@@ -1,0 +1,182 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums removed for SQLite compatibility
+
+
+// Models
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  role      String   @default("STUDENT")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  schoolId        String? // Null for Super Admin
+  school          School?          @relation(fields: [schoolId], references: [id])
+  
+  // School Admin relations
+  managedSchool   School?          @relation("SchoolManager")
+
+  // Teacher relations
+  coursesTaught   Course[]
+
+  // Student relations
+  enrollments     Enrollment[]
+  submissions     Submission[]
+  grades          Grade[]
+}
+
+model School {
+  id        String   @id @default(uuid())
+  name      String
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users           User[]
+  managerId       String? @unique
+  manager         User?   @relation("SchoolManager", fields: [managerId], references: [id])
+  classes         Class[]
+  subjects        Subject[]
+  academicYears   AcademicYear[]
+}
+
+model AcademicYear {
+  id        String   @id @default(uuid())
+  name      String   // e.g., "2023-2024"
+  startDate DateTime
+  endDate   DateTime
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id])
+  terms     Term[]
+  active    Boolean  @default(false)
+}
+
+model Term {
+  id             String     @id @default(uuid())
+  name           String     // e.g., "Trimestre 1"
+  startDate      DateTime
+  endDate        DateTime
+  status         String     @default("OPEN") // TermStatus enum: OPEN, CLOSED
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+  grades         Grade[]
+}
+
+model Class {
+  id        String   @id @default(uuid())
+  name      String   // e.g., "Terminal A"
+  level     String?  // e.g., "Terminal"
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id])
+  
+  // Relations
+  enrollments Enrollment[]
+  courses     Course[]
+}
+
+model Subject {
+  id        String   @id @default(uuid())
+  name      String   // e.g., "Mathématiques"
+  code      String?  // e.g., "MATH"
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id])
+  
+  courses   Course[]
+}
+
+model Course {
+  id        String   @id @default(uuid())
+  classId   String
+  class     Class    @relation(fields: [classId], references: [id])
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id])
+  teacherId String
+  teacher   User     @relation(fields: [teacherId], references: [id])
+
+  // Relations
+  materials    Material[]
+  assignments  Assignment[]
+}
+
+model Enrollment {
+  id        String   @id @default(uuid())
+  studentId String
+  student   User     @relation(fields: [studentId], references: [id])
+  classId   String
+  class     Class    @relation(fields: [classId], references: [id])
+  joinedAt  DateTime @default(now())
+
+  @@unique([studentId, classId])
+}
+
+model Material {
+  id        String   @id @default(uuid())
+  title     String
+  type      String   // e.g., "PDF", "VIDEO"
+  url       String
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Assignment {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  dueDate     DateTime
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id])
+  
+  submissions Submission[]
+  grades      Grade[]
+}
+
+model Submission {
+  id           String   @id @default(uuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id])
+  studentId    String
+  student      User     @relation(fields: [studentId], references: [id])
+  fileUrl      String?
+  content      String?
+  submittedAt  DateTime @default(now())
+  
+  grade        Grade?
+}
+
+model Grade {
+  id           String   @id @default(uuid())
+  value        Float
+  comment      String?
+  
+  studentId    String
+  student      User     @relation(fields: [studentId], references: [id])
+  
+  // Grade can be linked to an assignment or just a term grade
+  assignmentId String?
+  assignment   Assignment? @relation(fields: [assignmentId], references: [id])
+  submissionId String? @unique
+  submission   Submission? @relation(fields: [submissionId], references: [id])
+
+  termId       String?
+  term         Term?       @relation(fields: [termId], references: [id])
+
+  createdAt    DateTime @default(now())
+}
