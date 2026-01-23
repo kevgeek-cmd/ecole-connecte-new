@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import prisma from "../utils/prisma.js";
 import { z } from "zod";
 import type { AuthRequest } from "../middleware/auth.js";
+import { uploadToSupabase } from "../utils/supabase.js";
 
 const createCourseSchema = z.object({
   classId: z.string(),
