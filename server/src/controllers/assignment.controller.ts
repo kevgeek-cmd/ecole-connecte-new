@@ -141,7 +141,12 @@ export const submitAssignment = async (req: AuthRequest, res: Response) => {
     let fileUrl = req.body.fileUrl;
 
     if (req.file) {
-        fileUrl = `/uploads/${req.file.filename}`;
+        const publicUrl = await uploadToSupabase(req.file);
+        if (publicUrl) {
+            fileUrl = publicUrl;
+        } else {
+             return res.status(500).json({ message: "Failed to upload file" });
+        }
     }
 
     const studentId = req.user?.id;

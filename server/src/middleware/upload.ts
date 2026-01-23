@@ -1,26 +1,11 @@
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
 
-// Configure storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadDir = path.join(process.cwd(), 'uploads');
-    // Ensure directory exists
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Use memory storage to keep file in buffer for Supabase upload
+const storage = multer.memoryStorage();
 
 // File filter (optional, to restrict file types)
 const fileFilter = (req: any, file: any, cb: any) => {
-  // Accept PDF, Word documents, Videos, Images
+  // Accept PDF, Word documents, Videos, Images, Excel
   const allowedTypes = [
     'application/pdf', 
     'application/msword', 
@@ -28,13 +13,17 @@ const fileFilter = (req: any, file: any, cb: any) => {
     'video/mp4',
     'video/webm',
     'image/jpeg',
-    'image/png'
+    'image/png',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   ];
   
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(null, true); // Accepting all for now to avoid blocking user tests, ideally restrict.
+    // Accepting all for now to avoid blocking user tests, ideally restrict.
+    // console.warn(`Warning: File type ${file.mimetype} not explicitly allowed but passed.`);
+    cb(null, true); 
   }
 };
 

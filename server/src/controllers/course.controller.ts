@@ -119,7 +119,13 @@ export const addMaterial = async (req: AuthRequest, res: Response) => {
     let { title, type, url } = req.body;
 
     if (req.file) {
-        url = `/uploads/${req.file.filename}`;
+        const publicUrl = await uploadToSupabase(req.file);
+        if (publicUrl) {
+            url = publicUrl;
+        } else {
+             return res.status(500).json({ message: "Failed to upload file" });
+        }
+        
         // If type not provided, deduce from mime type roughly or default to PDF
         if (!type) {
             if (req.file.mimetype.includes('video')) type = 'VIDEO';

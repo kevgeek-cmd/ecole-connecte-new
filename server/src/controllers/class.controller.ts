@@ -126,7 +126,8 @@ export const importStudents = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ message: "Aucun fichier fourni" });
         }
 
-        const workbook = xlsx.readFile(req.file.path);
+        // Use buffer instead of path (since we switched to memoryStorage)
+        const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
         const sheetName = workbook.SheetNames[0];
         if (!sheetName) throw new Error("Excel file is empty");
         const sheet = workbook.Sheets[sheetName];
