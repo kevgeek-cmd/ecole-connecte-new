@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Edit, Trash2, ArrowLeft, Users as UsersIcon, GraduationCap, School, UserCog } from 'lucide-react';
+import { Plus, Edit, Trash2, ArrowLeft, Users as UsersIcon, GraduationCap, School, UserCog, Eye, EyeOff } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 
 interface User {
@@ -41,6 +41,8 @@ const Users = () => {
   const [isEditConfirmModalOpen, setIsEditConfirmModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [formData, setFormData] = useState<any>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const { register, handleSubmit, reset } = useForm();
   
   // To populate school dropdown for Super Admin
@@ -175,6 +177,8 @@ const Users = () => {
 
   const openCreateModal = () => {
     setEditingUser(null);
+    setSubmitError(null);
+    setShowPassword(false);
     reset({
         firstName: '',
         lastName: '',
@@ -187,6 +191,7 @@ const Users = () => {
   };
 
   const onSubmit = async (data: any) => {
+    setSubmitError(null);
     try {
         // If School Admin, automatically assign to their school
         if (currentUser?.role === 'SCHOOL_ADMIN' && currentUser.schoolId) { 
@@ -206,8 +211,9 @@ const Users = () => {
             reset();
             fetchUsers();
         }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving user', error);
+      setSubmitError(error.response?.data?.message || 'Une erreur est survenue lors de la création de l\'utilisateur.');
     }
   };
 
@@ -332,6 +338,13 @@ const Users = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">{editingUser ? 'Modifier l\'utilisateur' : 'Ajouter un utilisateur'}</h2>
+            
+            {submitError && (
+              <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm border border-red-200">
+                {submitError}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -351,7 +364,21 @@ const Users = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">Mot de passe</label>
-                <input {...register('password', { required: !editingUser, minLength: 6 })} type="password" className="w-full p-2 border border-gray-300 rounded mt-1 text-black" placeholder={editingUser ? "Laisser vide pour ne pas changer" : ""} />
+                <div className="relative">
+                    <input 
+                        {...register('password', { required: !editingUser, minLength: 6 })} 
+                        type={showPassword ? "text" : "password"} 
+                        className="w-full p-2 border border-gray-300 rounded mt-1 text-black pr-10" 
+                        placeholder={editingUser ? "Laisser vide pour ne pas changer" : ""} 
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none mt-0.5"
+                    >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                </div>
               </div>
 
               <div>
