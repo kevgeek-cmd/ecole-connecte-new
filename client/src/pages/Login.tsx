@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
+import { Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [error, setError] = React.useState('');
+  const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const onSubmit = async (data: any) => {
     try {
@@ -44,11 +46,20 @@ const Login = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
-            <input
-              {...register('password', { required: 'Mot de passe requis' })}
-              type="password"
-              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none text-black"
-            />
+            <div className="relative">
+              <input
+                {...register('password', { required: 'Mot de passe requis' })}
+                type={showPassword ? "text" : "password"}
+                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none text-black pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
             {errors.password && <span className="text-red-500 text-sm">{errors.password.message as string}</span>}
           </div>
 

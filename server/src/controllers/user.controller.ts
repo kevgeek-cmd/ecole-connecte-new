@@ -104,21 +104,27 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
 export const updateUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { email, firstName, lastName, role, schoolId } = req.body; // Allow partial updates without password
+    const { email, firstName, lastName, role, schoolId, password } = req.body; // Allow partial updates without password
 
     if (!id) return res.status(400).json({ message: "Missing id" });
 
     // Optional: Validate data if needed, or use Zod with .partial()
     
-    const updatedUser = await prisma.user.update({
-      where: { id: String(id) },
-      data: {
+    const updateData: any = {
         email,
         firstName,
         lastName,
         role,
-        schoolId: schoolId || undefined, // undefined to ignore if not provided/null handling
-      },
+        schoolId: schoolId || undefined,
+    };
+
+    if (password) {
+        updateData.password = await bcrypt.hash(password, 10);
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: String(id) },
+      data: updateData,
     });
 
     res.json(updatedUser);

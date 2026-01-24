@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import fs from 'fs';
 
 dotenv.config();
 
@@ -13,30 +14,49 @@ if (!supabaseUrl || !supabaseKey) {
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 export const uploadToSupabase = async (file: Express.Multer.File, bucket: string = 'uploads'): Promise<string | null> => {
-  try {
-    const fileExt = file.originalname.split('.').pop();
-    const fileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}.${fileExt}`;
-    const filePath = `${fileName}`;
+  // Try Supabase upload if credentials exist
+  if (supabaseUrl && supabaseKey) {
+    try {
+      let fileBuffer = file.buffer;
+      
+      // If using diskStorage, buffer is missing, read from file path
+      if (!fileBuffer && file.path) {
+        fileBuffer = fs.readFileSync(file.path);
+      }
 
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(filePath, file.buffer, {
-        contentType: file.mimetype,
-        upsert: false
-      });
+      if (fileBuffer) {
+        const fileExt = file.originalname.split('.').pop();
+        const fileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}.${fileExt}`;
+        const filePath = `${fileName}`;
 
-    if (error) {
-      console.error('Supabase upload error:', error);
-      return null;
+        const { data, error } = await supabase.storage
+          .from(bucket)
+          .upload(filePath, fileBuffer, {
+            contentType: file.mimetype,
+            upsert: false
+          });
+
+        if (error) {
+          console.error('Supabase upload error:', error);
+          // Don't return null yet, try fallback
+        } else {
+          const { data: { publicUrl } } = supabase.storage
+            .from(bucket)
+            .getPublicUrl(filePath);
+
+          return publicUrl;
+        }
+      }
+    } catch (error) {
+      console.error('Error uploading to Supabase:', error);
     }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(filePath);
-
-    return publicUrl;
-  } catch (error) {
-    console.error('Error uploading to Supabase:', error);
-    return null;
   }
+
+  // Fallback to local file if it exists (diskStorage)
+  if (file.filename) {
+    console.log('Using local file fallback:', file.filename);
+    return `/uploads/${file.filename}`;
+  }
+
+  return null;
 };
