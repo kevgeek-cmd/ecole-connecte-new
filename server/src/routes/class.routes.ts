@@ -7,7 +7,8 @@ import {
   enrollStudent,
   getClassStudents,
   deleteClass,
-  importStudents
+  importStudents,
+  updateClass
 } from "../controllers/class.controller.js";
 
 const router = Router();
@@ -16,6 +17,7 @@ router.use(authenticate);
 
 // Only Admins can create classes and enroll students
 router.post("/", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN"]), createClass);
+router.put("/:id", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN"]), updateClass);
 router.post("/enroll", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER"]), enrollStudent);
 router.post("/:id/students/import", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN"]), upload.single('file'), importStudents);
 router.delete("/:id", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN"]), deleteClass);

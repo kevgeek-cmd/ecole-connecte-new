@@ -101,6 +101,27 @@ export const getClassStudents = async (req: Request, res: Response) => {
     }
 }
 
+export const updateClass = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, level } = createClassSchema.parse(req.body);
+
+    if (!id) return res.status(400).json({ message: "Missing id" });
+
+    const updatedClass = await prisma.class.update({
+      where: { id: String(id) },
+      data: {
+        name,
+        level: level || null,
+      },
+    });
+
+    res.json(updatedClass);
+  } catch (error) {
+    res.status(500).json({ message: "Error updating class", error });
+  }
+};
+
 export const deleteClass = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -126,8 +147,9 @@ export const importStudents = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ message: "Aucun fichier fourni" });
         }
 
-        // Use buffer instead of path (since we switched to memoryStorage)
-        const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+        // Use file path since we are using diskStorage
+        const filePath = req.file.path;
+        const workbook = xlsx.readFile(filePath);
         const sheetName = workbook.SheetNames[0];
         if (!sheetName) throw new Error("Excel file is empty");
         const sheet = workbook.Sheets[sheetName];

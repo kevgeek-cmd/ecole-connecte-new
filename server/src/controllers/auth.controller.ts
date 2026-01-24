@@ -48,9 +48,17 @@ export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = loginSchema.parse(req.body);
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: { school: true }
+    });
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // Check if school is active
+    if (user.school && !user.school.isActive && user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ message: "L'accès à cette école a été suspendu. Veuillez contacter l'administrateur." });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);

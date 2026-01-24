@@ -1,7 +1,8 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import api from '../utils/api';
 import { useForm } from 'react-hook-form';
-import { Plus, Trash2, School, GraduationCap, Users, X, Upload } from 'lucide-react';
+import { Plus, Trash2, School, GraduationCap, Users, X, Upload, Edit } from 'lucide-react';
+import ConfirmModal from '../components/ConfirmModal';
 
 interface ClassModel {
   id: string;
@@ -33,6 +34,13 @@ const Classes = () => {
   const [isImporting, setIsImporting] = useState(false);
   const [isImportingMode, setIsImportingMode] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  
+  const [editingClass, setEditingClass] = useState<ClassModel | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [classToDelete, setClassToDelete] = useState<string | null>(null);
+  const [isEditConfirmModalOpen, setIsEditConfirmModalOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState<any>(null);
+
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
   const fetchClasses = async () => {
@@ -49,24 +57,65 @@ const Classes = () => {
   }, []);
 
   const onSubmit = async (data: any) => {
-    try {
-      await api.post('/classes', data);
-      setIsModalOpen(false);
-      reset();
-      fetchClasses();
-    } catch (error) {
-      console.error('Error creating class', error);
+    if (editingClass) {
+        setEditFormData(data);
+        setIsEditConfirmModalOpen(true);
+    } else {
+        try {
+            await api.post('/classes', data);
+            setIsModalOpen(false);
+            reset();
+            fetchClasses();
+        } catch (error) {
+            console.error('Error creating class', error);
+        }
     }
   };
 
-  const handleDeleteClass = async (id: string) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette classe ?')) return;
-    try {
-        await api.delete(`/classes/${id}`);
-        fetchClasses();
-    } catch (error) {
-        console.error('Error deleting class', error);
-    }
+  const confirmEdit = async () => {
+      if (!editingClass || !editFormData) return;
+      try {
+          await api.put(`/classes/${editingClass.id}`, editFormData);
+          setIsModalOpen(false);
+          reset();
+          fetchClasses();
+      } catch (error) {
+          console.error('Error updating class', error);
+      } finally {
+          setIsEditConfirmModalOpen(false);
+          setEditFormData(null);
+          setEditingClass(null);
+      }
+  }
+
+  const handleDeleteClick = (id: string) => {
+      setClassToDelete(id);
+      setIsDeleteModalOpen(true);
+  }
+
+  const confirmDelete = async () => {
+      if (!classToDelete) return;
+      try {
+          await api.delete(`/classes/${classToDelete}`);
+          fetchClasses();
+      } catch (error) {
+          console.error('Error deleting class', error);
+      } finally {
+          setIsDeleteModalOpen(false);
+          setClassToDelete(null);
+      }
+  }
+
+  const openCreateModal = () => {
+      setEditingClass(null);
+      reset({ name: '', level: '' });
+      setIsModalOpen(true);
+  }
+
+  const handleEditClick = (cls: ClassModel) => {
+      setEditingClass(cls);
+      reset({ name: cls.name, level: cls.level || '' });
+      setIsModalOpen(true);
   }
 
   const handleViewStudents = async (classId: string, className: string) => {
@@ -128,15 +177,23 @@ const Classes = () => {
         const response = await api.post(`/classes/${selectedClassId}/students/import`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
-        alert(`Import terminé: ${response.data.created} créés, ${response.data.enrolled} inscrits.`);
         
-        // Refresh
+        // Refresh Students List
         const studentsResponse = await api.get(`/classes/${selectedClassId}/students`);
         setSelectedClassStudents(studentsResponse.data);
+
+        // Refresh Classes (for counts)
+        fetchClasses();
         
-        // Reset
+        // Reset UI
         setIsImportingMode(false);
         setSelectedFile(null);
+
+        // Notify user
+        setTimeout(() => {
+             alert(`Import terminé avec succès !\n${response.data.created} nouveaux élèves créés.\n${response.data.enrolled} élèves inscrits dans la classe.`);
+        }, 100);
+        
     } catch (error) {
         console.error('Error importing students', error);
         alert("Erreur lors de l'import");
@@ -153,7 +210,7 @@ const Classes = () => {
           Gestion des Classes
         </h1>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={openCreateModal}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition"
         >
           <Plus className="w-4 h-4" />
@@ -194,7 +251,14 @@ const Classes = () => {
                     Élèves
                 </button>
                 <button 
-                    onClick={() => handleDeleteClass(cls.id)}
+                    onClick={() => handleEditClick(cls)}
+                    className="flex items-center justify-center p-2 text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded transition"
+                    title="Modifier la classe"
+                >
+                    <Edit className="w-4 h-4" />
+                </button>
+                <button 
+                    onClick={() => handleDeleteClick(cls.id)}
                     className="flex items-center justify-center p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded transition"
                     title="Supprimer la classe"
                 >
@@ -209,7 +273,7 @@ const Classes = () => {
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-8 rounded-xl w-full max-w-md">
-            <h2 className="text-xl font-bold mb-6">Ajouter une classe</h2>
+            <h2 className="text-xl font-bold mb-6">{editingClass ? 'Modifier la classe' : 'Ajouter une classe'}</h2>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nom de la classe</label>
@@ -250,7 +314,7 @@ const Classes = () => {
                   type="submit"
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
                 >
-                  Créer
+                  {editingClass ? 'Sauvegarder' : 'Créer'}
                 </button>
               </div>
             </form>
@@ -382,6 +446,26 @@ const Classes = () => {
             </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Supprimer la classe"
+        message="Êtes-vous sûr de vouloir supprimer cette classe ? Cette action supprimera également toutes les données associées (élèves inscrits, cours, etc.)."
+        confirmText="Supprimer"
+        isDanger={true}
+      />
+
+      <ConfirmModal
+        isOpen={isEditConfirmModalOpen}
+        onClose={() => setIsEditConfirmModalOpen(false)}
+        onConfirm={confirmEdit}
+        title="Modifier la classe"
+        message="Êtes-vous sûr de vouloir modifier cette classe ?"
+        confirmText="Sauvegarder"
+        isDanger={false}
+      />
     </div>
   );
 };

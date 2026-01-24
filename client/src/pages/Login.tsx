@@ -1,6 +1,6 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 
@@ -59,10 +59,6 @@ const Login = () => {
             Se connecter
           </button>
         </form>
-        
-        <p className="mt-4 text-center text-sm text-gray-600">
-          Pas encore de compte ? <Link to="/register" className="text-blue-600 hover:underline">S'inscrire</Link>
-        </p>
       </div>
     </div>
   );

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import api from '../utils/api';
 import { useForm } from 'react-hook-form';
-import { Plus, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Calendar, ChevronDown, ChevronUp, Trash2, Edit } from 'lucide-react';
+import ConfirmModal from '../components/ConfirmModal';
 
 interface TermModel {
   id: string;
@@ -26,6 +27,12 @@ const AcademicYears = () => {
   const [selectedYearId, setSelectedYearId] = useState<string | null>(null);
   const [expandedYearId, setExpandedYearId] = useState<string | null>(null);
 
+  const [editingYear, setEditingYear] = useState<AcademicYearModel | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [yearToDelete, setYearToDelete] = useState<string | null>(null);
+  const [isEditConfirmModalOpen, setIsEditConfirmModalOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState<any>(null);
+
   const { register: registerYear, handleSubmit: handleSubmitYear, reset: resetYear } = useForm();
   const { register: registerTerm, handleSubmit: handleSubmitTerm, reset: resetTerm } = useForm();
 
@@ -43,15 +50,74 @@ const AcademicYears = () => {
   }, []);
 
   const onSubmitYear = async (data: any) => {
-    try {
-      await api.post('/academic/years', data);
-      setIsYearModalOpen(false);
-      resetYear();
-      fetchYears();
-    } catch (error) {
-      console.error('Error creating academic year', error);
+    if (editingYear) {
+        setEditFormData(data);
+        setIsEditConfirmModalOpen(true);
+    } else {
+        try {
+            await api.post('/academic/years', data);
+            setIsYearModalOpen(false);
+            resetYear();
+            fetchYears();
+        } catch (error) {
+            console.error('Error creating academic year', error);
+        }
     }
   };
+
+  const confirmEdit = async () => {
+      if (!editingYear || !editFormData) return;
+      try {
+          await api.put(`/academic/years/${editingYear.id}`, editFormData);
+          setIsYearModalOpen(false);
+          resetYear();
+          fetchYears();
+      } catch (error) {
+          console.error('Error updating academic year', error);
+      } finally {
+          setIsEditConfirmModalOpen(false);
+          setEditFormData(null);
+          setEditingYear(null);
+      }
+  }
+
+  const handleDeleteClick = (id: string) => {
+      setYearToDelete(id);
+      setIsDeleteModalOpen(true);
+  }
+
+  const confirmDelete = async () => {
+      if (!yearToDelete) return;
+      try {
+          await api.delete(`/academic/years/${yearToDelete}`);
+          fetchYears();
+      } catch (error) {
+          console.error('Error deleting academic year', error);
+      } finally {
+          setIsDeleteModalOpen(false);
+          setYearToDelete(null);
+      }
+  }
+
+  const openCreateModal = () => {
+      setEditingYear(null);
+      resetYear({ name: '', startDate: '', endDate: '' });
+      setIsYearModalOpen(true);
+  }
+
+  const handleEditClick = (year: AcademicYearModel) => {
+      setEditingYear(year);
+      // Format dates for input type="date"
+      const startDate = new Date(year.startDate).toISOString().split('T')[0];
+      const endDate = new Date(year.endDate).toISOString().split('T')[0];
+      
+      resetYear({ 
+          name: year.name, 
+          startDate, 
+          endDate 
+      });
+      setIsYearModalOpen(true);
+  }
 
   const onSubmitTerm = async (data: any) => {
     try {
@@ -95,7 +161,7 @@ const AcademicYears = () => {
           Années Scolaires
         </h1>
         <button
-          onClick={() => setIsYearModalOpen(true)}
+          onClick={openCreateModal}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition"
         >
           <Plus className="w-4 h-4" />
@@ -121,9 +187,23 @@ const AcademicYears = () => {
                     </p>
                   </div>
               </div>
-              <div className="flex items-center gap-4">
-                  <span className="text-sm text-gray-500">{year.terms.length} Périodes</span>
-                  {expandedYearId === year.id ? <ChevronUp /> : <ChevronDown />}
+              <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                <span className="text-sm text-gray-500">{year.terms.length} Périodes</span>
+                <button 
+                    onClick={() => handleEditClick(year)}
+                    className="p-1 text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded transition"
+                    title="Modifier"
+                >
+                    <Edit className="w-4 h-4" />
+                </button>
+                <button 
+                    onClick={() => handleDeleteClick(year.id)}
+                    className="p-1 text-red-600 bg-red-50 hover:bg-red-100 rounded transition"
+                    title="Supprimer"
+                >
+                    <Trash2 className="w-4 h-4" />
+                </button>
+                {expandedYearId === year.id ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
               </div>
             </div>
 
@@ -176,7 +256,7 @@ const AcademicYears = () => {
       {isYearModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-8 rounded-xl w-full max-w-md">
-            <h2 className="text-xl font-bold mb-6">Nouvelle Année Scolaire</h2>
+            <h2 className="text-xl font-bold mb-6">{editingYear ? 'Modifier l\'année scolaire' : 'Ajouter une année scolaire'}</h2>
             <form onSubmit={handleSubmitYear(onSubmitYear)} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
@@ -216,7 +296,7 @@ const AcademicYears = () => {
                   type="submit"
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
                 >
-                  Créer
+                  {editingYear ? 'Sauvegarder' : 'Créer'}
                 </button>
               </div>
             </form>
@@ -275,6 +355,26 @@ const AcademicYears = () => {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Supprimer l'année scolaire"
+        message="Êtes-vous sûr de vouloir supprimer cette année scolaire ? Cette action supprimera également toutes les périodes associées."
+        confirmText="Supprimer"
+        isDanger={true}
+      />
+
+      <ConfirmModal
+        isOpen={isEditConfirmModalOpen}
+        onClose={() => setIsEditConfirmModalOpen(false)}
+        onConfirm={confirmEdit}
+        title="Modifier l'année scolaire"
+        message="Êtes-vous sûr de vouloir modifier cette année scolaire ?"
+        confirmText="Sauvegarder"
+        isDanger={false}
+      />
     </div>
   );
 };

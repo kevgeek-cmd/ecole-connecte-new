@@ -97,3 +97,39 @@ export const toggleTermStatus = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error updating term status", error });
   }
 };
+
+export const updateAcademicYear = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, startDate, endDate } = createYearSchema.parse(req.body);
+
+    if (!id) return res.status(400).json({ message: "Missing id" });
+
+    const updatedYear = await prisma.academicYear.update({
+      where: { id: String(id) },
+      data: {
+        name,
+        startDate,
+        endDate,
+      },
+    });
+
+    res.json(updatedYear);
+  } catch (error) {
+    res.status(500).json({ message: "Error updating academic year", error });
+  }
+};
+
+export const deleteAcademicYear = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: "Missing id" });
+
+    await prisma.academicYear.delete({
+      where: { id: String(id) },
+    });
+    res.status(200).json({ message: "Academic year deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting academic year", error });
+  }
+};
