@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useForm } from 'react-hook-form';
-import { Plus, Book, User } from 'lucide-react';
+import { Plus, Book, User, Trash2 } from 'lucide-react';
 
 interface CourseModel {
   id: string;

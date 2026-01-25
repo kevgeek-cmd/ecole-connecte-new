@@ -60,6 +60,13 @@ export const getCourses = async (req: AuthRequest, res: Response) => {
         include: {
           class: true,
           subject: true,
+          teacher: {
+             select: {
+                id: true,
+                firstName: true,
+                lastName: true
+             }
+          }
         },
       });
     } else if (role === "STUDENT") {
