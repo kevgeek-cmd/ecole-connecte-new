@@ -10,6 +10,7 @@ interface CourseModel {
   class: { name: string; level?: string };
   subject: { name: string; code?: string };
   teacher: { firstName: string; lastName: string };
+  coefficient: number;
 }
 
 interface Option {
@@ -26,6 +27,9 @@ const Courses = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
   
@@ -77,6 +81,26 @@ const Courses = () => {
   const openModal = () => {
       fetchDataForForm();
       setIsModalOpen(true);
+  }
+
+  const openDeleteModal = (courseId: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      setCourseToDelete(courseId);
+      setIsDeleteModalOpen(true);
+  }
+
+  const confirmDeleteCourse = async () => {
+      if (!courseToDelete) return;
+      try {
+          await api.delete(`/courses/${courseToDelete}`);
+          setIsDeleteModalOpen(false);
+          setCourseToDelete(null);
+          fetchCourses();
+      } catch (error) {
+          console.error("Error deleting course", error);
+          alert("Impossible de supprimer ce cours. Veuillez réessayer.");
+      }
   }
 
   const onSubmit = async (data: any) => {
@@ -131,23 +155,61 @@ const Courses = () => {
                   <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded mt-1 inline-block">
                     {course.class?.name}
                   </span>
+                  <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded mt-1 inline-block ml-2">
+                    Coeff: {course.coefficient || 1}
+                  </span>
                </div>
                <div className="bg-blue-50 p-2 rounded-full">
                   <Book className="w-6 h-6 text-blue-500" />
                </div>
             </div>
             
-            <div className="border-t pt-4 mt-2">
+            <div className="border-t pt-4 mt-2 flex justify-between items-center">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                     <User className="w-4 h-4" />
                     <span>Prof. {course.teacher?.firstName} {course.teacher?.lastName}</span>
                 </div>
+                {(isAdmin || (isTeacher && user?.id === course.teacher?.id)) && (
+                    <button 
+                        onClick={(e) => openDeleteModal(course.id, e)}
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition"
+                        title="Supprimer le cours"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                )}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Modal */}
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl w-full max-w-sm">
+            <h2 className="text-lg font-bold text-gray-800 mb-2">Confirmer la suppression</h2>
+            <p className="text-gray-600 mb-6">
+                Êtes-vous sûr de vouloir supprimer ce cours ? Cette action est irréversible et supprimera tous les devoirs et contenus associés.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={confirmDeleteCourse}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-8 rounded-xl w-full max-w-md">
@@ -180,6 +242,17 @@ const Courses = () => {
                     ))}
                 </select>
                 {errors.subjectId && <span className="text-red-500 text-sm">{errors.subjectId.message as string}</span>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Coefficient</label>
+                <input
+                  type="number"
+                  min="1"
+                  {...register('coefficient', { required: 'Le coefficient est requis', valueAsNumber: true })}
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                  defaultValue={1}
+                />
               </div>
 
               {isAdmin && (

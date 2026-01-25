@@ -8,6 +8,7 @@ const createCourseSchema = z.object({
   classId: z.string(),
   subjectId: z.string(),
   teacherId: z.string(),
+  coefficient: z.number().optional().default(1),
 });
 
 const createMaterialSchema = z.object({
@@ -18,7 +19,7 @@ const createMaterialSchema = z.object({
 
 export const createCourse = async (req: AuthRequest, res: Response) => {
   try {
-    const { classId, subjectId, teacherId } = createCourseSchema.parse(req.body);
+    const { classId, subjectId, teacherId, coefficient } = createCourseSchema.parse(req.body);
 
     // If the user is a teacher, force the teacherId to be their own ID
     let finalTeacherId = teacherId;
@@ -31,6 +32,7 @@ export const createCourse = async (req: AuthRequest, res: Response) => {
         classId,
         subjectId,
         teacherId: finalTeacherId,
+        coefficient,
       },
     });
 
@@ -196,6 +198,40 @@ export const deleteMaterial = async (req: AuthRequest, res: Response) => {
     res.json({ message: "Material deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: "Error deleting material", error });
+  }
+};
+
+export const deleteCourse = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) return res.status(400).json({ message: "ID required" });
+
+    const course = await prisma.course.findUnique({
+      where: { id: id as string },
+    });
+
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    // Verify permission (Teacher must own the course, or be Admin)
+    if (req.user?.role === "TEACHER") {
+      if (course.teacherId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+    } else if (req.user?.role !== "SUPER_ADMIN" && req.user?.role !== "SCHOOL_ADMIN") {
+        return res.status(403).json({ message: "Access denied" });
+    }
+
+    await prisma.course.delete({
+      where: { id: id as string },
+    });
+
+    res.json({ message: "Course deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error deleting course", error });
   }
 };
 

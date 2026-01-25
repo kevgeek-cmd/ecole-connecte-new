@@ -46,6 +46,9 @@ const CourseDetails = () => {
   const [isSubmittingAssign, setIsSubmittingAssign] = useState(false);
   const [isSubmittingMat, setIsSubmittingMat] = useState(false);
   
+  const [assignmentToDelete, setAssignmentToDelete] = useState<string | null>(null);
+  const [isDeleteAssignModalOpen, setIsDeleteAssignModalOpen] = useState(false);
+
   const [activeTab, setActiveTab] = useState<'CONTENT' | 'GRADES'>('CONTENT');
 
   const { register: registerAssign, handleSubmit: handleSubmitAssign, reset: resetAssign, formState: { errors: errorsAssign } } = useForm();
@@ -54,6 +57,26 @@ const CourseDetails = () => {
   const isTeacher = user?.role === 'TEACHER' || user?.role === 'SCHOOL_ADMIN';
 
   const selectedMatType = watchMat('type', 'PDF');
+
+  const openDeleteAssignmentModal = (assignId: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      setAssignmentToDelete(assignId);
+      setIsDeleteAssignModalOpen(true);
+  }
+
+  const confirmDeleteAssignment = async () => {
+      if (!assignmentToDelete) return;
+      try {
+          await api.delete(`/assignments/${assignmentToDelete}`);
+          setIsDeleteAssignModalOpen(false);
+          setAssignmentToDelete(null);
+          fetchCourseDetails();
+      } catch (error) {
+          console.error("Error deleting assignment", error);
+          alert("Impossible de supprimer ce devoir. Veuillez réessayer.");
+      }
+  }
 
   const fetchCourseDetails = async () => {
     try {
@@ -229,9 +252,9 @@ const CourseDetails = () => {
                 <div className="space-y-4">
                     {assignments.length === 0 && <p className="text-gray-500 italic">Aucun devoir.</p>}
                     {assignments.map(assignment => (
-                        <Link to={`/assignments/${assignment.id}`} key={assignment.id} className="block">
-                            <div className="bg-white p-4 rounded-lg border border-gray-200 hover:shadow-md transition hover:border-blue-300 group">
-                                <div className="flex justify-between items-start">
+                        <div className="bg-white p-4 rounded-lg border border-gray-200 hover:shadow-md transition hover:border-blue-300 group relative">
+                                <Link to={`/assignments/${assignment.id}`} className="block h-full">
+                                <div className="flex justify-between items-start pr-8">
                                     <h3 className="font-bold text-gray-800 group-hover:text-blue-600 transition">{assignment.title}</h3>
                                     <span className="text-xs font-mono bg-orange-100 text-orange-800 px-2 py-1 rounded">
                                         {new Date(assignment.dueDate).toLocaleDateString()}
@@ -246,6 +269,16 @@ const CourseDetails = () => {
                                 </div>
                             </div>
                         </Link>
+                         {isTeacher && (
+                             <button 
+                                 onClick={(e) => openDeleteAssignmentModal(assignment.id, e)}
+                                 className="absolute top-2 right-2 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition z-10"
+                                 title="Supprimer le devoir"
+                             >
+                                 <Trash2 className="w-4 h-4" />
+                             </button>
+                         )}
+                         </div>
                     ))}
                 </div>
             </div>
@@ -292,6 +325,32 @@ const CourseDetails = () => {
         </div>
       ) : (
         <Gradebook courseId={id!} />
+      )}
+
+      {/* Delete Assignment Confirmation Modal */}
+      {isDeleteAssignModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl w-full max-w-sm">
+            <h2 className="text-lg font-bold text-gray-800 mb-2">Confirmer la suppression</h2>
+            <p className="text-gray-600 mb-6">
+                Êtes-vous sûr de vouloir supprimer ce devoir ? Cette action est irréversible et supprimera toutes les notes et rendus associés.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setIsDeleteAssignModalOpen(false)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={confirmDeleteAssignment}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Create Assignment Modal */}

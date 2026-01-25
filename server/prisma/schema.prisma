@@ -110,6 +110,8 @@ model Course {
   subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   teacherId String
   teacher   User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  
+  coefficient Int    @default(1)
 
   // Relations
   materials    Material[]

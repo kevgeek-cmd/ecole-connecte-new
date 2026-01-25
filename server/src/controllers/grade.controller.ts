@@ -243,6 +243,7 @@ export const getStudentReportCard = async (req: AuthRequest, res: Response) => {
             subjectCode: course.subject.code,
             teacher: `${course.teacher.firstName} ${course.teacher.lastName}`,
             average: average,
+            coefficient: (course as any).coefficient || 1,
             grades: courseGrades.map(g => ({
                 value: g.value,
                 assignment: g.assignment?.title
@@ -250,10 +251,11 @@ export const getStudentReportCard = async (req: AuthRequest, res: Response) => {
         };
     });
 
-    // Calculate Overall Average
+    // Calculate Overall Average (Weighted)
     const validSubjects = subjectStats.filter(s => s.average !== null);
-    const overallSum = validSubjects.reduce((acc, s) => acc + (s.average || 0), 0);
-    const overallAverage = validSubjects.length > 0 ? overallSum / validSubjects.length : null;
+    const overallWeightedSum = validSubjects.reduce((acc, s) => acc + ((s.average || 0) * s.coefficient), 0);
+    const totalCoefficients = validSubjects.reduce((acc, s) => acc + s.coefficient, 0);
+    const overallAverage = totalCoefficients > 0 ? overallWeightedSum / totalCoefficients : null;
 
     res.json({
         student: {

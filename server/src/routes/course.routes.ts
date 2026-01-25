@@ -7,6 +7,7 @@ import {
   addMaterial,
   deleteMaterial,
   getMaterials,
+  deleteCourse,
 } from "../controllers/course.controller.js";
 
 const router = Router();
@@ -15,6 +16,7 @@ router.use(authenticate);
 
 router.post("/", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER"]), createCourse);
 router.get("/", getCourses);
+router.delete("/:id", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER"]), deleteCourse);
 
 // Material routes nested under course
 router.post("/:id/materials", authorize(["TEACHER", "SCHOOL_ADMIN"]), upload.single('file'), addMaterial);

@@ -24,6 +24,7 @@ interface ReportCardData {
     subjectCode?: string;
     teacher: string;
     average: number | null;
+    coefficient: number;
     grades: {
       value: number;
       assignment?: string;
@@ -166,6 +167,7 @@ const StudentReportCards = () => {
                         <tr className="bg-gray-100 border-b-2 border-gray-300">
                             <th className="p-3 text-left text-sm font-bold text-gray-700 uppercase">Matière</th>
                             <th className="p-3 text-left text-sm font-bold text-gray-700 uppercase">Enseignant</th>
+                            <th className="p-3 text-center text-sm font-bold text-gray-700 uppercase">Coef.</th>
                             <th className="p-3 text-center text-sm font-bold text-gray-700 uppercase">Moyenne</th>
                             <th className="p-3 text-left text-sm font-bold text-gray-700 uppercase">Appréciation</th>
                         </tr>
@@ -178,6 +180,7 @@ const StudentReportCards = () => {
                                     <p className="text-xs text-gray-500">{subject.subjectCode}</p>
                                 </td>
                                 <td className="p-3 text-gray-700">{subject.teacher}</td>
+                                <td className="p-3 text-center font-medium text-gray-700">{subject.coefficient || 1}</td>
                                 <td className="p-3 text-center">
                                     <span className={`font-bold ${
                                         subject.average === null ? 'text-gray-400' :
@@ -199,7 +202,7 @@ const StudentReportCards = () => {
                     </tbody>
                     <tfoot>
                         <tr className="bg-gray-50 font-bold">
-                            <td colSpan={2} className="p-4 text-right uppercase text-gray-700">Moyenne Générale</td>
+                            <td colSpan={3} className="p-4 text-right uppercase text-gray-700">Moyenne Générale</td>
                             <td className="p-4 text-center text-xl border-t-2 border-gray-800">
                                 <span className={
                                     reportCard.overallAverage === null ? 'text-gray-400' :

@@ -46,8 +46,12 @@ export const createAssignment = async (req: AuthRequest, res: Response) => {
     let finalDescription = description || "";
 
     if (req.file) {
-        const fileUrl = `/uploads/${req.file.filename}`;
-        finalDescription += `\n\n[Télécharger le fichier joint](${fileUrl})`;
+        const publicUrl = await uploadToSupabase(req.file);
+        if (publicUrl) {
+            finalDescription += `\n\n[Télécharger le fichier joint](${publicUrl})`;
+        } else {
+             return res.status(500).json({ message: "Failed to upload file to storage" });
+        }
     }
 
     if (!title || !dueDate || !courseId) {
@@ -195,6 +199,41 @@ export const submitAssignment = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error submitting assignment", error });
+  }
+};
+
+export const deleteAssignment = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) return res.status(400).json({ message: "ID required" });
+
+    const assignment = await prisma.assignment.findUnique({
+      where: { id: id as string },
+      include: { course: true }
+    });
+
+    if (!assignment) {
+      return res.status(404).json({ message: "Assignment not found" });
+    }
+
+    // Verify permission
+    if (req.user?.role === "TEACHER") {
+      if (assignment.course.teacherId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+    } else if (req.user?.role !== "SUPER_ADMIN" && req.user?.role !== "SCHOOL_ADMIN") {
+        return res.status(403).json({ message: "Access denied" });
+    }
+
+    await prisma.assignment.delete({
+      where: { id: id as string },
+    });
+
+    res.json({ message: "Assignment deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error deleting assignment", error });
   }
 };
 
