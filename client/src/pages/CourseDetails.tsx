@@ -167,8 +167,8 @@ const CourseDetails = () => {
           setIsSubmittingMat(true);
           setMaterialError(null);
 
-          if (data.file && data.file[0] && data.file[0].size > 100 * 1024 * 1024) {
-            setMaterialError("Le fichier est trop volumineux (max 100MB).");
+          if (data.file && data.file[0] && data.file[0].size > 50 * 1024 * 1024) {
+            setMaterialError("Le fichier est trop volumineux (max 50MB).");
             setIsSubmittingMat(false);
             return;
           }
@@ -197,16 +197,6 @@ const CourseDetails = () => {
       } finally {
           setIsSubmittingMat(false);
       }
-  }
-
-  const handleDeleteMaterial = async (materialId: string) => {
-    if(!window.confirm("Êtes-vous sûr de vouloir supprimer ce support ?")) return;
-    try {
-        await api.delete(`/courses/materials/${materialId}`);
-        fetchCourseDetails();
-    } catch (error) {
-        console.error("Error deleting material", error);
-    }
   }
 
   const getMaterialIcon = (type: string) => {
@@ -309,7 +299,6 @@ const CourseDetails = () => {
                                         {isTeacher ? `${assignment._count?.submissions || 0} rendus` : 'Cliquez pour voir/rendre'}
                                     </span>
                                 </div>
-                            </div>
                         </Link>
                          {isTeacher && (
                              <button 

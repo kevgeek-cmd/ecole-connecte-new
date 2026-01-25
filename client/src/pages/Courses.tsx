@@ -9,7 +9,7 @@ interface CourseModel {
   id: string;
   class: { name: string; level?: string };
   subject: { name: string; code?: string };
-  teacher: { firstName: string; lastName: string };
+  teacher: { id: string; firstName: string; lastName: string };
   coefficient: number;
 }
 
