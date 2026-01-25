@@ -70,6 +70,8 @@ export const getCourses = async (req: AuthRequest, res: Response) => {
         },
       });
     } else if (role === "STUDENT") {
+      // Log for debugging
+      console.log(`Fetching courses for student ${userId}`);
       courses = await prisma.course.findMany({
         where: {
           class: {
@@ -81,6 +83,7 @@ export const getCourses = async (req: AuthRequest, res: Response) => {
           },
         },
         include: {
+          class: true, // Include class info for students too
           subject: true,
           teacher: {
             select: {
@@ -90,6 +93,7 @@ export const getCourses = async (req: AuthRequest, res: Response) => {
           },
         },
       });
+      console.log(`Found ${courses.length} courses for student ${userId}`);
     } else if (role === "SCHOOL_ADMIN") {
         if (!schoolId) {
              return res.status(400).json({ message: "School ID not found for admin" });
