@@ -49,6 +49,9 @@ const CourseDetails = () => {
   const [assignmentToDelete, setAssignmentToDelete] = useState<string | null>(null);
   const [isDeleteAssignModalOpen, setIsDeleteAssignModalOpen] = useState(false);
 
+  const [materialToDelete, setMaterialToDelete] = useState<string | null>(null);
+  const [isDeleteMatModalOpen, setIsDeleteMatModalOpen] = useState(false);
+
   const [activeTab, setActiveTab] = useState<'CONTENT' | 'GRADES'>('CONTENT');
 
   const { register: registerAssign, handleSubmit: handleSubmitAssign, reset: resetAssign, formState: { errors: errorsAssign } } = useForm();
@@ -65,6 +68,13 @@ const CourseDetails = () => {
       setIsDeleteAssignModalOpen(true);
   }
 
+  const openDeleteMaterialModal = (matId: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      setMaterialToDelete(matId);
+      setIsDeleteMatModalOpen(true);
+  }
+
   const confirmDeleteAssignment = async () => {
       if (!assignmentToDelete) return;
       try {
@@ -75,6 +85,19 @@ const CourseDetails = () => {
       } catch (error) {
           console.error("Error deleting assignment", error);
           alert("Impossible de supprimer ce devoir. Veuillez réessayer.");
+      }
+  }
+
+  const confirmDeleteMaterial = async () => {
+      if (!materialToDelete) return;
+      try {
+          await api.delete(`/courses/materials/${materialToDelete}`);
+          setIsDeleteMatModalOpen(false);
+          setMaterialToDelete(null);
+          fetchCourseDetails();
+      } catch (error) {
+          console.error("Error deleting material", error);
+          alert("Impossible de supprimer ce support. Veuillez réessayer.");
       }
   }
 
@@ -311,7 +334,7 @@ const CourseDetails = () => {
                             </a>
                             {isTeacher && (
                                 <button 
-                                    onClick={() => handleDeleteMaterial(material.id)}
+                                    onClick={(e) => openDeleteMaterialModal(material.id, e)}
                                     className="text-gray-400 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition"
                                     title="Supprimer"
                                 >
@@ -344,6 +367,32 @@ const CourseDetails = () => {
               </button>
               <button
                 onClick={confirmDeleteAssignment}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Material Confirmation Modal */}
+      {isDeleteMatModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl w-full max-w-sm">
+            <h2 className="text-lg font-bold text-gray-800 mb-2">Confirmer la suppression</h2>
+            <p className="text-gray-600 mb-6">
+                Êtes-vous sûr de vouloir supprimer ce support de cours ? Cette action est irréversible.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setIsDeleteMatModalOpen(false)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={confirmDeleteMaterial}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
               >
                 Supprimer
