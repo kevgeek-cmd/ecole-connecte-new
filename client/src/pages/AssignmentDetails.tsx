@@ -176,13 +176,21 @@ const AssignmentDetails = () => {
                             <p className="text-sm text-green-600 mb-2">
                                 Le {new Date(mySubmission.createdAt).toLocaleDateString()}
                             </p>
-                             {mySubmission.grade ? (
-                                <div className="mt-2 pt-2 border-t border-green-200">
-                                    <p className="text-sm font-bold text-gray-700">Note: {mySubmission.grade.value}/20</p>
-                                    {mySubmission.grade.comment && <p className="text-xs text-gray-500 italic">"{mySubmission.grade.comment}"</p>}
+                            {mySubmission.grade ? (
+                                <div className="mt-4 p-4 bg-white rounded-lg border border-green-300 shadow-sm">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Award className="w-6 h-6 text-yellow-500" />
+                                        <span className="text-lg font-bold text-gray-800">Note obtenue</span>
+                                    </div>
+                                    <p className="text-3xl font-bold text-blue-600 mb-1">{mySubmission.grade.value}<span className="text-base text-gray-400">/20</span></p>
+                                    {mySubmission.grade.comment && (
+                                        <div className="mt-2 pt-2 border-t border-gray-100">
+                                            <p className="text-sm text-gray-600 italic">"{mySubmission.grade.comment}"</p>
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
-                                <p className="text-xs text-gray-500 italic">En attente de correction</p>
+                                <p className="text-xs text-gray-500 italic mt-2">En attente de correction</p>
                             )}
                         </div>
                     ) : (

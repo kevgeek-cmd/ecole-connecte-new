@@ -129,7 +129,17 @@ export const getAssignments = async (req: AuthRequest, res: Response) => {
         _count: {
           select: { submissions: true },
         },
+        submissions: {
+            where: {
+                studentId: req.user?.role === 'STUDENT' ? req.user.id : undefined
+            },
+            include: {
+                grade: true
+            },
+            take: 1
+        }
       },
+      orderBy: { dueDate: 'asc' }
     });
 
     res.json(assignments);

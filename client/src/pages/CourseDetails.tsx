@@ -21,6 +21,11 @@ interface AssignmentModel {
   _count?: {
     submissions: number;
   };
+  submissions?: {
+    grade?: {
+        value: number;
+    }
+  }[];
 }
 
 interface MaterialModel {
@@ -161,6 +166,13 @@ const CourseDetails = () => {
       try {
           setIsSubmittingMat(true);
           setMaterialError(null);
+
+          if (data.file && data.file[0] && data.file[0].size > 100 * 1024 * 1024) {
+            setMaterialError("Le fichier est trop volumineux (max 100MB).");
+            setIsSubmittingMat(false);
+            return;
+          }
+
           const formData = new FormData();
           formData.append('title', data.title);
           formData.append('type', data.type);
@@ -279,9 +291,16 @@ const CourseDetails = () => {
                                 <Link to={`/assignments/${assignment.id}`} className="block h-full">
                                 <div className="flex justify-between items-start pr-8">
                                     <h3 className="font-bold text-gray-800 group-hover:text-blue-600 transition">{assignment.title}</h3>
-                                    <span className="text-xs font-mono bg-orange-100 text-orange-800 px-2 py-1 rounded">
-                                        {new Date(assignment.dueDate).toLocaleDateString()}
-                                    </span>
+                                    <div className="flex gap-2">
+                                        {assignment.submissions?.[0]?.grade && (
+                                            <span className="text-xs font-bold bg-green-100 text-green-800 px-2 py-1 rounded">
+                                                Note: {assignment.submissions[0].grade.value}/20
+                                            </span>
+                                        )}
+                                        <span className="text-xs font-mono bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                                            {new Date(assignment.dueDate).toLocaleDateString()}
+                                        </span>
+                                    </div>
                                 </div>
                                 {assignment.description && <p className="text-sm text-gray-600 mt-2 line-clamp-2">{cleanDescription(assignment.description)}</p>}
                                 
@@ -295,7 +314,7 @@ const CourseDetails = () => {
                          {isTeacher && (
                              <button 
                                  onClick={(e) => openDeleteAssignmentModal(assignment.id, e)}
-                                 className="absolute top-2 right-2 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition z-10"
+                                 className="absolute top-2 right-2 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition z-10 opacity-0 group-hover:opacity-100"
                                  title="Supprimer le devoir"
                              >
                                  <Trash2 className="w-4 h-4" />
