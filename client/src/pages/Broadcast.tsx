@@ -32,7 +32,7 @@ const Broadcast = () => {
       console.error("Broadcast error", error);
       setStatus({ 
         type: 'error', 
-        message: error.response?.data?.message || "Une erreur est survenue lors de l'envoi." 
+        message: error.response?.data?.message || error.message || "Une erreur est survenue lors de l'envoi." 
       });
     } finally {
       setIsSubmitting(false);
