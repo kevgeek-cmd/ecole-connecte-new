@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Bell, Trash2, X } from 'lucide-react';
-import axios from 'axios';
+import api from '../utils/api';
 
 interface Notification {
   id: string;
@@ -15,16 +15,10 @@ const NotificationCenter = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   const fetchNotifications = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-      
-      const response = await axios.get(`${API_URL}/notifications`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get('/notifications');
       setNotifications(response.data);
       setUnreadCount(response.data.filter((n: Notification) => !n.read).length);
     } catch (error) {
@@ -52,10 +46,7 @@ const NotificationCenter = () => {
 
   const markAsRead = async (id: string) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.patch(`${API_URL}/notifications/${id}/read`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.patch(`/notifications/${id}/read`);
       
       // Update local state
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
@@ -68,10 +59,7 @@ const NotificationCenter = () => {
   const deleteNotification = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-        const token = localStorage.getItem('token');
-        await axios.delete(`${API_URL}/notifications/${id}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        await api.delete(`/notifications/${id}`);
         setNotifications(prev => prev.filter(n => n.id !== id));
         // Recalculate unread just in case
         const notif = notifications.find(n => n.id === id);

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import axios from 'axios';
+import api from '../utils/api';
 import { Send, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface BroadcastForm {
@@ -13,18 +13,12 @@ const Broadcast = () => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<BroadcastForm>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   const onSubmit = async (data: BroadcastForm) => {
     setIsSubmitting(true);
     setStatus(null);
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${API_URL}/notifications/broadcast`,
-        data,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.post('/notifications/broadcast', data);
       
       setStatus({ type: 'success', message: response.data.message });
       reset();
