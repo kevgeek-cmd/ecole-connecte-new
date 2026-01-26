@@ -21,7 +21,12 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? [process.env.FRONTEND_URL || 'https://ecole-connecte-new.vercel.app'] 
+    : true, // Allow all in development (or strictly localhost)
+  credentials: true
+}));
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(morgan("dev"));
 app.use(express.json());

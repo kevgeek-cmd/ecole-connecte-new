@@ -36,18 +36,32 @@ function App() {
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
               
-              {/* Admin Routes */}
-              <Route path="/schools" element={<Schools />} />
-              <Route path="/users" element={<Users />} />
-              <Route path="/classes" element={<Classes />} />
-              <Route path="/subjects" element={<Subjects />} />
-              <Route path="/academic-years" element={<AcademicYears />} />
+              {/* Super Admin Routes */}
+              <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']} />}>
+                <Route path="/schools" element={<Schools />} />
+              </Route>
 
-              {/* Academic Routes */}
-              <Route path="/courses" element={<Courses />} />
-              <Route path="/courses/:id" element={<CourseDetails />} />
-              <Route path="/assignments/:id" element={<AssignmentDetails />} />
-              <Route path="/report-cards" element={<StudentReportCards />} />
+              {/* Admin Routes (Super & School) */}
+              <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'SCHOOL_ADMIN']} />}>
+                <Route path="/users" element={<Users />} />
+                <Route path="/classes" element={<Classes />} />
+                <Route path="/subjects" element={<Subjects />} />
+                <Route path="/academic-years" element={<AcademicYears />} />
+              </Route>
+
+              {/* Academic Routes (Accessible by all authorized roles, but logic handled inside components or backend) */}
+              {/* Teachers & Students mainly, but Admins can view courses too */}
+              <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER', 'STUDENT']} />}>
+                <Route path="/courses" element={<Courses />} />
+                <Route path="/courses/:id" element={<CourseDetails />} />
+                <Route path="/assignments/:id" element={<AssignmentDetails />} />
+              </Route>
+
+              {/* Student Only */}
+              <Route element={<ProtectedRoute allowedRoles={['STUDENT']} />}>
+                 <Route path="/report-cards" element={<StudentReportCards />} />
+              </Route>
+
             </Route>
           </Route>
 
