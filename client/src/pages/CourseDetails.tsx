@@ -167,17 +167,19 @@ const CourseDetails = () => {
           setIsSubmittingMat(true);
           setMaterialError(null);
 
-          if (data.file && data.file[0] && data.file[0].size > 50 * 1024 * 1024) {
-            setMaterialError("Le fichier est trop volumineux (max 50MB).");
-            setIsSubmittingMat(false);
-            return;
+          if (data.type !== 'LINK' && data.type !== 'VIDEO') {
+            if (data.file && data.file[0] && data.file[0].size > 50 * 1024 * 1024) {
+              setMaterialError("Le fichier est trop volumineux (max 50MB).");
+              setIsSubmittingMat(false);
+              return;
+            }
           }
 
           const formData = new FormData();
           formData.append('title', data.title);
           formData.append('type', data.type);
           
-          if (data.type === 'LINK') {
+          if (data.type === 'LINK' || data.type === 'VIDEO') {
                formData.append('url', data.url);
           } else {
                if (data.file && data.file[0]) {
@@ -520,24 +522,26 @@ const CourseDetails = () => {
                 </select>
               </div>
 
-              {selectedMatType === 'LINK' ? (
+              {selectedMatType === 'LINK' || selectedMatType === 'VIDEO' ? (
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">URL / Lien</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        {selectedMatType === 'VIDEO' ? 'Lien Vidéo (YouTube, Vimeo...)' : 'URL / Lien'}
+                    </label>
                     <input
                     {...registerMat('url', { required: 'L\'URL est requise' })}
                     className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
-                    placeholder="https://..."
+                    placeholder={selectedMatType === 'VIDEO' ? 'https://www.youtube.com/watch?v=...' : 'https://...'}
                     />
                     {errorsMat.url && <span className="text-red-500 text-sm">{errorsMat.url.message as string}</span>}
                 </div>
               ) : (
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Fichier</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Fichier (PDF, Word...)</label>
                     <input
                     type="file"
                     {...registerMat('file', { required: 'Le fichier est requis' })}
                     className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
-                    accept={selectedMatType === 'VIDEO' ? "video/*" : ".pdf,.doc,.docx,.ppt,.pptx"}
+                    accept=".pdf,.doc,.docx,.ppt,.pptx"
                     />
                     {errorsMat.file && <span className="text-red-500 text-sm">{errorsMat.file.message as string}</span>}
                 </div>
