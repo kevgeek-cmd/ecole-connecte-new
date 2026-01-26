@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bell, Check, Trash2, X } from 'lucide-react';
+import { Bell, Trash2, X } from 'lucide-react';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
 
 interface Notification {
   id: string;
@@ -16,7 +15,6 @@ const NotificationCenter = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { user } = useAuth();
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   const fetchNotifications = async () => {
