@@ -27,7 +27,7 @@ export const getNotifications = async (req: AuthRequest, res: Response) => {
 
 export const markAsRead = async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const userId = req.user?.id;
 
     const notification = await prisma.notification.findFirst({
@@ -51,7 +51,7 @@ export const markAsRead = async (req: AuthRequest, res: Response) => {
 
 export const deleteNotification = async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const userId = req.user?.id;
 
     // Users can delete their own notifications
