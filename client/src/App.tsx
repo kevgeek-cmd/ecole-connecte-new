@@ -11,14 +11,25 @@ import Courses from './pages/Courses';
 import CourseDetails from './pages/CourseDetails';
 import AssignmentDetails from './pages/AssignmentDetails';
 import StudentReportCards from './pages/StudentReportCards';
+import Broadcast from './pages/Broadcast';
 import ProtectedRoute from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar';
+
+import NotificationCenter from './components/NotificationCenter';
 
 const Layout = () => (
   <div className="flex min-h-screen bg-gray-50">
     <Sidebar />
-    <div className="flex-1 ml-64 p-8">
-      <Outlet />
+    <div className="flex-1 ml-64 flex flex-col h-screen overflow-hidden">
+      {/* Top Header for Notifications */}
+      <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-end px-8 shrink-0">
+          <NotificationCenter />
+      </header>
+      
+      {/* Main Content Scrollable Area */}
+      <main className="flex-1 overflow-auto p-8">
+        <Outlet />
+      </main>
     </div>
   </div>
 );
@@ -39,6 +50,7 @@ function App() {
               {/* Super Admin Routes */}
               <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']} />}>
                 <Route path="/schools" element={<Schools />} />
+                <Route path="/broadcast" element={<Broadcast />} />
               </Route>
 
               {/* Admin Routes (Super & School) */}

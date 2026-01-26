@@ -1,6 +1,6 @@
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, User, School, BookOpen, GraduationCap, LayoutDashboard, FileText } from 'lucide-react';
+import { LogOut, User, School, BookOpen, GraduationCap, LayoutDashboard, FileText, Megaphone } from 'lucide-react';
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
@@ -38,6 +38,10 @@ const Sidebar = () => {
             <Link to="/users" className="flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition">
               <User className="w-5 h-5" />
               Utilisateurs
+            </Link>
+            <Link to="/broadcast" className="flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition">
+              <Megaphone className="w-5 h-5" />
+              Annonces
             </Link>
           </>
         )}
