@@ -6,7 +6,9 @@ import {
   createTerm,
   toggleTermStatus,
   updateAcademicYear,
-  deleteAcademicYear
+  deleteAcademicYear,
+  updateTerm,
+  deleteTerm
 } from "../controllers/academic.controller.js";
 
 const router = Router();
@@ -18,6 +20,8 @@ router.put("/years/:id", updateAcademicYear);
 router.delete("/years/:id", deleteAcademicYear);
 router.get("/years", getAcademicYears);
 router.post("/terms", createTerm);
+router.put("/terms/:id", updateTerm);
+router.delete("/terms/:id", deleteTerm);
 router.patch("/terms/:id/status", toggleTermStatus);
 
 export default router;

@@ -223,3 +223,112 @@ export const importStudents = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ message: "Erreur lors de l'import", error });
     }
 };
+
+export const transferStudent = async (req: Request, res: Response) => {
+    try {
+        const { studentId, fromClassId, toClassId } = req.body;
+        if (!studentId || !fromClassId || !toClassId) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        const enrollment = await prisma.enrollment.findFirst({
+            where: { studentId, classId: fromClassId }
+        });
+
+        if (!enrollment) {
+            return res.status(404).json({ message: "Enrollment not found in source class" });
+        }
+
+        // Check if already enrolled in target class
+        const existingTargetEnrollment = await prisma.enrollment.findFirst({
+            where: { studentId, classId: toClassId }
+        });
+
+        if (existingTargetEnrollment) {
+            // Already there, just remove old enrollment
+            await prisma.enrollment.delete({ where: { id: enrollment.id } });
+            return res.json({ message: "Student was already in target class. Removed from old class." });
+        }
+
+        await prisma.enrollment.update({
+            where: { id: enrollment.id },
+            data: { classId: toClassId }
+        });
+
+        res.json({ message: "Student transferred successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Error transferring student", error });
+    }
+};
+
+export const previewImportStudents = async (req: AuthRequest, res: Response) => {
+    try {
+         if (!req.file) {
+            return res.status(400).json({ message: "Aucun fichier fourni" });
+        }
+        if (!req.file.buffer) {
+             return res.status(400).json({ message: "File buffer is empty" });
+        }
+        
+        const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+        const sheetName = workbook.SheetNames[0];
+        if (!sheetName) throw new Error("Excel file is empty");
+        const sheet = workbook.Sheets[sheetName];
+        const data = xlsx.utils.sheet_to_json(sheet) as any[];
+
+        const previewData = [];
+
+        for (const row of data) {
+            const firstName = row['Prénom'] || row['Prenom'] || row['firstname'] || row['First Name'];
+            const lastName = row['Nom'] || row['lastname'] || row['Last Name'];
+            // Explicitly check for 'Email Ecole' or 'Email'
+            const email = row['Email'] || row['email'] || row['Email Ecole']; 
+            const password = row['Password'] || row['Mot de passe'] || row['password'];
+
+            const status = {
+                firstName,
+                lastName,
+                email,
+                password: password ? '******' : 'Manquant',
+                providedEmail: !!email,
+                providedPassword: !!password,
+                status: 'VALID',
+                reasons: [] as string[]
+            };
+
+            if (!firstName) { status.status = 'INVALID'; status.reasons.push('Prénom manquant'); }
+            if (!lastName) { status.status = 'INVALID'; status.reasons.push('Nom manquant'); }
+            if (!email) { status.status = 'INVALID'; status.reasons.push('Email manquant'); }
+            if (!password) { status.status = 'INVALID'; status.reasons.push('Mot de passe manquant'); }
+            
+            // Generate or validate email
+            let checkEmail = email;
+            if (!checkEmail && firstName && lastName) {
+                 const cleanFirstName = firstName.toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+                 const cleanLastName = lastName.toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+                 checkEmail = `${cleanFirstName}.${cleanLastName}@ecole.com`;
+                 status.email = checkEmail + " (Généré)";
+            } else if (checkEmail) {
+                 status.email = checkEmail;
+            }
+
+            if (checkEmail) {
+                const existingUser = await prisma.user.findUnique({ where: { email: checkEmail } });
+                if (existingUser) {
+                    status.status = 'EXISTS';
+                    status.reasons.push('Compte existant (sera inscrit)');
+                }
+            } else {
+                 status.status = 'INVALID'; status.reasons.push('Email manquant/impossible');
+            }
+
+            previewData.push(status);
+        }
+
+        res.json(previewData);
+
+    } catch (error) {
+        console.error("Preview error", error);
+        res.status(500).json({ message: "Error previewing import", error });
+    }
+};

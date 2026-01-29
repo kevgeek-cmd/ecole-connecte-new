@@ -59,8 +59,8 @@ const CourseDetails = () => {
 
   const [activeTab, setActiveTab] = useState<'CONTENT' | 'GRADES'>('CONTENT');
 
-  const { register: registerAssign, handleSubmit: handleSubmitAssign, reset: resetAssign, formState: { errors: errorsAssign } } = useForm();
-  const { register: registerMat, handleSubmit: handleSubmitMat, reset: resetMat, watch: watchMat, formState: { errors: errorsMat } } = useForm();
+  const { register: registerAssign, handleSubmit: handleSubmitAssign, reset: resetAssign, formState: { errors: errorsAssign } } = useForm<{ title: string; description?: string; dueDate: string; file?: FileList }>();
+  const { register: registerMat, handleSubmit: handleSubmitMat, reset: resetMat, watch: watchMat, formState: { errors: errorsMat } } = useForm<{ title: string; type: string; url: string; file?: FileList }>();
 
   const isTeacher = user?.role === 'TEACHER' || user?.role === 'SCHOOL_ADMIN';
 
@@ -115,7 +115,7 @@ const CourseDetails = () => {
       setMaterials(materialsRes.data);
       
       const coursesRes = await api.get('/courses');
-      const foundCourse = coursesRes.data.find((c: any) => c.id === id);
+      const foundCourse = coursesRes.data.find((c: CourseModel) => c.id === id);
       setCourse(foundCourse);
 
     } catch (error) {
@@ -129,7 +129,7 @@ const CourseDetails = () => {
     }
   }, [id]);
 
-  const onSubmitAssignment = async (data: any) => {
+  const onSubmitAssignment = async (data: { title: string; description?: string; dueDate: string; file?: FileList }) => {
     try {
       setIsSubmittingAssign(true);
       setAssignmentError(null);
@@ -154,15 +154,16 @@ const CourseDetails = () => {
       setIsAssignmentModalOpen(false);
       resetAssign();
       fetchCourseDetails();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating assignment', error);
-      setAssignmentError(error.response?.data?.message || "Erreur lors de la création du devoir.");
+      const err = error as { response?: { data?: { message?: string } } };
+      setAssignmentError(err.response?.data?.message || "Erreur lors de la création du devoir.");
     } finally {
       setIsSubmittingAssign(false);
     }
   };
 
-  const onSubmitMaterial = async (data: any) => {
+  const onSubmitMaterial = async (data: { title: string; type: string; url: string; file?: FileList }) => {
       try {
           setIsSubmittingMat(true);
           setMaterialError(null);
@@ -193,9 +194,10 @@ const CourseDetails = () => {
           setIsMaterialModalOpen(false);
           resetMat();
           fetchCourseDetails();
-      } catch (error: any) {
+      } catch (error) {
           console.error("Error adding material", error);
-          setMaterialError(error.response?.data?.message || "Erreur lors de l'ajout du contenu.");
+          const err = error as { response?: { data?: { message?: string } } };
+          setMaterialError(err.response?.data?.message || "Erreur lors de l'ajout du contenu.");
       } finally {
           setIsSubmittingMat(false);
       }

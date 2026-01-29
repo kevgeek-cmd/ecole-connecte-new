@@ -8,7 +8,9 @@ import {
   getClassStudents,
   deleteClass,
   importStudents,
-  updateClass
+  updateClass,
+  transferStudent,
+  previewImportStudents
 } from "../controllers/class.controller.js";
 
 const router = Router();
@@ -19,7 +21,9 @@ router.use(authenticate);
 router.post("/", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN"]), createClass);
 router.put("/:id", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN"]), updateClass);
 router.post("/enroll", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER"]), enrollStudent);
+router.post("/transfer", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN"]), transferStudent);
 router.post("/:id/students/import", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN"]), upload.single('file'), importStudents);
+router.post("/:id/students/import-preview", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN"]), upload.single('file'), previewImportStudents);
 router.delete("/:id", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN"]), deleteClass);
 
 // Teachers and Students can view classes (Students only their own, implemented in filtering logic ideally)

@@ -31,10 +31,14 @@ const AcademicYears = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [yearToDelete, setYearToDelete] = useState<string | null>(null);
   const [isEditConfirmModalOpen, setIsEditConfirmModalOpen] = useState(false);
-  const [editFormData, setEditFormData] = useState<any>(null);
+  const [editFormData, setEditFormData] = useState<{ name: string; startDate: string; endDate: string } | null>(null);
 
-  const { register: registerYear, handleSubmit: handleSubmitYear, reset: resetYear } = useForm();
-  const { register: registerTerm, handleSubmit: handleSubmitTerm, reset: resetTerm } = useForm();
+  const [editingTerm, setEditingTerm] = useState<TermModel | null>(null);
+  const [isTermDeleteModalOpen, setIsTermDeleteModalOpen] = useState(false);
+  const [termToDelete, setTermToDelete] = useState<string | null>(null);
+
+  const { register: registerYear, handleSubmit: handleSubmitYear, reset: resetYear } = useForm<{ name: string; startDate: string; endDate: string }>();
+  const { register: registerTerm, handleSubmit: handleSubmitTerm, reset: resetTerm } = useForm<{ name: string; startDate: string; endDate: string }>();
 
   const fetchYears = async () => {
     try {
@@ -49,7 +53,7 @@ const AcademicYears = () => {
     fetchYears();
   }, []);
 
-  const onSubmitYear = async (data: any) => {
+  const onSubmitYear = async (data: { name: string; startDate: string; endDate: string }) => {
     if (editingYear) {
         setEditFormData(data);
         setIsEditConfirmModalOpen(true);
@@ -119,9 +123,13 @@ const AcademicYears = () => {
       setIsYearModalOpen(true);
   }
 
-  const onSubmitTerm = async (data: any) => {
+  const onSubmitTerm = async (data: { name: string; startDate: string; endDate: string }) => {
     try {
-      await api.post('/academic/terms', { ...data, academicYearId: selectedYearId });
+      if (editingTerm) {
+        await api.put(`/academic/terms/${editingTerm.id}`, data);
+      } else {
+        await api.post('/academic/terms', { ...data, academicYearId: selectedYearId });
+      }
       setIsTermModalOpen(false);
       resetTerm();
       fetchYears();
@@ -142,6 +150,34 @@ const AcademicYears = () => {
           setExpandedYearId(yearId);
       }
   }
+
+  const handleEditTermClick = (term: TermModel) => {
+    setEditingTerm(term);
+    resetTerm({
+        name: term.name,
+        startDate: new Date(term.startDate).toISOString().split('T')[0],
+        endDate: new Date(term.endDate).toISOString().split('T')[0]
+    });
+    setIsTermModalOpen(true);
+  };
+
+  const handleDeleteTermClick = (id: string) => {
+    setTermToDelete(id);
+    setIsTermDeleteModalOpen(true);
+  };
+
+  const confirmDeleteTerm = async () => {
+      if (!termToDelete) return;
+      try {
+          await api.delete(`/academic/terms/${termToDelete}`);
+          fetchYears();
+      } catch (error) {
+          console.error('Error deleting term', error);
+      } finally {
+          setIsTermDeleteModalOpen(false);
+          setTermToDelete(null);
+      }
+  };
 
   const handleToggleStatus = async (termId: string, currentStatus: string) => {
     try {
@@ -226,7 +262,25 @@ const AcademicYears = () => {
                             {year.terms.map(term => (
                                 <div key={term.id} className="bg-white p-4 rounded border border-gray-200">
                                     <div className="flex justify-between items-start">
-                                        <span className="font-bold">{term.name}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-bold">{term.name}</span>
+                                            <div className="flex gap-1">
+                                                <button 
+                                                    onClick={() => handleEditTermClick(term)}
+                                                    className="text-yellow-600 hover:bg-yellow-50 p-1 rounded"
+                                                    title="Modifier"
+                                                >
+                                                    <Edit className="w-3 h-3" />
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleDeleteTermClick(term.id)}
+                                                    className="text-red-600 hover:bg-red-50 p-1 rounded"
+                                                    title="Supprimer"
+                                                >
+                                                    <Trash2 className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        </div>
                                         <button
                                             onClick={() => handleToggleStatus(term.id, term.status)}
                                             className={`text-xs px-2 py-1 rounded border transition-colors ${
@@ -348,13 +402,23 @@ const AcademicYears = () => {
                   type="submit"
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
                 >
-                  Créer
+                  {editingTerm ? 'Sauvegarder' : 'Créer'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={isTermDeleteModalOpen}
+        onClose={() => setIsTermDeleteModalOpen(false)}
+        onConfirm={confirmDeleteTerm}
+        title="Supprimer la période"
+        message="Êtes-vous sûr de vouloir supprimer cette période ?"
+        confirmText="Supprimer"
+        isDanger={true}
+      />
 
       <ConfirmModal
         isOpen={isDeleteModalOpen}

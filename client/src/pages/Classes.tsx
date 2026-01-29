@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../utils/api';
 import { useForm } from 'react-hook-form';
-import { Plus, Trash2, School, GraduationCap, Users, X, Upload, Edit } from 'lucide-react';
+import { Plus, Trash2, School, GraduationCap, Users, X, Upload, Edit, Key, ArrowRightLeft, AlertCircle, CheckCircle } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 
 interface ClassModel {
@@ -39,7 +39,15 @@ const Classes = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [classToDelete, setClassToDelete] = useState<string | null>(null);
   const [isEditConfirmModalOpen, setIsEditConfirmModalOpen] = useState(false);
-  const [editFormData, setEditFormData] = useState<any>(null);
+  const [editFormData, setEditFormData] = useState<{name: string, level: string} | null>(null);
+
+  const [studentToReset, setStudentToReset] = useState<Student | null>(null);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+
+  const [studentToTransfer, setStudentToTransfer] = useState<Student | null>(null);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [targetClassId, setTargetClassId] = useState('');
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
@@ -56,7 +64,7 @@ const Classes = () => {
     fetchClasses();
   }, []);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: { name: string; level: string }) => {
     if (editingClass) {
         setEditFormData(data);
         setIsEditConfirmModalOpen(true);
@@ -201,6 +209,55 @@ const Classes = () => {
         setIsImporting(false);
     }
   };
+
+  const handleResetPasswordClick = (student: Student) => {
+      setStudentToReset(student);
+      setNewPassword('');
+      setIsPasswordModalOpen(true);
+  }
+
+  const confirmResetPassword = async () => {
+      if (!studentToReset || !newPassword) return;
+      try {
+          await api.put(`/users/${studentToReset.id}`, { password: newPassword });
+          alert("Mot de passe mis à jour avec succès");
+          setIsPasswordModalOpen(false);
+          setStudentToReset(null);
+      } catch (error) {
+          console.error("Error resetting password", error);
+          alert("Erreur lors de la réinitialisation du mot de passe");
+      }
+  }
+
+  const handleTransferClick = (student: Student) => {
+      setStudentToTransfer(student);
+      setTargetClassId('');
+      setIsTransferModalOpen(true);
+  }
+
+  const confirmTransfer = async () => {
+      if (!studentToTransfer || !targetClassId) return;
+      try {
+          await api.post('/classes/transfer', {
+              studentId: studentToTransfer.id,
+              targetClassId
+          });
+          
+          // Refresh list
+          const response = await api.get(`/classes/${selectedClassId}/students`);
+          setSelectedClassStudents(response.data);
+          
+          // Refresh classes counts
+          fetchClasses();
+
+          setIsTransferModalOpen(false);
+          setStudentToTransfer(null);
+          alert("Élève transféré avec succès");
+      } catch (error) {
+          console.error("Error transferring student", error);
+          alert("Erreur lors du transfert");
+      }
+  }
 
   return (
     <div className="p-6">
@@ -355,42 +412,113 @@ const Classes = () => {
                             </button>
                         </div>
                     ) : isImportingMode ? (
-                        <div className="bg-green-50 p-4 rounded-lg space-y-3">
-                            <h3 className="font-medium text-green-800 flex items-center gap-2">
-                                <Upload className="w-4 h-4" />
-                                Importer des élèves (Excel)
-                            </h3>
-                            <div className="space-y-2">
-                                <label className="block text-sm text-green-700">
-                                    Sélectionnez un fichier .xlsx ou .xls contenant les colonnes "Nom" et "Prénom"
-                                </label>
-                                <input 
-                                    type="file" 
-                                    accept=".xlsx, .xls, .csv" 
-                                    onChange={handleFileSelect}
-                                    className="w-full p-2 bg-white border border-green-200 rounded text-sm"
-                                />
-                            </div>
-                            <div className="flex justify-end gap-2">
-                                <button
-                                    onClick={() => {
-                                        setIsImportingMode(false);
-                                        setSelectedFile(null);
-                                    }}
-                                    className="px-3 py-1 text-green-700 text-sm hover:underline"
-                                >
-                                    Annuler
-                                </button>
-                                <button
-                                    onClick={handleImportSubmit}
-                                    disabled={!selectedFile || isImporting}
-                                    className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
-                                >
-                                    {isImporting && <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>}
-                                    Valider l'import
-                                </button>
-                            </div>
-                        </div>
+                        <>
+                                    <div className="flex justify-between items-center mb-6">
+                                        <div className="space-y-2">
+                                            <h3 className="font-medium text-green-800 flex items-center gap-2">
+                                                <Upload className="w-4 h-4" />
+                                                Importer des élèves (Excel)
+                                            </h3>
+                                            <div className="text-xs text-green-700">
+                                                <p>Format attendu (colonnes) :</p>
+                                                <ul className="list-disc pl-4 mt-1">
+                                                    <li>Nom (obligatoire)</li>
+                                                    <li>Prénom (obligatoire)</li>
+                                                    <li>Email ou Email Ecole (obligatoire)</li>
+                                                    <li>Mot de passe (obligatoire)</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {!importPreviewData.length ? (
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <label className="block text-sm text-green-700 font-medium">
+                                                    Fichier Excel (.xlsx, .xls)
+                                                </label>
+                                                <input 
+                                                    type="file" 
+                                                    accept=".xlsx, .xls, .csv" 
+                                                    onChange={handleFileSelect}
+                                                    className="w-full p-2 bg-white border border-green-200 rounded text-sm"
+                                                />
+                                            </div>
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        setIsImportingMode(false);
+                                                        setSelectedFile(null);
+                                                        setImportPreviewData([]);
+                                                    }}
+                                                    className="px-3 py-2 text-green-700 text-sm hover:underline"
+                                                >
+                                                    Annuler
+                                                </button>
+                                                <button
+                                                    onClick={handlePreviewImport}
+                                                    disabled={!selectedFile || isPreviewingImport}
+                                                    className="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+                                                >
+                                                    {isPreviewingImport && <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>}
+                                                    Prévisualiser
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <div className="max-h-60 overflow-y-auto border rounded bg-white text-sm">
+                                                <table className="w-full text-left border-collapse">
+                                                    <thead className="bg-gray-50 sticky top-0">
+                                                        <tr>
+                                                            <th className="p-2 border-b">Statut</th>
+                                                            <th className="p-2 border-b">Nom Prénom</th>
+                                                            <th className="p-2 border-b">Email</th>
+                                                            <th className="p-2 border-b">MDP</th>
+                                                            <th className="p-2 border-b">Info</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {importPreviewData.map((row, idx) => (
+                                                            <tr key={idx} className={row.status === 'INVALID' ? 'bg-red-50' : row.status === 'EXISTS' ? 'bg-yellow-50' : ''}>
+                                                                <td className="p-2 border-b">
+                                                                    {row.status === 'VALID' && <CheckCircle className="w-4 h-4 text-green-600" />}
+                                                                    {row.status === 'INVALID' && <AlertCircle className="w-4 h-4 text-red-600" />}
+                                                                    {row.status === 'EXISTS' && <AlertCircle className="w-4 h-4 text-yellow-600" />}
+                                                                </td>
+                                                                <td className="p-2 border-b">{row.firstName} {row.lastName}</td>
+                                                                <td className="p-2 border-b text-xs">{row.email}</td>
+                                                                <td className="p-2 border-b text-xs font-mono">{row.password}</td>
+                                                                <td className="p-2 border-b text-xs text-gray-500">
+                                                                    {row.reasons.join(', ')}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        setImportPreviewData([]);
+                                                        setSelectedFile(null);
+                                                    }}
+                                                    className="px-3 py-2 text-gray-600 text-sm hover:underline"
+                                                >
+                                                    Retour
+                                                </button>
+                                                <button
+                                                    onClick={handleImportSubmit}
+                                                    disabled={isImporting || importPreviewData.every(r => r.status === 'INVALID')}
+                                                    className="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+                                                >
+                                                    {isImporting && <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>}
+                                                    Confirmer l'import ({importPreviewData.filter(r => r.status !== 'INVALID').length})
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                    </>
                     ) : (
                         <div className="bg-gray-50 p-4 rounded-lg space-y-3">
                             <label className="block text-sm font-medium text-gray-700">Sélectionner un élève</label>
@@ -436,6 +564,22 @@ const Classes = () => {
                                         <p className="font-medium">{student.firstName} {student.lastName}</p>
                                         <p className="text-xs text-gray-500">{student.email}</p>
                                     </div>
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={() => handleResetPasswordClick(student)}
+                                            className="p-1 text-gray-600 hover:bg-gray-200 rounded"
+                                            title="Réinitialiser le mot de passe"
+                                        >
+                                            <Key className="w-4 h-4" />
+                                        </button>
+                                        <button 
+                                            onClick={() => handleTransferClick(student)}
+                                            className="p-1 text-blue-600 hover:bg-blue-100 rounded"
+                                            title="Transférer vers une autre classe"
+                                        >
+                                            <ArrowRightLeft className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -466,6 +610,76 @@ const Classes = () => {
         confirmText="Sauvegarder"
         isDanger={false}
       />
+
+      {/* Password Reset Modal */}
+      {isPasswordModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+              <div className="bg-white p-6 rounded-xl w-full max-w-sm">
+                  <h3 className="font-bold text-lg mb-4">Réinitialiser le mot de passe</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                      Nouvel mot de passe pour {studentToReset?.firstName} {studentToReset?.lastName}
+                  </p>
+                  <input
+                      type="text"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Nouveau mot de passe"
+                      className="w-full p-2 border rounded mb-4"
+                  />
+                  <div className="flex justify-end gap-2">
+                      <button 
+                          onClick={() => setIsPasswordModalOpen(false)}
+                          className="px-3 py-1 text-gray-600 hover:bg-gray-100 rounded"
+                      >
+                          Annuler
+                      </button>
+                      <button 
+                          onClick={confirmResetPassword}
+                          className="px-3 py-1 bg-orange-600 text-white rounded hover:bg-orange-700"
+                      >
+                          Confirmer
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
+
+      {/* Transfer Modal */}
+      {isTransferModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+              <div className="bg-white p-6 rounded-xl w-full max-w-sm">
+                  <h3 className="font-bold text-lg mb-4">Transférer l'élève</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                      Déplacer {studentToTransfer?.firstName} {studentToTransfer?.lastName} vers :
+                  </p>
+                  <select
+                      value={targetClassId}
+                      onChange={(e) => setTargetClassId(e.target.value)}
+                      className="w-full p-2 border rounded mb-4"
+                  >
+                      <option value="">Sélectionner une classe</option>
+                      {classes.filter(c => c.id !== selectedClassId).map(cls => (
+                          <option key={cls.id} value={cls.id}>{cls.name}</option>
+                      ))}
+                  </select>
+                  <div className="flex justify-end gap-2">
+                      <button 
+                          onClick={() => setIsTransferModalOpen(false)}
+                          className="px-3 py-1 text-gray-600 hover:bg-gray-100 rounded"
+                      >
+                          Annuler
+                      </button>
+                      <button 
+                          onClick={confirmTransfer}
+                          disabled={!targetClassId}
+                          className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                      >
+                          Transférer
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
   );
 };
