@@ -49,7 +49,10 @@ const Classes = () => {
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [targetClassId, setTargetClassId] = useState('');
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const [importPreviewData, setImportPreviewData] = useState<any[]>([]);
+  const [isPreviewingImport, setIsPreviewingImport] = useState(false);
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<{ name: string; level: string }>();
 
   const fetchClasses = async () => {
     try {
@@ -171,6 +174,26 @@ const Classes = () => {
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
         setSelectedFile(event.target.files[0]);
+    }
+  };
+
+  const handlePreviewImport = async () => {
+    if (!selectedFile || !selectedClassId) return;
+    
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    
+    try {
+        setIsPreviewingImport(true);
+        const response = await api.post(`/classes/${selectedClassId}/students/import-preview`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        setImportPreviewData(response.data);
+    } catch (error) {
+        console.error('Error previewing import', error);
+        alert("Erreur lors de la prévisualisation. Vérifiez le format du fichier.");
+    } finally {
+        setIsPreviewingImport(false);
     }
   };
 
@@ -479,7 +502,7 @@ const Classes = () => {
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {importPreviewData.map((row, idx) => (
+                                                        {importPreviewData.map((row: any, idx: number) => (
                                                             <tr key={idx} className={row.status === 'INVALID' ? 'bg-red-50' : row.status === 'EXISTS' ? 'bg-yellow-50' : ''}>
                                                                 <td className="p-2 border-b">
                                                                     {row.status === 'VALID' && <CheckCircle className="w-4 h-4 text-green-600" />}
@@ -490,7 +513,7 @@ const Classes = () => {
                                                                 <td className="p-2 border-b text-xs">{row.email}</td>
                                                                 <td className="p-2 border-b text-xs font-mono">{row.password}</td>
                                                                 <td className="p-2 border-b text-xs text-gray-500">
-                                                                    {row.reasons.join(', ')}
+                                                                    {row.reasons && row.reasons.join(', ')}
                                                                 </td>
                                                             </tr>
                                                         ))}
@@ -509,11 +532,11 @@ const Classes = () => {
                                                 </button>
                                                 <button
                                                     onClick={handleImportSubmit}
-                                                    disabled={isImporting || importPreviewData.every(r => r.status === 'INVALID')}
+                                                    disabled={isImporting || importPreviewData.every((r: any) => r.status === 'INVALID')}
                                                     className="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
                                                 >
                                                     {isImporting && <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>}
-                                                    Confirmer l'import ({importPreviewData.filter(r => r.status !== 'INVALID').length})
+                                                    Confirmer l'import ({importPreviewData.filter((r: any) => r.status !== 'INVALID').length})
                                                 </button>
                                             </div>
                                         </div>
