@@ -24,6 +24,74 @@ async function main() {
     });
     console.log('Created Super Admin:', superAdmin.email);
   }
+
+  // 2. Create School
+  const schoolName = 'École Connectée Test';
+  let school = await prisma.school.findFirst({ where: { name: schoolName } });
+
+  if (!school) {
+    school = await prisma.school.create({
+      data: {
+        name: schoolName,
+        address: '123 Rue de l\'École',
+      },
+    });
+    console.log('Created School:', school.name);
+  }
+
+  // 3. Create School Admin
+  const schoolAdminEmail = 'admin@ecole.com';
+  let schoolAdmin = await prisma.user.findUnique({ where: { email: schoolAdminEmail } });
+
+  if (!schoolAdmin) {
+    schoolAdmin = await prisma.user.create({
+      data: {
+        email: schoolAdminEmail,
+        password: hashedPassword,
+        firstName: 'Directeur',
+        lastName: 'Ecole',
+        role: 'SCHOOL_ADMIN',
+        schoolId: school.id,
+      },
+    });
+    console.log('Created School Admin:', schoolAdmin.email);
+  }
+
+  // 4. Create Teacher
+  const teacherEmail = 'prof@ecole.com';
+  let teacher = await prisma.user.findUnique({ where: { email: teacherEmail } });
+
+  if (!teacher) {
+    teacher = await prisma.user.create({
+      data: {
+        email: teacherEmail,
+        password: hashedPassword,
+        firstName: 'Jean',
+        lastName: 'Professeur',
+        role: 'TEACHER',
+        schoolId: school.id,
+      },
+    });
+    console.log('Created Teacher:', teacher.email);
+  }
+
+  // 5. Create Student
+  const studentEmail = 'eleve@ecole.com';
+  let student = await prisma.user.findUnique({ where: { email: studentEmail } });
+
+  if (!student) {
+    student = await prisma.user.create({
+      data: {
+        email: studentEmail,
+        password: hashedPassword,
+        firstName: 'Paul',
+        lastName: 'Etudiant',
+        role: 'STUDENT',
+        schoolId: school.id,
+      },
+    });
+    console.log('Created Student:', student.email);
+  }
 }
 
 main()
