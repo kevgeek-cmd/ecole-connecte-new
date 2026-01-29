@@ -63,7 +63,7 @@ const Dashboard = () => {
           </>
         )}
 
-        {user.role === 'SCHOOL_ADMIN' && (
+        {(user.role === 'SCHOOL_ADMIN' || user.role === 'IT_ADMIN') && (
           <>
             <div className="bg-white p-6 rounded-lg shadow border-l-4 border-purple-500">
               <h3 className="text-lg font-semibold text-gray-700">Classes</h3>

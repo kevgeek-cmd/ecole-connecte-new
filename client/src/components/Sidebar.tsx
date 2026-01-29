@@ -46,7 +46,7 @@ const Sidebar = () => {
           </>
         )}
 
-        {user.role === 'SCHOOL_ADMIN' && (
+        {(user.role === 'SCHOOL_ADMIN' || user.role === 'IT_ADMIN') && (
           <>
             <Link to="/classes" className="flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition">
               <School className="w-5 h-5" />

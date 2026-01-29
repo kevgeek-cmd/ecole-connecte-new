@@ -20,6 +20,7 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
         break;
 
       case "SCHOOL_ADMIN":
+      case "IT_ADMIN":
         if (!user.schoolId) break;
         const classesCount = await prisma.class.count({
           where: { schoolId: user.schoolId },

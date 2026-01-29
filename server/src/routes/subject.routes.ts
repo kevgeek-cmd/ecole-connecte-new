@@ -6,9 +6,9 @@ const router = Router();
 
 router.use(authenticate);
 
-router.post("/", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN"]), createSubject);
-router.put("/:id", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN"]), updateSubject);
-router.delete("/:id", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN"]), deleteSubject);
+router.post("/", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "IT_ADMIN"]), createSubject);
+router.put("/:id", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "IT_ADMIN"]), updateSubject);
+router.delete("/:id", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "IT_ADMIN"]), deleteSubject);
 router.get("/", getSubjects);
 
 export default router;

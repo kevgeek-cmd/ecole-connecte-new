@@ -9,13 +9,25 @@ const createUserSchema = z.object({
   password: z.string().min(6),
   firstName: z.string(),
   lastName: z.string(),
-  role: z.enum(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER", "STUDENT"]),
+  role: z.enum(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER", "STUDENT", "IT_ADMIN"]),
   schoolId: z.string().optional(),
 });
 
-export const createUser = async (req: Request, res: Response) => {
+export const createUser = async (req: AuthRequest, res: Response) => {
   try {
     const { email, password, firstName, lastName, role, schoolId } = createUserSchema.parse(req.body);
+    const currentUser = req.user;
+
+    // RBAC for creation
+    if (currentUser?.role === 'IT_ADMIN') {
+        if (role !== 'TEACHER' && role !== 'STUDENT') {
+            return res.status(403).json({ message: "IT Admin can only create Teachers and Students." });
+        }
+        // Force schoolId to be same as IT Admin
+        if (currentUser.schoolId && schoolId && schoolId !== currentUser.schoolId) {
+             return res.status(403).json({ message: "Cannot create user for another school." });
+        }
+    }
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -24,6 +36,11 @@ export const createUser = async (req: Request, res: Response) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // If IT_ADMIN or SCHOOL_ADMIN, ensure created user is in their school
+    const targetSchoolId = (currentUser?.role === 'SCHOOL_ADMIN' || currentUser?.role === 'IT_ADMIN') 
+        ? currentUser.schoolId 
+        : (schoolId || null);
+
     const user = await prisma.user.create({
       data: {
         email,
@@ -31,7 +48,7 @@ export const createUser = async (req: Request, res: Response) => {
         firstName,
         lastName,
         role,
-        schoolId: schoolId || null,
+        schoolId: targetSchoolId,
       },
     });
 
@@ -54,14 +71,14 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
     if (schoolId) whereClause.schoolId = schoolId;
 
     // RBAC: Strict filtering based on current user role
-    if (currentUser?.role === 'SCHOOL_ADMIN') {
-        // School Admin can ONLY see users from their own school
+    if (currentUser?.role === 'SCHOOL_ADMIN' || currentUser?.role === 'IT_ADMIN') {
+        // School Admin and IT Admin can ONLY see users from their own school
         if (!currentUser.schoolId) {
             return res.status(400).json({ message: "Admin has no school assigned" });
         }
         whereClause.schoolId = currentUser.schoolId;
         
-        // Exclude SUPER_ADMIN (just in case)
+        // Exclude SUPER_ADMIN
         whereClause.role = { not: 'SUPER_ADMIN' };
     } else if (currentUser?.role === 'SUPER_ADMIN') {
         // Super Admin can see everyone
@@ -101,12 +118,40 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const updateUser = async (req: Request, res: Response) => {
+export const updateUser = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { email, firstName, lastName, role, schoolId, password } = req.body; // Allow partial updates without password
+    const currentUser = req.user;
 
+    if (!currentUser) return res.status(401).json({ message: "Unauthorized" });
     if (!id) return res.status(400).json({ message: "Missing id" });
+
+    const targetUser = await prisma.user.findUnique({ where: { id } });
+    if (!targetUser) return res.status(404).json({ message: "Utilisateur non trouvé" });
+
+    // RBAC Security Checks
+    if (currentUser.role === 'IT_ADMIN') {
+        // Can only edit TEACHER, STUDENT, or SELF
+        if (targetUser.role !== 'TEACHER' && targetUser.role !== 'STUDENT' && targetUser.id !== currentUser.id) {
+             return res.status(403).json({ message: "L'informaticien ne peut modifier que les enseignants, les élèves ou son propre profil." });
+        }
+        
+        // Cannot change role to/from ADMINs
+        if (role) {
+             if (role === 'SUPER_ADMIN' || role === 'SCHOOL_ADMIN') {
+                 return res.status(403).json({ message: "Action non autorisée sur les rôles administrateurs." });
+             }
+             if (targetUser.id === currentUser.id && role !== 'IT_ADMIN') {
+                  return res.status(403).json({ message: "Vous ne pouvez pas changer votre propre rôle." });
+             }
+        }
+        
+        // Cannot change schoolId to another school
+        if (schoolId && schoolId !== currentUser.schoolId) {
+             return res.status(403).json({ message: "Action non autorisée sur l'école." });
+        }
+    }
 
     // Optional: Validate data if needed, or use Zod with .partial()
     
@@ -133,17 +178,51 @@ export const updateUser = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteUser = async (req: Request, res: Response) => {
+export const deleteUser = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+    const currentUser = req.user;
+
+    if (!currentUser) return res.status(401).json({ message: "Unauthorized" });
     if (!id) return res.status(400).json({ message: "Missing id" });
+
+    // 1. Prevent self-deletion
+    if (currentUser.id === id) {
+        return res.status(403).json({ message: "Vous ne pouvez pas supprimer votre propre compte." });
+    }
+
+    const targetUser = await prisma.user.findUnique({ where: { id } });
+    if (!targetUser) return res.status(404).json({ message: "Utilisateur non trouvé" });
+
+    // 2. RBAC Specific Logic
+    if (currentUser.role === 'IT_ADMIN') {
+        // IT_ADMIN can only delete TEACHER and STUDENT
+        if (targetUser.role !== 'TEACHER' && targetUser.role !== 'STUDENT') {
+            return res.status(403).json({ message: "L'informaticien ne peut supprimer que des enseignants et des élèves." });
+        }
+        // Must be in same school
+        if (targetUser.schoolId !== currentUser.schoolId) {
+             return res.status(403).json({ message: "Impossible de supprimer un utilisateur d'une autre école." });
+        }
+    } 
+    
+    if (currentUser.role === 'SCHOOL_ADMIN') {
+         // SCHOOL_ADMIN cannot delete SUPER_ADMIN
+         if (targetUser.role === 'SUPER_ADMIN') {
+             return res.status(403).json({ message: "Impossible de supprimer le Super Admin." });
+         }
+         // Ensure same school (unless target is SUPER_ADMIN which is already handled, or unassigned)
+         if (targetUser.schoolId && targetUser.schoolId !== currentUser.schoolId) {
+             return res.status(403).json({ message: "Impossible de supprimer un utilisateur d'une autre école." });
+         }
+    }
 
     await prisma.user.delete({
       where: { id: String(id) },
     });
-    res.status(200).json({ message: "User deleted successfully" });
+    res.status(200).json({ message: "Utilisateur supprimé avec succès" });
   } catch (error) {
-    res.status(500).json({ message: "Error deleting user", error });
+    res.status(500).json({ message: "Erreur lors de la suppression", error });
   }
 };
 

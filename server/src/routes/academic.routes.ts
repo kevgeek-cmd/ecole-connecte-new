@@ -13,7 +13,7 @@ import {
 
 const router = Router();
 
-router.use(authenticate, authorize(["SUPER_ADMIN", "SCHOOL_ADMIN"]));
+router.use(authenticate, authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "IT_ADMIN"]));
 
 router.post("/years", createAcademicYear);
 router.put("/years/:id", updateAcademicYear);

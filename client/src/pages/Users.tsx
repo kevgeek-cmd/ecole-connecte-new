@@ -56,7 +56,7 @@ const Users = () => {
     const studentsNoClass: User[] = [];
 
     users.forEach(u => {
-      if (u.role === 'SUPER_ADMIN' || u.role === 'SCHOOL_ADMIN') {
+      if (u.role === 'SUPER_ADMIN' || u.role === 'SCHOOL_ADMIN' || u.role === 'IT_ADMIN') {
         admins.push(u);
       } else if (u.role === 'TEACHER') {
         teachers.push(u);
@@ -299,6 +299,7 @@ const Users = () => {
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                       ${u.role === 'SUPER_ADMIN' ? 'bg-red-100 text-red-800' : 
                         u.role === 'SCHOOL_ADMIN' ? 'bg-purple-100 text-purple-800' :
+                        u.role === 'IT_ADMIN' ? 'bg-indigo-100 text-indigo-800' :
                         u.role === 'TEACHER' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
                       {u.role}
                     </span>
@@ -311,20 +312,29 @@ const Users = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex items-center gap-2">
-                          <button 
-                              onClick={() => handleEditClick(u)}
-                              className="p-1 text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded transition"
-                              title="Modifier"
-                          >
-                              <Edit className="w-4 h-4" />
-                          </button>
-                          <button 
-                              onClick={() => handleDeleteClick(u.id)}
-                              className="p-1 text-red-600 bg-red-50 hover:bg-red-100 rounded transition"
-                              title="Supprimer"
-                          >
-                              <Trash2 className="w-4 h-4" />
-                          </button>
+                          {(currentUser?.role === 'SUPER_ADMIN' || 
+                            (currentUser?.role === 'SCHOOL_ADMIN' && u.role !== 'SUPER_ADMIN') ||
+                            (currentUser?.role === 'IT_ADMIN' && (u.role === 'TEACHER' || u.role === 'STUDENT' || u.id === currentUser?.id))) && (
+                            <button 
+                                onClick={() => handleEditClick(u)}
+                                className="p-1 text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded transition"
+                                title="Modifier"
+                            >
+                                <Edit className="w-4 h-4" />
+                            </button>
+                          )}
+                          
+                          {(currentUser?.role === 'SUPER_ADMIN' || 
+                            (currentUser?.role === 'SCHOOL_ADMIN' && u.role !== 'SUPER_ADMIN') ||
+                            (currentUser?.role === 'IT_ADMIN' && (u.role === 'TEACHER' || u.role === 'STUDENT'))) && (
+                            <button 
+                                onClick={() => handleDeleteClick(u.id)}
+                                className="p-1 text-red-600 bg-red-50 hover:bg-red-100 rounded transition"
+                                title="Supprimer"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                       </div>
                   </td>
                 </tr>
@@ -386,6 +396,9 @@ const Users = () => {
                 <select {...register('role', { required: true })} className="w-full p-2 border border-gray-300 rounded mt-1 text-black">
                     <option value="STUDENT">Élève</option>
                     <option value="TEACHER">Enseignant</option>
+                    {(currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'SCHOOL_ADMIN') && (
+                        <option value="IT_ADMIN">Informaticien</option>
+                    )}
                     {currentUser?.role === 'SUPER_ADMIN' && (
                         <>
                             <option value="SCHOOL_ADMIN">Administrateur École</option>

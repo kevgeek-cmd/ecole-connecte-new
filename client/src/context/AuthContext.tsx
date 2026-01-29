@@ -4,7 +4,7 @@ import axios from 'axios';
 interface User {
   id: string;
   email: string;
-  role: 'SUPER_ADMIN' | 'SCHOOL_ADMIN' | 'TEACHER' | 'STUDENT';
+  role: 'SUPER_ADMIN' | 'SCHOOL_ADMIN' | 'TEACHER' | 'STUDENT' | 'IT_ADMIN';
   firstName: string;
   lastName: string;
   schoolId?: string;

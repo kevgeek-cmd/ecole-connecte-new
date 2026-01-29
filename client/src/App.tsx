@@ -54,7 +54,7 @@ function App() {
               </Route>
 
               {/* Admin Routes (Super & School) */}
-              <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'SCHOOL_ADMIN']} />}>
+              <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'SCHOOL_ADMIN', 'IT_ADMIN']} />}>
                 <Route path="/users" element={<Users />} />
                 <Route path="/classes" element={<Classes />} />
                 <Route path="/subjects" element={<Subjects />} />
@@ -63,7 +63,7 @@ function App() {
 
               {/* Academic Routes (Accessible by all authorized roles, but logic handled inside components or backend) */}
               {/* Teachers & Students mainly, but Admins can view courses too */}
-              <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER', 'STUDENT']} />}>
+              <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER', 'STUDENT', 'IT_ADMIN']} />}>
                 <Route path="/courses" element={<Courses />} />
                 <Route path="/courses/:id" element={<CourseDetails />} />
                 <Route path="/assignments/:id" element={<AssignmentDetails />} />

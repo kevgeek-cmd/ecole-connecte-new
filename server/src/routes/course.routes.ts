@@ -14,13 +14,13 @@ const router = Router();
 
 router.use(authenticate);
 
-router.post("/", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER"]), createCourse);
+router.post("/", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER", "IT_ADMIN"]), createCourse);
 router.get("/", getCourses);
-router.delete("/:id", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER"]), deleteCourse);
+router.delete("/:id", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER", "IT_ADMIN"]), deleteCourse);
 
 // Material routes nested under course
-router.post("/:id/materials", authorize(["TEACHER", "SCHOOL_ADMIN"]), upload.single('file'), addMaterial);
+router.post("/:id/materials", authorize(["TEACHER", "SCHOOL_ADMIN", "IT_ADMIN"]), upload.single('file'), addMaterial);
 router.get("/:id/materials", getMaterials);
-router.delete("/materials/:id", authorize(["TEACHER", "SCHOOL_ADMIN"]), deleteMaterial);
+router.delete("/materials/:id", authorize(["TEACHER", "SCHOOL_ADMIN", "IT_ADMIN"]), deleteMaterial);
 
 export default router;
