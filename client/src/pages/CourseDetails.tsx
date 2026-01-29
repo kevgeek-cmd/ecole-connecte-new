@@ -222,18 +222,18 @@ const CourseDetails = () => {
     return desc.replace(/\[Télécharger le fichier joint\]\(.*?\)/, '').trim();
   };
 
-  if (!course) return <div className="p-6">Chargement...</div>;
+  if (!course) return <div className="p-6 text-gray-800 dark:text-gray-200">Chargement...</div>;
 
   return (
     <div className="p-6">
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6">
         <div className="flex justify-between items-start mb-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                <Book className="w-8 h-8 text-blue-600" />
+                <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                <Book className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                 {course.subject?.name}
                 </h1>
-                <p className="text-gray-500 mt-1">Classe: {course.class?.name} • Prof: {course.teacher?.firstName} {course.teacher?.lastName}</p>
+                <p className="text-gray-500 dark:text-gray-400 mt-1">Classe: {course.class?.name} • Prof: {course.teacher?.firstName} {course.teacher?.lastName}</p>
             </div>
             {isTeacher && activeTab === 'CONTENT' && (
                     <div className="flex gap-2">
@@ -246,7 +246,7 @@ const CourseDetails = () => {
                         </button>
                         <button
                             onClick={() => setIsAssignmentModalOpen(true)}
-                            className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-50 transition shadow-sm"
+                            className="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-600 transition shadow-sm"
                         >
                             <Upload className="w-4 h-4" />
                             Ajouter un devoir
@@ -256,28 +256,28 @@ const CourseDetails = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200">
+        <div className="flex border-b border-gray-200 dark:border-gray-700">
             <button
-                className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'CONTENT' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'CONTENT' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                 onClick={() => setActiveTab('CONTENT')}
             >
                 Contenu du cours
-                {activeTab === 'CONTENT' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600"></div>}
+                {activeTab === 'CONTENT' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 dark:bg-blue-400"></div>}
             </button>
             <button
-                className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'QUIZZES' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'QUIZZES' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                 onClick={() => setActiveTab('QUIZZES')}
             >
                 QCM & Quiz
-                {activeTab === 'QUIZZES' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600"></div>}
+                {activeTab === 'QUIZZES' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 dark:bg-blue-400"></div>}
             </button>
             {isTeacher && (
                 <button
-                    className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'GRADES' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'GRADES' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                     onClick={() => setActiveTab('GRADES')}
                 >
                     Notes & Évaluations
-                    {activeTab === 'GRADES' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600"></div>}
+                    {activeTab === 'GRADES' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 dark:bg-blue-400"></div>}
                 </button>
             )}
         </div>
@@ -286,32 +286,32 @@ const CourseDetails = () => {
       {activeTab === 'CONTENT' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
                     <FileText className="w-5 h-5" />
                     Devoirs à rendre
                 </h2>
                 <div className="space-y-4">
-                    {assignments.length === 0 && <p className="text-gray-500 italic">Aucun devoir.</p>}
+                    {assignments.length === 0 && <p className="text-gray-500 dark:text-gray-400 italic">Aucun devoir.</p>}
                     {assignments.map(assignment => (
-                        <div className="bg-white p-4 rounded-lg border border-gray-200 hover:shadow-md transition hover:border-blue-300 group relative">
+                        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition hover:border-blue-300 dark:hover:border-blue-500 group relative">
                                 <Link to={`/assignments/${assignment.id}`} className="block h-full">
                                 <div className="flex justify-between items-start pr-8">
-                                    <h3 className="font-bold text-gray-800 group-hover:text-blue-600 transition">{assignment.title}</h3>
+                                    <h3 className="font-bold text-gray-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">{assignment.title}</h3>
                                     <div className="flex gap-2">
                                         {assignment.submissions?.[0]?.grade && (
-                                            <span className="text-xs font-bold bg-green-100 text-green-800 px-2 py-1 rounded">
+                                            <span className="text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 px-2 py-1 rounded">
                                                 Note: {assignment.submissions[0].grade.value}/20
                                             </span>
                                         )}
-                                        <span className="text-xs font-mono bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                                        <span className="text-xs font-mono bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100 px-2 py-1 rounded">
                                             {new Date(assignment.dueDate).toLocaleDateString()}
                                         </span>
                                     </div>
                                 </div>
-                                {assignment.description && <p className="text-sm text-gray-600 mt-2 line-clamp-2">{cleanDescription(assignment.description)}</p>}
+                                {assignment.description && <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">{cleanDescription(assignment.description)}</p>}
                                 
                                 <div className="mt-4 flex justify-between items-center">
-                                    <span className="text-xs text-gray-400">
+                                    <span className="text-xs text-gray-400 dark:text-gray-500">
                                         {isTeacher ? `${assignment._count?.submissions || 0} rendus` : 'Cliquez pour voir/rendre'}
                                     </span>
                                 </div>
@@ -319,7 +319,7 @@ const CourseDetails = () => {
                          {isTeacher && (
                              <button 
                                  onClick={(e) => openDeleteAssignmentModal(assignment.id, e)}
-                                 className="absolute top-2 right-2 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition z-10 opacity-0 group-hover:opacity-100"
+                                 className="absolute top-2 right-2 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition z-10 opacity-0 group-hover:opacity-100"
                                  title="Supprimer le devoir"
                              >
                                  <Trash2 className="w-4 h-4" />
@@ -331,16 +331,16 @@ const CourseDetails = () => {
             </div>
 
             <div>
-                <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
                     <FileText className="w-5 h-5" />
                     Supports de cours
                 </h2>
                 <div className="space-y-3">
-                    {materials.length === 0 && <p className="text-gray-500 italic">Aucun support de cours.</p>}
+                    {materials.length === 0 && <p className="text-gray-500 dark:text-gray-400 italic">Aucun support de cours.</p>}
                     {materials.map(material => (
                         <div 
                             key={material.id} 
-                            className="flex items-center justify-between bg-white p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition group"
+                            className="flex items-center justify-between bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition group"
                         >
                             <a 
                                 href={getFileUrl(material.url)} 
@@ -348,12 +348,12 @@ const CourseDetails = () => {
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-3 flex-1"
                             >
-                                <div className="bg-gray-100 p-2 rounded">
+                                <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded">
                                     {getMaterialIcon(material.type)}
                                 </div>
                                 <div>
-                                    <h3 className="font-medium text-gray-800">{material.title}</h3>
-                                    <p className="text-xs text-gray-500">{new Date(material.createdAt).toLocaleDateString()}</p>
+                                    <h3 className="font-medium text-gray-800 dark:text-white">{material.title}</h3>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(material.createdAt).toLocaleDateString()}</p>
                                 </div>
                             </a>
                             {isTeacher && (

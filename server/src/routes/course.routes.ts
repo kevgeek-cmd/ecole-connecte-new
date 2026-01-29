@@ -4,6 +4,7 @@ import { upload } from "../middleware/upload.js";
 import {
   createCourse,
   getCourses,
+  getCourse,
   addMaterial,
   deleteMaterial,
   getMaterials,

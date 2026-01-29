@@ -96,6 +96,58 @@ export const getLibrary = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ message: "Error fetching library", error });
   }
 };
+
+export const getCourse = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+    const role = req.user?.role;
+
+    if (!id) return res.status(400).json({ message: "ID required" });
+
+    const course = await prisma.course.findUnique({
+      where: { id },
+      include: {
+        class: true,
+        subject: true,
+        teacher: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true
+          }
+        }
+      }
+    });
+
+    if (!course) return res.status(404).json({ message: "Course not found" });
+
+    // Access control
+    if (role === 'TEACHER' && course.teacherId !== userId) {
+        // Allow if teacher teaches this course
+        // Already checked by id? No, ensure teacher owns it.
+        // Actually, maybe allow viewing if they are in same school? 
+        // For now, strict: only own courses.
+        return res.status(403).json({ message: "Access denied" });
+    }
+    
+    if (role === 'STUDENT') {
+        // Check enrollment
+        const enrollment = await prisma.enrollment.findFirst({
+            where: {
+                studentId: userId,
+                classId: course.classId
+            }
+        });
+        if (!enrollment) return res.status(403).json({ message: "Not enrolled in this class" });
+    }
+
+    res.json(course);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching course", error });
+  }
+};
+
 export const createCourse = async (req: AuthRequest, res: Response) => {
   try {
     const { classId, subjectId, teacherId, coefficient } = createCourseSchema.parse(req.body);
