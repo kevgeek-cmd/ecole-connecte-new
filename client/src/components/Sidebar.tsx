@@ -1,10 +1,15 @@
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, User, School, BookOpen, GraduationCap, LayoutDashboard, FileText, Megaphone } from 'lucide-react';
+import { LogOut, User, School, BookOpen, GraduationCap, LayoutDashboard, FileText, Megaphone, Moon, Sun, Library, MessageCircle } from 'lucide-react';
+import { useState } from 'react';
+import ConfirmationModal from './ConfirmationModal';
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -73,6 +78,14 @@ const Sidebar = () => {
               <BookOpen className="w-5 h-5" />
               Mes Cours
             </Link>
+            <Link to="/library" className="flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition">
+              <Library className="w-5 h-5" />
+              Bibliothèque
+            </Link>
+            <Link to="/chat" className="flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition">
+              <MessageCircle className="w-5 h-5" />
+              Messages
+            </Link>
           </>
         )}
 
@@ -85,6 +98,14 @@ const Sidebar = () => {
       </nav>
 
       <div className="p-4 border-t border-gray-800">
+        <button
+            onClick={toggleTheme}
+            className="w-full flex items-center justify-center gap-2 p-2 mb-4 bg-gray-800 hover:bg-gray-700 rounded transition text-sm"
+        >
+            {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+            {theme === 'light' ? 'Mode Nuit' : 'Mode Jour'}
+        </button>
+
         <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
                 <span className="font-bold text-lg">{user.firstName[0]}{user.lastName[0]}</span>
@@ -95,13 +116,24 @@ const Sidebar = () => {
             </div>
         </div>
         <button
-          onClick={handleLogout}
+          onClick={() => setIsLogoutModalOpen(true)}
           className="w-full flex items-center justify-center gap-2 p-2 bg-red-600 hover:bg-red-700 rounded transition text-sm"
         >
           <LogOut className="w-4 h-4" />
           Déconnexion
         </button>
       </div>
+
+      <ConfirmationModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={handleLogout}
+        title="Confirmer la déconnexion"
+        message="Êtes-vous sûr de vouloir vous déconnecter ?"
+        confirmText="Se déconnecter"
+        cancelText="Annuler"
+        variant="danger"
+      />
     </div>
   );
 };

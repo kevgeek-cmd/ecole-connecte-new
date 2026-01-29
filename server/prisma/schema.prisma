@@ -41,6 +41,29 @@ model User {
   submissions     Submission[]
   grades          Grade[]
   notifications   Notification[]
+  
+  // Chat relations
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  isOnline         Boolean   @default(false)
+  
+  // Quiz relations
+  quizAttempts     QuizAttempt[]
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  
+  senderId  String
+  sender    User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  
+  receiverId String?
+  receiver   User?   @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  
+  classId   String?
+  class     Class?    @relation(fields: [classId], references: [id], onDelete: Cascade)
 }
 
 model Notification {
@@ -102,6 +125,7 @@ model Class {
   // Relations
   enrollments Enrollment[]
   courses     Course[]
+  messages    Message[]
 }
 
 model Subject {
@@ -127,6 +151,7 @@ model Course {
   // Relations
   materials    Material[]
   assignments  Assignment[]
+  quizzes      Quiz[]
 }
 
 model Enrollment {
@@ -193,4 +218,60 @@ model Grade {
   term         Term?       @relation(fields: [termId], references: [id], onDelete: Cascade)
 
   createdAt    DateTime @default(now())
+}
+
+model Quiz {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  published   Boolean  @default(false)
+  
+  questions   QuizQuestion[]
+  attempts    QuizAttempt[]
+}
+
+model QuizQuestion {
+  id        String   @id @default(uuid())
+  quizId    String
+  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  text      String
+  type      String   // "SINGLE", "MULTIPLE"
+  points    Int      @default(1)
+  
+  options   QuizOption[]
+  answers   QuizAnswer[]
+}
+
+model QuizOption {
+  id         String       @id @default(uuid())
+  questionId String
+  question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text       String
+  isCorrect  Boolean      @default(false)
+}
+
+model QuizAttempt {
+  id        String   @id @default(uuid())
+  quizId    String
+  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  studentId String
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  score     Float
+  startedAt DateTime @default(now())
+  completedAt DateTime?
+  
+  answers   QuizAnswer[]
+}
+
+model QuizAnswer {
+  id           String       @id @default(uuid())
+  attemptId    String
+  attempt      QuizAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId   String
+  question     QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOptions String[] // Array of Option IDs
 }

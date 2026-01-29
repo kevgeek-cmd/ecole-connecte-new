@@ -8,12 +8,14 @@ import {
   deleteMaterial,
   getMaterials,
   deleteCourse,
+  getLibrary,
 } from "../controllers/course.controller.js";
 
 const router = Router();
 
 router.use(authenticate);
 
+router.get("/library", getLibrary); // Specific route first
 router.post("/", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER", "IT_ADMIN"]), createCourse);
 router.get("/", getCourses);
 router.delete("/:id", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER", "IT_ADMIN"]), deleteCourse);

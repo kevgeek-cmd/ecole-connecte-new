@@ -1,0 +1,200 @@
+import type { Response } from "express";
+import prisma from "../utils/prisma.js";
+import type { AuthRequest } from "../middleware/auth.js";
+import { z } from "zod";
+
+const createQuizSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  courseId: z.string().uuid(),
+  questions: z.array(z.object({
+    text: z.string().min(1),
+    type: z.enum(["SINGLE", "MULTIPLE"]),
+    points: z.number().int().min(1),
+    options: z.array(z.object({
+      text: z.string().min(1),
+      isCorrect: z.boolean()
+    })).min(2)
+  })).min(1)
+});
+
+export const createQuiz = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        const validatedData = createQuizSchema.parse(req.body);
+
+        // Verify teacher owns the course
+        const course = await prisma.course.findUnique({
+            where: { id: validatedData.courseId }
+        });
+
+        if (!course || course.teacherId !== userId) {
+            return res.status(403).json({ message: "Unauthorized to create quiz for this course" });
+        }
+
+        const quiz = await prisma.quiz.create({
+            data: {
+                title: validatedData.title,
+                description: validatedData.description,
+                courseId: validatedData.courseId,
+                published: true, // Auto publish for now, or add field in schema
+                questions: {
+                    create: validatedData.questions.map(q => ({
+                        text: q.text,
+                        type: q.type,
+                        points: q.points,
+                        options: {
+                            create: q.options
+                        }
+                    }))
+                }
+            },
+            include: {
+                questions: {
+                    include: { options: true }
+                }
+            }
+        });
+
+        res.status(201).json(quiz);
+    } catch (error) {
+        console.error("Create quiz error", error);
+        res.status(500).json({ message: "Error creating quiz", error });
+    }
+};
+
+export const getQuizzes = async (req: AuthRequest, res: Response) => {
+    try {
+        const { courseId } = req.query;
+        if (!courseId) return res.status(400).json({ message: "Course ID required" });
+
+        const quizzes = await prisma.quiz.findMany({
+            where: { courseId: String(courseId) },
+            include: {
+                _count: {
+                    select: { questions: true }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        res.json(quizzes);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching quizzes", error });
+    }
+};
+
+export const getQuiz = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const quiz = await prisma.quiz.findUnique({
+            where: { id: String(id) },
+            include: {
+                questions: {
+                    include: {
+                        options: {
+                            select: { id: true, text: true } // Hide isCorrect from students
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!quiz) return res.status(404).json({ message: "Quiz not found" });
+        res.json(quiz);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching quiz", error });
+    }
+};
+
+export const submitQuizAttempt = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params; // Quiz ID
+        const userId = req.user?.id;
+        const { answers } = req.body; // { questionId: [optionId] }
+
+        if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+        const quiz = await prisma.quiz.findUnique({
+            where: { id: String(id) },
+            include: {
+                questions: {
+                    include: { options: true }
+                }
+            }
+        });
+
+        if (!quiz) return res.status(404).json({ message: "Quiz not found" });
+
+        // Calculate score
+        let totalPoints = 0;
+        let earnedPoints = 0;
+
+        const attemptAnswers = [];
+
+        for (const question of (quiz as any).questions) {
+            totalPoints += question.points;
+            
+            const userSelectedOptionIds = answers[question.id] || [];
+            const correctOptionIds = question.options.filter(o => o.isCorrect).map(o => o.id);
+
+            // Simple grading logic: All correct options selected and no incorrect ones
+            // For SINGLE type, array length 1
+            const isCorrect = 
+                userSelectedOptionIds.length === correctOptionIds.length &&
+                userSelectedOptionIds.every((id: string) => correctOptionIds.includes(id));
+
+            if (isCorrect) {
+                earnedPoints += question.points;
+            }
+
+            attemptAnswers.push({
+                questionId: question.id,
+                selectedOptions: userSelectedOptionIds
+            });
+        }
+
+        const score = (earnedPoints / totalPoints) * 20; // Scale to 20
+
+        const attempt = await prisma.quizAttempt.create({
+            data: {
+                quizId: String(id),
+                studentId: userId,
+                score,
+                completedAt: new Date(),
+                answers: {
+                    create: attemptAnswers
+                }
+            }
+        });
+
+        res.json({ attempt, totalPoints, earnedPoints });
+    } catch (error) {
+        console.error("Submit quiz error", error);
+        res.status(500).json({ message: "Error submitting quiz", error });
+    }
+};
+
+export const getMyAttempts = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        const { courseId } = req.query;
+
+        if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+        const attempts = await prisma.quizAttempt.findMany({
+            where: {
+                studentId: userId,
+                quiz: courseId ? { courseId: String(courseId) } : undefined
+            },
+            include: {
+                quiz: true
+            },
+            orderBy: { startedAt: 'desc' }
+        });
+
+        res.json(attempts);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching attempts", error });
+    }
+};

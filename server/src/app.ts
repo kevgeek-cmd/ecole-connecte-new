@@ -16,6 +16,8 @@ import assignmentRoutes from "./routes/assignment.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import gradeRoutes from "./routes/grade.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
+import quizRoutes from "./routes/quiz.routes.js";
 
 dotenv.config();
 
@@ -50,6 +52,8 @@ app.use("/api/assignments", assignmentRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/grades", gradeRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/quizzes", quizRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "API Ecole Connectée is running" });

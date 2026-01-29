@@ -17,6 +17,85 @@ const createMaterialSchema = z.object({
   url: z.string(),
 });
 
+export const getLibrary = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const role = req.user?.role;
+    const schoolId = req.user?.schoolId;
+
+    if (!userId || !role) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    let materials;
+
+    const includeRelation = {
+        course: {
+            include: {
+                class: true,
+                subject: true,
+                teacher: {
+                    select: {
+                        firstName: true,
+                        lastName: true
+                    }
+                }
+            }
+        }
+    };
+
+    if (role === "TEACHER") {
+      materials = await prisma.material.findMany({
+        where: {
+            course: {
+                teacherId: userId
+            }
+        },
+        include: includeRelation.course.include ? includeRelation : undefined,
+        orderBy: { createdAt: 'desc' }
+      });
+    } else if (role === "STUDENT") {
+      materials = await prisma.material.findMany({
+        where: {
+          course: {
+            class: {
+              enrollments: {
+                some: {
+                  studentId: userId,
+                },
+              },
+            },
+          },
+        },
+        include: includeRelation.course.include ? includeRelation : undefined,
+        orderBy: { createdAt: 'desc' }
+      });
+    } else if (role === "SCHOOL_ADMIN" || role === "IT_ADMIN") {
+         if (!schoolId) return res.status(400).json({message: "No school ID"});
+         materials = await prisma.material.findMany({
+            where: {
+                course: {
+                    class: {
+                        schoolId: schoolId
+                    }
+                }
+            },
+            include: includeRelation.course.include ? includeRelation : undefined,
+            orderBy: { createdAt: 'desc' }
+         });
+    } else {
+        // Super Admin
+        materials = await prisma.material.findMany({
+            include: includeRelation.course.include ? includeRelation : undefined,
+            orderBy: { createdAt: 'desc' }
+        });
+    }
+
+    res.json(materials);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching library", error });
+  }
+};
 export const createCourse = async (req: AuthRequest, res: Response) => {
   try {
     const { classId, subjectId, teacherId, coefficient } = createCourseSchema.parse(req.body);

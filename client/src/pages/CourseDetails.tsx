@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useForm } from 'react-hook-form';
 import { Book, FileText, Upload, Video, File, Link as LinkIcon, Plus, Trash2 } from 'lucide-react';
 import Gradebook from '../components/Gradebook';
+import QuizList from '../components/QuizList';
 
 interface CourseModel {
   id: string;
@@ -57,7 +58,8 @@ const CourseDetails = () => {
   const [materialToDelete, setMaterialToDelete] = useState<string | null>(null);
   const [isDeleteMatModalOpen, setIsDeleteMatModalOpen] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'CONTENT' | 'GRADES'>('CONTENT');
+  const [quizzes, setQuizzes] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'CONTENT' | 'GRADES' | 'QUIZZES'>('CONTENT');
 
   const { register: registerAssign, handleSubmit: handleSubmitAssign, reset: resetAssign, formState: { errors: errorsAssign } } = useForm<{ title: string; description?: string; dueDate: string; file?: FileList }>();
   const { register: registerMat, handleSubmit: handleSubmitMat, reset: resetMat, watch: watchMat, formState: { errors: errorsMat } } = useForm<{ title: string; type: string; url: string; file?: FileList }>();
@@ -113,6 +115,9 @@ const CourseDetails = () => {
 
       const materialsRes = await api.get(`/courses/${id}/materials`);
       setMaterials(materialsRes.data);
+
+      const quizzesRes = await api.get(`/quizzes?courseId=${id}`);
+      setQuizzes(quizzesRes.data);
       
       const coursesRes = await api.get('/courses');
       const foundCourse = coursesRes.data.find((c: CourseModel) => c.id === id);
@@ -259,6 +264,13 @@ const CourseDetails = () => {
                 Contenu du cours
                 {activeTab === 'CONTENT' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600"></div>}
             </button>
+            <button
+                className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'QUIZZES' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                onClick={() => setActiveTab('QUIZZES')}
+            >
+                QCM & Quiz
+                {activeTab === 'QUIZZES' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600"></div>}
+            </button>
             {isTeacher && (
                 <button
                     className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'GRADES' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
@@ -358,6 +370,8 @@ const CourseDetails = () => {
                 </div>
             </div>
         </div>
+      ) : activeTab === 'QUIZZES' ? (
+        <QuizList courseId={id!} isTeacher={isTeacher} quizzes={quizzes} onUpdate={fetchCourseDetails} />
       ) : (
         <Gradebook courseId={id!} />
       )}
