@@ -127,7 +127,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
     if (!currentUser) return res.status(401).json({ message: "Unauthorized" });
     if (!id) return res.status(400).json({ message: "Missing id" });
 
-    const targetUser = await prisma.user.findUnique({ where: { id } });
+    const targetUser = await prisma.user.findUnique({ where: { id: String(id) } });
     if (!targetUser) return res.status(404).json({ message: "Utilisateur non trouvé" });
 
     // RBAC Security Checks
@@ -191,7 +191,7 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
         return res.status(403).json({ message: "Vous ne pouvez pas supprimer votre propre compte." });
     }
 
-    const targetUser = await prisma.user.findUnique({ where: { id } });
+    const targetUser = await prisma.user.findUnique({ where: { id: String(id) } });
     if (!targetUser) return res.status(404).json({ message: "Utilisateur non trouvé" });
 
     // 2. RBAC Specific Logic
