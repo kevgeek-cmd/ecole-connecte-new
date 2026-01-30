@@ -37,9 +37,9 @@ export const setupSocket = (io: Server) => {
     console.log(`User connected: ${userId} (${role})`);
 
     // Join user's own room for private messages
-    const userRoom = String(userId);
+    const userRoom = `user:${userId}`;
     socket.join(userRoom);
-    console.log(`Socket ${socket.id} joined room ${userRoom}`);
+    console.log(`Socket ${socket.id} joined private room ${userRoom}`);
 
     // Automatically join all class rooms the user belongs to
     try {
@@ -49,7 +49,7 @@ export const setupSocket = (io: Server) => {
                 select: { classId: true }
             });
             courses.forEach(c => {
-                const classRoom = String(c.classId);
+                const classRoom = `class:${c.classId}`;
                 socket.join(classRoom);
                 console.log(`Teacher ${userId} joined class room ${classRoom}`);
             });
@@ -59,7 +59,7 @@ export const setupSocket = (io: Server) => {
                 select: { classId: true }
             });
             enrollments.forEach(e => {
-                const classRoom = String(e.classId);
+                const classRoom = `class:${e.classId}`;
                 socket.join(classRoom);
                 console.log(`Student ${userId} joined class room ${classRoom}`);
             });
@@ -69,7 +69,7 @@ export const setupSocket = (io: Server) => {
     }
 
     socket.on("join_class", (classId: string) => {
-        const classRoom = String(classId);
+        const classRoom = `class:${classId}`;
         socket.join(classRoom);
         console.log(`User ${userId} (Socket ${socket.id}) manually joined class ${classRoom}`);
     });
@@ -80,12 +80,7 @@ export const setupSocket = (io: Server) => {
             const senderId = String(userId);
             const targetId = data.classId ? String(data.classId) : (data.receiverId ? String(data.receiverId) : null);
             
-            console.log(`[Socket] Message from ${senderId} to ${targetId} (Class: ${!!data.classId})`);
-            
-            if (!targetId) {
-                console.warn("[Socket] No target specified for message");
-                return;
-            }
+            if (!targetId) return;
 
             const message = await prisma.message.create({
                 data: {
@@ -101,25 +96,23 @@ export const setupSocket = (io: Server) => {
                 }
             });
 
-            console.log(`[Socket] Message created in DB: ${message.id}`);
-
             // Emit to receiver or class
             if (data.classId) {
-                const roomName = String(data.classId);
-                const roomSize = io.sockets.adapter.rooms.get(roomName)?.size || 0;
-                console.log(`[Socket] Emitting to class room ${roomName} (Size: ${roomSize})`);
+                const roomName = `class:${data.classId}`;
+                console.log(`[Socket] Emitting to class room ${roomName}`);
                 io.to(roomName).emit("receive_message", message);
             } else if (data.receiverId) {
-                const roomName = String(data.receiverId);
-                const roomSize = io.sockets.adapter.rooms.get(roomName)?.size || 0;
-                console.log(`[Socket] Emitting to user room ${roomName} (Size: ${roomSize})`);
+                const receiverRoom = `user:${data.receiverId}`;
+                const senderRoom = `user:${senderId}`;
                 
-                io.to(roomName).emit("receive_message", message);
+                console.log(`[Socket] Emitting from ${senderRoom} to ${receiverRoom}`);
                 
-                // Also emit to sender's own room (in case they have multiple tabs)
-                if (roomName !== senderId) {
-                    console.log(`[Socket] Also emitting back to sender room ${senderId}`);
-                    io.to(senderId).emit("receive_message", message);
+                // Send to receiver
+                io.to(receiverRoom).emit("receive_message", message);
+                
+                // Send to sender (all their tabs)
+                if (receiverRoom !== senderRoom) {
+                    io.to(senderRoom).emit("receive_message", message);
                 }
             }
         } catch (e) {
