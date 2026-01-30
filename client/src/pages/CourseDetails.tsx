@@ -41,6 +41,7 @@ const CourseDetails = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const [course, setCourse] = useState<CourseModel | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [assignments, setAssignments] = useState<AssignmentModel[]>([]);
   const [materials, setMaterials] = useState<MaterialModel[]>([]);
   
@@ -236,6 +237,7 @@ const CourseDetails = () => {
     return desc.replace(/\[Télécharger le fichier joint\]\(.*?\)/, '').trim();
   };
 
+  if (error) return <div className="p-6 text-red-600 dark:text-red-400">{error}</div>;
   if (!course) return <div className="p-6 text-gray-800 dark:text-gray-200">Chargement...</div>;
 
   return (

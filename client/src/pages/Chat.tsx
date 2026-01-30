@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { io, Socket } from 'socket.io-client';
 import api from '../utils/api';
-import { Send, User, Users, Circle, Paperclip, FileText, Image as ImageIcon, Video, X } from 'lucide-react';
+import { Send, User, Users, Circle, Paperclip, FileText, X } from 'lucide-react';
 
 interface Message {
     id: string;
