@@ -1,5 +1,5 @@
 import type { Response } from "express";
-import { supabase } from "../utils/supabase.js";
+import { supabase, uploadToSupabase } from "../utils/supabase.js";
 import prisma from "../utils/prisma.js";
 import type { AuthRequest } from "../middleware/auth.js";
 
@@ -9,32 +9,18 @@ export const uploadChatFile = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ message: "No file uploaded" });
         }
 
-        const file = req.file;
-        const fileExt = file.originalname.split('.').pop();
-        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `chat_uploads/${fileName}`;
+        const publicUrl = await uploadToSupabase(req.file, 'materials');
 
-        const { data, error } = await supabase.storage
-            .from('materials') // Reusing materials bucket or create a new one 'chat-uploads'
-            .upload(filePath, file.buffer, {
-                contentType: file.mimetype
-            });
-
-        if (error) {
-            console.error("Supabase upload error:", error);
+        if (!publicUrl) {
             return res.status(500).json({ message: "Upload failed" });
         }
 
-        const { data: publicData } = supabase.storage
-            .from('materials')
-            .getPublicUrl(filePath);
-
         res.json({ 
-            url: publicData.publicUrl,
-            type: file.mimetype.startsWith('image/') ? 'IMAGE' : 
-                  file.mimetype === 'application/pdf' ? 'PDF' : 
-                  file.mimetype.includes('video') ? 'VIDEO' : 'DOC',
-            originalName: file.originalname
+            url: publicUrl,
+            type: req.file.mimetype.startsWith('image/') ? 'IMAGE' : 
+                  req.file.mimetype === 'application/pdf' ? 'PDF' : 
+                  req.file.mimetype.includes('video') ? 'VIDEO' : 'DOC',
+            originalName: req.file.originalname
         });
 
     } catch (error) {

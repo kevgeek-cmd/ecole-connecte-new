@@ -59,13 +59,15 @@ const Chat = () => {
 
         newSocket.on('receive_message', (message: Message) => {
             setMessages((prev) => {
-                // If message is from me, replace the temporary optimistic message
+                // Check for duplicates by ID
+                if (prev.some(m => m.id === message.id)) return prev;
+
+                // If message is from me, try to replace the temporary optimistic message
                 if (message.senderId === userRef.current?.id) {
-                     // Find a temp message (id is timestamp-like) with same content
                      const tempIdx = prev.findIndex(m => 
                         m.senderId === userRef.current?.id && 
-                        m.content === message.content && 
-                        m.id.length > 10 // Simple heuristic for timestamp vs uuid
+                        m.id.startsWith('temp-') &&
+                        (m.content === message.content || m.attachmentUrl === message.attachmentUrl)
                      );
                      
                      if (tempIdx !== -1) {
@@ -73,12 +75,6 @@ const Chat = () => {
                          newPrev[tempIdx] = message;
                          return newPrev;
                      }
-                     
-                     // If no temp message found (maybe race condition or didn't optimize), check for duplicates by ID
-                     if (prev.some(m => m.id === message.id)) return prev;
-                } else {
-                     // Check for duplicates
-                     if (prev.some(m => m.id === message.id)) return prev;
                 }
                 
                 return [...prev, message];
@@ -142,7 +138,20 @@ const Chat = () => {
                 });
                 classes = Array.from(classMap.values());
             } else if (user?.role === 'STUDENT') {
-                // For now relying on users/contacts
+                const resCourses = await api.get('/courses');
+                if (resCourses.data && resCourses.data.length > 0) {
+                    const classMap = new Map();
+                    resCourses.data.forEach((c: any) => {
+                        if (c.class && !classMap.has(c.class.id)) {
+                            classMap.set(c.class.id, {
+                                id: c.class.id,
+                                name: c.class.name,
+                                type: 'class'
+                            });
+                        }
+                    });
+                    classes = Array.from(classMap.values());
+                }
             }
 
             setContacts([...classes, ...users]);
@@ -208,7 +217,7 @@ const Chat = () => {
 
         // Optimistic update
         const tempMessage: Message = {
-            id: Date.now().toString(),
+            id: `temp-${Date.now()}`,
             content: messageData.content,
             senderId: user?.id || '',
             receiverId: messageData.receiverId,

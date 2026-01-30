@@ -31,17 +31,43 @@ export const setupSocket = (io: Server) => {
     }
   });
 
-  io.on("connection", (socket: AuthSocket) => {
+  io.on("connection", async (socket: AuthSocket) => {
     const userId = socket.user.id;
-    console.log(`User connected: ${userId}`);
+    const role = socket.user.role;
+    console.log(`User connected: ${userId} (${role})`);
 
     // Join user's own room for private messages
     socket.join(userId);
     console.log(`Socket ${socket.id} joined room ${userId}`);
 
+    // Automatically join all class rooms the user belongs to
+    try {
+        if (role === 'TEACHER') {
+            const courses = await prisma.course.findMany({
+                where: { teacherId: userId },
+                select: { classId: true }
+            });
+            courses.forEach(c => {
+                socket.join(c.classId);
+                console.log(`Teacher ${userId} joined class room ${c.classId}`);
+            });
+        } else if (role === 'STUDENT') {
+            const enrollments = await prisma.enrollment.findMany({
+                where: { studentId: userId },
+                select: { classId: true }
+            });
+            enrollments.forEach(e => {
+                socket.join(e.classId);
+                console.log(`Student ${userId} joined class room ${e.classId}`);
+            });
+        }
+    } catch (error) {
+        console.error("Error joining rooms on connection", error);
+    }
+
     socket.on("join_class", (classId: string) => {
         socket.join(classId);
-        console.log(`User ${userId} (Socket ${socket.id}) joined class ${classId}`);
+        console.log(`User ${userId} (Socket ${socket.id}) manually joined class ${classId}`);
     });
 
     socket.on("send_message", async (data) => {
