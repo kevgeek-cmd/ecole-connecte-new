@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Calendar, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, User, Calendar } from 'lucide-react';
 import api from '../utils/api';
 
 interface Attempt {
