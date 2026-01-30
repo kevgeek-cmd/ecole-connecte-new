@@ -44,14 +44,16 @@ export const setupSocket = (io: Server) => {
     });
 
     socket.on("send_message", async (data) => {
-        // data: { content, receiverId?, classId? }
+        // data: { content, receiverId?, classId?, attachmentUrl?, attachmentType? }
         try {
             const message = await prisma.message.create({
                 data: {
                     content: data.content,
                     senderId: userId,
                     receiverId: data.receiverId || null,
-                    classId: data.classId || null
+                    classId: data.classId || null,
+                    attachmentUrl: data.attachmentUrl || null,
+                    attachmentType: data.attachmentType || null
                 },
                 include: {
                     sender: { select: { id: true, firstName: true, lastName: true } }

@@ -64,6 +64,9 @@ model Message {
   
   classId   String?
   class     Class?    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  
+  attachmentUrl String?
+  attachmentType String? // "IMAGE", "PDF", "DOC", "VIDEO"
 }
 
 model Notification {

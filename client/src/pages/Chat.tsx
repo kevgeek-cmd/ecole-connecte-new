@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { io, Socket } from 'socket.io-client';
 import api from '../utils/api';
-import { Send, User, Users, Circle } from 'lucide-react';
+import { Send, User, Users, Circle, Paperclip, FileText, Image as ImageIcon, Video, X } from 'lucide-react';
 
 interface Message {
     id: string;
@@ -10,6 +10,8 @@ interface Message {
     senderId: string;
     receiverId?: string | null;
     classId?: string | null;
+    attachmentUrl?: string | null;
+    attachmentType?: 'IMAGE' | 'PDF' | 'DOC' | 'VIDEO' | null;
     sender: {
         id: string;
         firstName: string;
@@ -24,7 +26,6 @@ interface Contact {
     lastName: string;
     role: string;
     isOnline?: boolean;
-    // For classes (if we mix them in contacts list or separate)
     name?: string; 
     type?: 'user' | 'class';
 }
@@ -36,7 +37,10 @@ const Chat = () => {
     const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Use a ref for user to access current value inside socket listeners
     const userRef = useRef(user);
@@ -122,11 +126,6 @@ const Chat = () => {
             const resUsers = await api.get('/chat/contacts');
             const users = resUsers.data.map((u: any) => ({ ...u, type: 'user' }));
 
-            // Fetch classes (for Teachers/Students)
-            // Ideally we should have an endpoint for this, but reusing existing ones or fetching from chat controller
-            // For simplicity, let's assume the user has access to some classes. 
-            // We can fetch courses and get classes from there.
-            
             let classes: Contact[] = [];
             if (user?.role === 'TEACHER') {
                 const resCourses = await api.get('/courses');
@@ -143,11 +142,7 @@ const Chat = () => {
                 });
                 classes = Array.from(classMap.values());
             } else if (user?.role === 'STUDENT') {
-                // Get my class
-                // Student usually belongs to one class in a year, or multiple enrollments.
-                // We can fetch enrollments? 
-                // Let's rely on backend providing this later or just users for now.
-                // Or fetch from /users/me (if it returns class info)
+                // For now relying on users/contacts
             }
 
             setContacts([...classes, ...users]);
@@ -171,23 +166,55 @@ const Chat = () => {
         }
     };
 
-    const handleSendMessage = (e: React.FormEvent) => {
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setSelectedFile(e.target.files[0]);
+        }
+    };
+
+    const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !socket || !selectedContact) return;
+        if ((!newMessage.trim() && !selectedFile) || !socket || !selectedContact) return;
+
+        let attachmentUrl = null;
+        let attachmentType = null;
+
+        if (selectedFile) {
+            setIsUploading(true);
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                const res = await api.post('/chat/upload', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                attachmentUrl = res.data.url;
+                attachmentType = res.data.type;
+            } catch (error) {
+                console.error("Upload failed", error);
+                alert("Erreur lors de l'envoi du fichier");
+                setIsUploading(false);
+                return;
+            }
+            setIsUploading(false);
+        }
 
         const messageData = {
-            content: newMessage,
+            content: newMessage || (selectedFile ? `📎 ${selectedFile.name}` : ''),
             receiverId: selectedContact.type === 'user' ? selectedContact.id : undefined,
-            classId: selectedContact.type === 'class' ? selectedContact.id : undefined
+            classId: selectedContact.type === 'class' ? selectedContact.id : undefined,
+            attachmentUrl,
+            attachmentType
         };
 
         // Optimistic update
         const tempMessage: Message = {
-            id: Date.now().toString(), // Temporary ID
-            content: newMessage,
+            id: Date.now().toString(),
+            content: messageData.content,
             senderId: user?.id || '',
             receiverId: messageData.receiverId,
             classId: messageData.classId,
+            attachmentUrl: attachmentUrl,
+            attachmentType: attachmentType as any,
             sender: {
                 id: user?.id || '',
                 firstName: user?.firstName || '',
@@ -200,6 +227,8 @@ const Chat = () => {
 
         socket.emit('send_message', messageData);
         setNewMessage('');
+        setSelectedFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
     // Filter messages for current view
@@ -212,7 +241,6 @@ const Chat = () => {
         if (selectedContact.type === 'class') {
             return m.classId === contactId; 
         } else {
-            // Check if message is between me and contact
             const senderId = String(m.senderId);
             const receiverId = m.receiverId ? String(m.receiverId) : null;
             
@@ -220,7 +248,34 @@ const Chat = () => {
                    (senderId === currentUserId && receiverId === contactId);
         }
     });
-    // Note: The Message interface above didn't include classId/receiverId. Let's add them.
+
+    const renderAttachment = (msg: Message) => {
+        if (!msg.attachmentUrl) return null;
+        
+        if (msg.attachmentType === 'IMAGE') {
+            return (
+                <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className="block mt-2">
+                    <img src={msg.attachmentUrl} alt="attachment" className="max-w-[200px] rounded-lg border border-gray-200" />
+                </a>
+            );
+        } else if (msg.attachmentType === 'VIDEO') {
+            return (
+                <video src={msg.attachmentUrl} controls className="max-w-[200px] mt-2 rounded-lg" />
+            );
+        } else {
+            return (
+                <a 
+                    href={msg.attachmentUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="flex items-center gap-2 mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded text-blue-600 hover:underline"
+                >
+                    {msg.attachmentType === 'PDF' ? <FileText className="w-4 h-4" /> : <Paperclip className="w-4 h-4" />}
+                    <span>Voir la pièce jointe</span>
+                </a>
+            );
+        }
+    };
 
     return (
         <div className="flex h-[calc(100vh-100px)] bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
@@ -279,7 +334,8 @@ const Chat = () => {
                                     <div key={idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                                         <div className={`max-w-[70%] rounded-lg p-3 ${isMe ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-white shadow-sm'}`}>
                                             {!isMe && <p className="text-xs font-bold mb-1 opacity-70">{msg.sender.firstName} {msg.sender.lastName}</p>}
-                                            <p className="text-sm">{msg.content}</p>
+                                            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                                            {renderAttachment(msg)}
                                             <p className="text-[10px] mt-1 opacity-70 text-right">
                                                 {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </p>
@@ -291,21 +347,51 @@ const Chat = () => {
                         </div>
 
                         {/* Input */}
-                        <form onSubmit={handleSendMessage} className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex gap-2">
-                            <input
-                                type="text"
-                                className="flex-1 border border-gray-300 dark:border-gray-600 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
-                                placeholder="Écrivez votre message..."
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
-                            />
-                            <button 
-                                type="submit" 
-                                className="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition flex items-center justify-center w-10 h-10"
-                                disabled={!newMessage.trim()}
-                            >
-                                <Send className="w-5 h-5" />
-                            </button>
+                        <form onSubmit={handleSendMessage} className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex flex-col gap-2">
+                            {selectedFile && (
+                                <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 p-2 rounded text-sm">
+                                    <Paperclip className="w-4 h-4 text-gray-500" />
+                                    <span className="truncate max-w-xs dark:text-gray-300">{selectedFile.name}</span>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setSelectedFile(null)}
+                                        className="ml-auto hover:text-red-500"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
+                            <div className="flex gap-2 items-end">
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleFileSelect}
+                                    className="hidden"
+                                    id="file-upload"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition"
+                                    title="Joindre un fichier"
+                                >
+                                    <Paperclip className="w-5 h-5" />
+                                </button>
+                                <input
+                                    type="text"
+                                    className="flex-1 border border-gray-300 dark:border-gray-600 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+                                    placeholder="Écrivez votre message..."
+                                    value={newMessage}
+                                    onChange={(e) => setNewMessage(e.target.value)}
+                                />
+                                <button 
+                                    type="submit" 
+                                    className="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition flex items-center justify-center w-10 h-10 disabled:opacity-50"
+                                    disabled={(!newMessage.trim() && !selectedFile) || isUploading}
+                                >
+                                    {isUploading ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div> : <Send className="w-5 h-5" />}
+                                </button>
+                            </div>
                         </form>
                     </>
                 ) : (

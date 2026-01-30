@@ -112,21 +112,33 @@ const CourseDetails = () => {
     try {
       if (!id) return;
 
-      const [assignmentsRes, materialsRes, quizzesRes, courseRes] = await Promise.all([
-        api.get(`/assignments?courseId=${id}`),
-        api.get(`/courses/${id}/materials`),
-        api.get(`/quizzes?courseId=${id}`),
-        api.get(`/courses/${id}`)
-      ]);
+      // Fetch course first to ensure it exists and we have access
+      try {
+        const courseRes = await api.get(`/courses/${id}`);
+        setCourse(courseRes.data);
+      } catch (err) {
+        console.error("Error fetching course info", err);
+        // If course fetch fails, no point fetching others
+        return; 
+      }
 
-      setAssignments(assignmentsRes.data);
-      setMaterials(materialsRes.data);
-      setQuizzes(quizzesRes.data);
-      setCourse(courseRes.data);
+      // Fetch other data independently so one failure doesn't block the UI
+      const fetchAssignments = api.get(`/assignments?courseId=${id}`)
+        .then(res => setAssignments(res.data))
+        .catch(err => console.error("Error fetching assignments", err));
+
+      const fetchMaterials = api.get(`/courses/${id}/materials`)
+        .then(res => setMaterials(res.data))
+        .catch(err => console.error("Error fetching materials", err));
+
+      const fetchQuizzes = api.get(`/quizzes?courseId=${id}`)
+        .then(res => setQuizzes(res.data))
+        .catch(err => console.error("Error fetching quizzes", err));
+
+      await Promise.allSettled([fetchAssignments, fetchMaterials, fetchQuizzes]);
 
     } catch (error) {
       console.error('Error fetching course details', error);
-      // Optional: Handle redirect or error state
     }
   };
 
