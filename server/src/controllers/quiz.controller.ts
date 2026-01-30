@@ -67,7 +67,7 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
     } catch (error) {
         console.error("Create quiz error", error);
         if (error instanceof z.ZodError) {
-             return res.status(400).json({ message: "Validation error", errors: error.errors });
+             return res.status(400).json({ message: "Validation error", errors: (error as any).errors });
         }
         res.status(500).json({ message: "Error creating quiz", error: (error as Error).message });
     }
