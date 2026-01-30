@@ -37,15 +37,18 @@ export const setupSocket = (io: Server) => {
 
     // Join user's own room for private messages
     socket.join(userId);
+    console.log(`Socket ${socket.id} joined room ${userId}`);
 
     socket.on("join_class", (classId: string) => {
         socket.join(classId);
-        console.log(`User ${userId} joined class ${classId}`);
+        console.log(`User ${userId} (Socket ${socket.id}) joined class ${classId}`);
     });
 
     socket.on("send_message", async (data) => {
         // data: { content, receiverId?, classId?, attachmentUrl?, attachmentType? }
         try {
+            console.log(`[Socket] Message from ${userId} to ${data.receiverId || data.classId} (Class: ${!!data.classId})`);
+            
             const message = await prisma.message.create({
                 data: {
                     content: data.content,
@@ -62,8 +65,13 @@ export const setupSocket = (io: Server) => {
 
             // Emit to receiver or class
             if (data.classId) {
+                const roomSize = io.sockets.adapter.rooms.get(data.classId)?.size || 0;
+                console.log(`[Socket] Emitting to class ${data.classId} (Size: ${roomSize})`);
                 io.to(data.classId).emit("receive_message", message);
             } else if (data.receiverId) {
+                const roomSize = io.sockets.adapter.rooms.get(data.receiverId)?.size || 0;
+                console.log(`[Socket] Emitting to user ${data.receiverId} (Size: ${roomSize})`);
+                
                 io.to(data.receiverId).emit("receive_message", message);
                 // Also emit to sender (if they have multiple tabs or just for confirmation)
                 socket.emit("receive_message", message);
