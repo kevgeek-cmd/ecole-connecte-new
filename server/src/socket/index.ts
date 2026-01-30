@@ -37,8 +37,9 @@ export const setupSocket = (io: Server) => {
     console.log(`User connected: ${userId} (${role})`);
 
     // Join user's own room for private messages
-    socket.join(userId);
-    console.log(`Socket ${socket.id} joined room ${userId}`);
+    const userRoom = String(userId);
+    socket.join(userRoom);
+    console.log(`Socket ${socket.id} joined room ${userRoom}`);
 
     // Automatically join all class rooms the user belongs to
     try {
@@ -48,8 +49,9 @@ export const setupSocket = (io: Server) => {
                 select: { classId: true }
             });
             courses.forEach(c => {
-                socket.join(c.classId);
-                console.log(`Teacher ${userId} joined class room ${c.classId}`);
+                const classRoom = String(c.classId);
+                socket.join(classRoom);
+                console.log(`Teacher ${userId} joined class room ${classRoom}`);
             });
         } else if (role === 'STUDENT') {
             const enrollments = await prisma.enrollment.findMany({
@@ -57,8 +59,9 @@ export const setupSocket = (io: Server) => {
                 select: { classId: true }
             });
             enrollments.forEach(e => {
-                socket.join(e.classId);
-                console.log(`Student ${userId} joined class room ${e.classId}`);
+                const classRoom = String(e.classId);
+                socket.join(classRoom);
+                console.log(`Student ${userId} joined class room ${classRoom}`);
             });
         }
     } catch (error) {
@@ -66,21 +69,30 @@ export const setupSocket = (io: Server) => {
     }
 
     socket.on("join_class", (classId: string) => {
-        socket.join(classId);
-        console.log(`User ${userId} (Socket ${socket.id}) manually joined class ${classId}`);
+        const classRoom = String(classId);
+        socket.join(classRoom);
+        console.log(`User ${userId} (Socket ${socket.id}) manually joined class ${classRoom}`);
     });
 
     socket.on("send_message", async (data) => {
         // data: { content, receiverId?, classId?, attachmentUrl?, attachmentType? }
         try {
-            console.log(`[Socket] Message from ${userId} to ${data.receiverId || data.classId} (Class: ${!!data.classId})`);
+            const senderId = String(userId);
+            const targetId = data.classId ? String(data.classId) : (data.receiverId ? String(data.receiverId) : null);
             
+            console.log(`[Socket] Message from ${senderId} to ${targetId} (Class: ${!!data.classId})`);
+            
+            if (!targetId) {
+                console.warn("[Socket] No target specified for message");
+                return;
+            }
+
             const message = await prisma.message.create({
                 data: {
-                    content: data.content,
-                    senderId: userId,
-                    receiverId: data.receiverId || null,
-                    classId: data.classId || null,
+                    content: data.content || "",
+                    senderId: senderId,
+                    receiverId: data.classId ? null : targetId,
+                    classId: data.classId ? targetId : null,
                     attachmentUrl: data.attachmentUrl || null,
                     attachmentType: data.attachmentType || null
                 },
@@ -89,21 +101,29 @@ export const setupSocket = (io: Server) => {
                 }
             });
 
+            console.log(`[Socket] Message created in DB: ${message.id}`);
+
             // Emit to receiver or class
             if (data.classId) {
-                const roomSize = io.sockets.adapter.rooms.get(data.classId)?.size || 0;
-                console.log(`[Socket] Emitting to class ${data.classId} (Size: ${roomSize})`);
-                io.to(data.classId).emit("receive_message", message);
+                const roomName = String(data.classId);
+                const roomSize = io.sockets.adapter.rooms.get(roomName)?.size || 0;
+                console.log(`[Socket] Emitting to class room ${roomName} (Size: ${roomSize})`);
+                io.to(roomName).emit("receive_message", message);
             } else if (data.receiverId) {
-                const roomSize = io.sockets.adapter.rooms.get(data.receiverId)?.size || 0;
-                console.log(`[Socket] Emitting to user ${data.receiverId} (Size: ${roomSize})`);
+                const roomName = String(data.receiverId);
+                const roomSize = io.sockets.adapter.rooms.get(roomName)?.size || 0;
+                console.log(`[Socket] Emitting to user room ${roomName} (Size: ${roomSize})`);
                 
-                io.to(data.receiverId).emit("receive_message", message);
-                // Also emit to sender (if they have multiple tabs or just for confirmation)
-                socket.emit("receive_message", message);
+                io.to(roomName).emit("receive_message", message);
+                
+                // Also emit to sender's own room (in case they have multiple tabs)
+                if (roomName !== senderId) {
+                    console.log(`[Socket] Also emitting back to sender room ${senderId}`);
+                    io.to(senderId).emit("receive_message", message);
+                }
             }
         } catch (e) {
-            console.error("Error sending message", e);
+            console.error("[Socket] Error sending message:", e);
         }
     });
 

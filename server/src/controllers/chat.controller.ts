@@ -9,7 +9,7 @@ export const uploadChatFile = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ message: "No file uploaded" });
         }
 
-        const publicUrl = await uploadToSupabase(req.file, 'materials');
+        const publicUrl = await uploadToSupabase(req.file); // Use default bucket 'uploads' instead of 'materials'
 
         if (!publicUrl) {
             return res.status(500).json({ message: "Upload failed" });

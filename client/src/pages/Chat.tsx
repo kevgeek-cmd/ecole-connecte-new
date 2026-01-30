@@ -58,19 +58,25 @@ const Chat = () => {
         });
 
         newSocket.on('receive_message', (message: Message) => {
+            console.log('Received message via socket:', message);
             setMessages((prev) => {
                 // Check for duplicates by ID
-                if (prev.some(m => m.id === message.id)) return prev;
+                if (prev.some(m => String(m.id) === String(message.id))) {
+                    console.log('Duplicate message ignored');
+                    return prev;
+                }
 
                 // If message is from me, try to replace the temporary optimistic message
-                if (message.senderId === userRef.current?.id) {
+                const currentUserId = String(userRef.current?.id);
+                if (String(message.senderId) === currentUserId) {
                      const tempIdx = prev.findIndex(m => 
-                        m.senderId === userRef.current?.id && 
-                        m.id.startsWith('temp-') &&
-                        (m.content === message.content || m.attachmentUrl === message.attachmentUrl)
+                        String(m.senderId) === currentUserId && 
+                        String(m.id).startsWith('temp-') &&
+                        (m.content.trim() === message.content.trim() || (m.attachmentUrl && m.attachmentUrl === message.attachmentUrl))
                      );
                      
                      if (tempIdx !== -1) {
+                         console.log('Replacing temp message with official one');
                          const newPrev = [...prev];
                          newPrev[tempIdx] = message;
                          return newPrev;
@@ -196,11 +202,12 @@ const Chat = () => {
                 const res = await api.post('/chat/upload', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
+                console.log("Upload success:", res.data);
                 attachmentUrl = res.data.url;
                 attachmentType = res.data.type;
-            } catch (error) {
-                console.error("Upload failed", error);
-                alert("Erreur lors de l'envoi du fichier");
+            } catch (error: any) {
+                console.error("Upload failed details:", error.response?.data || error.message);
+                alert(`Erreur lors de l'envoi du fichier: ${error.response?.data?.message || error.message}`);
                 setIsUploading(false);
                 return;
             }
@@ -337,11 +344,15 @@ const Chat = () => {
 
                         {/* Messages */}
                         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                            {displayMessages.map((msg, idx) => {
-                                const isMe = msg.senderId === user?.id;
+                            {displayMessages.map((msg) => {
+                                const isMe = String(msg.senderId) === String(user?.id);
                                 return (
-                                    <div key={idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`max-w-[70%] rounded-lg p-3 ${isMe ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-white shadow-sm'}`}>
+                                    <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                                        <div className={`max-w-[70%] p-3 rounded-lg ${
+                                            isMe 
+                                                ? 'bg-blue-600 text-white rounded-br-none' 
+                                                : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-white shadow-sm rounded-bl-none'
+                                        }`}>
                                             {!isMe && <p className="text-xs font-bold mb-1 opacity-70">{msg.sender.firstName} {msg.sender.lastName}</p>}
                                             <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                                             {renderAttachment(msg)}
