@@ -13,7 +13,7 @@ export const setupSocket = (io: Server) => {
       return next(new Error("Authentication error"));
     }
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+      const decoded = jwt.verify(token, (process.env.JWT_SECRET || "secret") as string);
       socket.user = decoded;
       
       // Update online status
@@ -38,8 +38,8 @@ export const setupSocket = (io: Server) => {
 
     // Join user's own room for private messages
     const userRoom = `user:${userId}`;
-    socket.join(userRoom);
-    console.log(`Socket ${socket.id} joined private room ${userRoom}`);
+    await socket.join(userRoom);
+    console.log(`[Socket] User ${userId} joined room ${userRoom}`);
 
     // Automatically join all class rooms the user belongs to
     try {
@@ -48,46 +48,53 @@ export const setupSocket = (io: Server) => {
                 where: { teacherId: userId },
                 select: { classId: true }
             });
-            courses.forEach(c => {
+            console.log(`[Socket] Teacher ${userId} found in ${courses.length} courses`);
+            for (const c of courses) {
                 const classRoom = `class:${c.classId}`;
-                socket.join(classRoom);
-                console.log(`Teacher ${userId} joined class room ${classRoom}`);
-            });
+                await socket.join(classRoom);
+                console.log(`[Socket] Teacher ${userId} joined class room ${classRoom}`);
+            }
         } else if (role === 'STUDENT') {
             const enrollments = await prisma.enrollment.findMany({
                 where: { studentId: userId },
                 select: { classId: true }
             });
-            enrollments.forEach(e => {
+            console.log(`[Socket] Student ${userId} found in ${enrollments.length} enrollments`);
+            for (const e of enrollments) {
                 const classRoom = `class:${e.classId}`;
-                socket.join(classRoom);
-                console.log(`Student ${userId} joined class room ${classRoom}`);
-            });
+                await socket.join(classRoom);
+                console.log(`[Socket] Student ${userId} joined class room ${classRoom}`);
+            }
         }
     } catch (error) {
-        console.error("Error joining rooms on connection", error);
+        console.error("[Socket] Error joining rooms on connection", error);
     }
 
-    socket.on("join_class", (classId: string) => {
+    socket.on("join_class", async (classId: string) => {
         const classRoom = `class:${classId}`;
-        socket.join(classRoom);
-        console.log(`User ${userId} (Socket ${socket.id}) manually joined class ${classRoom}`);
+        await socket.join(classRoom);
+        console.log(`[Socket] User ${userId} manually joined class ${classRoom}`);
     });
 
     socket.on("send_message", async (data) => {
-        // data: { content, receiverId?, classId?, attachmentUrl?, attachmentType? }
         try {
             const senderId = String(userId);
-            const targetId = data.classId ? String(data.classId) : (data.receiverId ? String(data.receiverId) : null);
+            const targetClassId = data.classId ? String(data.classId) : null;
+            const targetReceiverId = data.receiverId ? String(data.receiverId) : null;
             
-            if (!targetId) return;
+            console.log(`[Socket] Incoming message from ${senderId} to ${targetClassId ? 'class:'+targetClassId : 'user:'+targetReceiverId}`);
+
+            if (!targetClassId && !targetReceiverId) {
+                console.log("[Socket] Error: No target specified");
+                return;
+            }
 
             const message = await prisma.message.create({
                 data: {
                     content: data.content || "",
                     senderId: senderId,
-                    receiverId: data.classId ? null : targetId,
-                    classId: data.classId ? targetId : null,
+                    receiverId: targetClassId ? null : targetReceiverId,
+                    classId: targetClassId,
                     attachmentUrl: data.attachmentUrl || null,
                     attachmentType: data.attachmentType || null
                 },
@@ -96,27 +103,27 @@ export const setupSocket = (io: Server) => {
                 }
             });
 
-            // Emit to receiver or class
-            if (data.classId) {
-                const roomName = `class:${data.classId}`;
-                console.log(`[Socket] Emitting to class room ${roomName}`);
+            if (targetClassId) {
+                const roomName = `class:${targetClassId}`;
+                const clients = await io.in(roomName).fetchSockets();
+                console.log(`[Socket] Emitting to class ${roomName} (${clients.length} connected)`);
                 io.to(roomName).emit("receive_message", message);
-            } else if (data.receiverId) {
-                const receiverRoom = `user:${data.receiverId}`;
+            } else if (targetReceiverId) {
+                const receiverRoom = `user:${targetReceiverId}`;
                 const senderRoom = `user:${senderId}`;
                 
-                console.log(`[Socket] Emitting from ${senderRoom} to ${receiverRoom}`);
+                const receiverClients = await io.in(receiverRoom).fetchSockets();
+                const senderClients = await io.in(senderRoom).fetchSockets();
                 
-                // Send to receiver
+                console.log(`[Socket] Private message: ${senderRoom} (${senderClients.length}) -> ${receiverRoom} (${receiverClients.length})`);
+                
                 io.to(receiverRoom).emit("receive_message", message);
-                
-                // Send to sender (all their tabs)
                 if (receiverRoom !== senderRoom) {
                     io.to(senderRoom).emit("receive_message", message);
                 }
             }
         } catch (e) {
-            console.error("[Socket] Error sending message:", e);
+            console.error("[Socket] Error in send_message:", e);
         }
     });
 

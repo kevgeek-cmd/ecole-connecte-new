@@ -42,6 +42,8 @@ const Chat = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const [isConnected, setIsConnected] = useState(false);
+
     // Use a ref for user to access current value inside socket listeners
     const userRef = useRef(user);
     useEffect(() => { userRef.current = user; }, [user]);
@@ -50,24 +52,39 @@ const Chat = () => {
         if (!token) return;
 
         const newSocket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000', {
-            auth: { token }
+            auth: { token },
+            transports: ['websocket', 'polling'] // Try both for better compatibility
         });
 
         newSocket.on('connect', () => {
-            console.log('Connected to socket');
+            console.log('[Socket] Connected with ID:', newSocket.id);
+            setIsConnected(true);
+        });
+
+        newSocket.on('connect_error', (error) => {
+            console.error('[Socket] Connection error:', error);
+            setIsConnected(false);
+        });
+
+        newSocket.on('disconnect', (reason) => {
+            console.log('[Socket] Disconnected:', reason);
+            setIsConnected(false);
         });
 
         newSocket.on('receive_message', (message: Message) => {
-            console.log('Received message via socket:', message);
+            console.log('[Socket] Message received:', message);
             setMessages((prev) => {
                 // Check for duplicates by ID
-                if (prev.some(m => String(m.id) === String(message.id))) {
-                    console.log('Duplicate message ignored');
+                const isDuplicate = prev.some(m => String(m.id) === String(message.id));
+                if (isDuplicate) {
+                    console.log('[Socket] Duplicate message ignored:', message.id);
                     return prev;
                 }
 
                 // If message is from me, try to replace the temporary optimistic message
                 const currentUserId = String(userRef.current?.id);
+                console.log('[Socket] Comparing sender', message.senderId, 'with current user', currentUserId);
+
                 if (String(message.senderId) === currentUserId) {
                      const tempIdx = prev.findIndex(m => 
                         String(m.senderId) === currentUserId && 
@@ -76,13 +93,14 @@ const Chat = () => {
                      );
                      
                      if (tempIdx !== -1) {
-                         console.log('Replacing temp message with official one');
+                         console.log('[Socket] Replacing temp message at index:', tempIdx);
                          const newPrev = [...prev];
                          newPrev[tempIdx] = message;
                          return newPrev;
                      }
                 }
                 
+                console.log('[Socket] Adding new message to list');
                 return [...prev, message];
             });
         });
@@ -297,8 +315,12 @@ const Chat = () => {
         <div className="flex h-[calc(100vh-100px)] bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
             {/* Sidebar */}
             <div className="w-1/4 border-r border-gray-200 dark:border-gray-700 flex flex-col">
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
                     <h2 className="font-semibold text-gray-700 dark:text-gray-200">Discussions</h2>
+                    <div className="flex items-center gap-1">
+                        <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500 animate-pulse'}`}></div>
+                        <span className="text-[10px] text-gray-500 uppercase">{isConnected ? 'Connecté' : 'Déconnecté'}</span>
+                    </div>
                 </div>
                 <div className="flex-1 overflow-y-auto">
                     {contacts.map(contact => (
