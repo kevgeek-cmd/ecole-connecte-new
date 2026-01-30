@@ -112,6 +112,7 @@ const CourseDetails = () => {
   const fetchCourseDetails = async () => {
     try {
       if (!id) return;
+      setError(null);
 
       // Fetch course first to ensure it exists and we have access
       try {
@@ -119,6 +120,7 @@ const CourseDetails = () => {
         setCourse(courseRes.data);
       } catch (err) {
         console.error("Error fetching course info", err);
+        setError("Impossible de charger les détails du cours.");
         // If course fetch fails, no point fetching others
         return; 
       }
