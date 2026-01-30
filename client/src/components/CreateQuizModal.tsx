@@ -66,9 +66,18 @@ const CreateQuizModal = ({ courseId, onClose, onSuccess }: CreateQuizModalProps)
 
             await api.post('/quizzes', { ...data, courseId });
             onSuccess();
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setError("Erreur lors de la création du QCM.");
+            const errorMessage = err.response?.data?.message || err.message || "Erreur lors de la création du QCM.";
+            const validationErrors = err.response?.data?.errors;
+            
+            if (validationErrors) {
+                // Construct a more detailed error message from Zod errors
+                const details = validationErrors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ');
+                setError(`${errorMessage} (${details})`);
+            } else {
+                setError(errorMessage);
+            }
         } finally {
             setIsSubmitting(false);
         }

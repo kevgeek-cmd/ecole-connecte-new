@@ -10,7 +10,7 @@ const createQuizSchema = z.object({
   questions: z.array(z.object({
     text: z.string().min(1),
     type: z.enum(["SINGLE", "MULTIPLE"]),
-    points: z.number().int().min(1),
+    points: z.coerce.number().int().min(1),
     options: z.array(z.object({
       text: z.string().min(1),
       isCorrect: z.boolean()
@@ -21,6 +21,9 @@ const createQuizSchema = z.object({
 export const createQuiz = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?.id;
+        console.log("Creating quiz for user:", userId);
+        console.log("Quiz data:", JSON.stringify(req.body, null, 2));
+
         const validatedData = createQuizSchema.parse(req.body);
 
         // Verify teacher owns the course
@@ -28,7 +31,11 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
             where: { id: validatedData.courseId }
         });
 
-        if (!course || course.teacherId !== userId) {
+        if (!course) {
+             return res.status(404).json({ message: "Course not found" });
+        }
+
+        if (course.teacherId !== userId) {
             return res.status(403).json({ message: "Unauthorized to create quiz for this course" });
         }
 
@@ -59,7 +66,10 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
         res.status(201).json(quiz);
     } catch (error) {
         console.error("Create quiz error", error);
-        res.status(500).json({ message: "Error creating quiz", error });
+        if (error instanceof z.ZodError) {
+             return res.status(400).json({ message: "Validation error", errors: error.errors });
+        }
+        res.status(500).json({ message: "Error creating quiz", error: (error as Error).message });
     }
 };
 
