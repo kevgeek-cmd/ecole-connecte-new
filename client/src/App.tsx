@@ -15,6 +15,8 @@ import StudentReportCards from './pages/StudentReportCards';
 import Library from './pages/Library';
 import Chat from './pages/Chat';
 import QuizTake from './pages/QuizTake';
+import QuizAttemptsList from './pages/QuizAttemptsList';
+import QuizAttemptDetail from './pages/QuizAttemptDetail';
 import Broadcast from './pages/Broadcast';
 import ProtectedRoute from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar';
@@ -75,6 +77,8 @@ function App() {
                 <Route path="/library" element={<Library />} />
                 <Route path="/chat" element={<Chat />} />
                 <Route path="/quizzes/:id" element={<QuizTake />} />
+                <Route path="/quizzes/:id/attempts" element={<QuizAttemptsList />} />
+                <Route path="/quizzes/attempts/:id" element={<QuizAttemptDetail />} />
               </Route>
 
               {/* Student Only */}

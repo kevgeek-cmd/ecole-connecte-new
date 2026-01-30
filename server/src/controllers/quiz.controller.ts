@@ -184,23 +184,113 @@ export const getQuizzes = async (req: AuthRequest, res: Response) => {
 export const getQuiz = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
+        const userId = req.user?.id;
+        const userRole = req.user?.role;
+
         const quiz = await prisma.quiz.findUnique({
             where: { id: String(id) },
             include: {
                 questions: {
                     include: {
-                        options: {
-                            select: { id: true, text: true } // Hide isCorrect from students
-                        }
+                        options: true
                     }
-                }
+                },
+                course: true
             }
         });
 
         if (!quiz) return res.status(404).json({ message: "Quiz not found" });
+
+        // If student, hide correct answers unless they already attempted it
+        if (userRole === 'STUDENT') {
+            const attempt = await prisma.quizAttempt.findFirst({
+                where: { quizId: quiz.id, studentId: userId }
+            });
+
+            if (!attempt) {
+                // Hide isCorrect from options
+                quiz.questions.forEach(q => {
+                    q.options.forEach(o => {
+                        (o as any).isCorrect = undefined;
+                    });
+                });
+            }
+        }
+
         res.json(quiz);
     } catch (error) {
         res.status(500).json({ message: "Error fetching quiz", error });
+    }
+};
+
+export const getQuizAttempts = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params; // Quiz ID
+        const userId = req.user?.id;
+
+        const quiz = await prisma.quiz.findUnique({
+            where: { id: String(id) },
+            include: { course: true }
+        });
+
+        if (!quiz) return res.status(404).json({ message: "Quiz not found" });
+        if (quiz.course.teacherId !== userId) {
+            return res.status(403).json({ message: "Unauthorized" });
+        }
+
+        const attempts = await prisma.quizAttempt.findMany({
+            where: { quizId: String(id) },
+            include: {
+                student: {
+                    select: { id: true, firstName: true, lastName: true, email: true }
+                }
+            },
+            orderBy: { completedAt: 'desc' }
+        });
+
+        res.json(attempts);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching attempts", error });
+    }
+};
+
+export const getAttemptDetail = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params; // Attempt ID
+        const userId = req.user?.id;
+        const userRole = req.user?.role;
+
+        const attempt = await prisma.quizAttempt.findUnique({
+            where: { id: String(id) },
+            include: {
+                quiz: {
+                    include: {
+                        questions: {
+                            include: { options: true }
+                        },
+                        course: true
+                    }
+                },
+                answers: true,
+                student: {
+                    select: { id: true, firstName: true, lastName: true }
+                }
+            }
+        });
+
+        if (!attempt) return res.status(404).json({ message: "Attempt not found" });
+
+        // Authorization: only the student who did it or the teacher of the course
+        if (userRole === 'STUDENT' && attempt.studentId !== userId) {
+            return res.status(403).json({ message: "Unauthorized" });
+        }
+        if (userRole === 'TEACHER' && attempt.quiz.course.teacherId !== userId) {
+            return res.status(403).json({ message: "Unauthorized" });
+        }
+
+        res.json(attempt);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching attempt detail", error });
     }
 };
 

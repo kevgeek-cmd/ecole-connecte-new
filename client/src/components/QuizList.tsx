@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Plus, CheckCircle, Clock, PlayCircle, Edit2, Trash2, AlertTriangle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Plus, CheckCircle, Clock, PlayCircle, Edit2, Trash2, AlertTriangle, Eye } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import CreateQuizModal from './CreateQuizModal';
 import api from '../utils/api';
 
@@ -9,7 +9,7 @@ interface Quiz {
     title: string;
     description?: string;
     _count: { questions: number };
-    attempts?: { score: number }[];
+    attempts?: { id: string, score: number }[];
     questions?: any[];
 }
 
@@ -25,6 +25,7 @@ const QuizList = ({ courseId, isTeacher, quizzes, onUpdate }: QuizListProps) => 
     const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
     const [deletingQuizId, setDeletingQuizId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const navigate = useNavigate();
 
     const handleDelete = async () => {
         if (!deletingQuizId) return;
@@ -78,6 +79,8 @@ const QuizList = ({ courseId, isTeacher, quizzes, onUpdate }: QuizListProps) => 
                 
                 {quizzes.map((quiz) => {
                     const hasAttempted = !isTeacher && quiz.attempts && quiz.attempts.length > 0;
+                    const attemptId = hasAttempted ? quiz.attempts![0].id : null;
+                    
                     return (
                         <div key={quiz.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition">
                             <div className="flex justify-between items-start">
@@ -92,7 +95,7 @@ const QuizList = ({ courseId, isTeacher, quizzes, onUpdate }: QuizListProps) => 
                                         {hasAttempted && (
                                             <span className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
                                                 <CheckCircle className="w-4 h-4" />
-                                                Dernier score: {quiz.attempts![0].score.toFixed(1)}/20
+                                                Note: {quiz.attempts![0].score.toFixed(1)}/20
                                             </span>
                                         )}
                                     </div>
@@ -101,6 +104,13 @@ const QuizList = ({ courseId, isTeacher, quizzes, onUpdate }: QuizListProps) => 
                                 <div className="flex items-center gap-2">
                                     {isTeacher ? (
                                         <>
+                                            <button
+                                                onClick={() => navigate(`/quizzes/${quiz.id}/attempts`)}
+                                                className="p-2 text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition"
+                                                title="Voir les résultats"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </button>
                                             <button
                                                 onClick={() => openEditModal(quiz.id)}
                                                 className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition"
@@ -118,10 +128,13 @@ const QuizList = ({ courseId, isTeacher, quizzes, onUpdate }: QuizListProps) => 
                                         </>
                                     ) : (
                                         hasAttempted ? (
-                                            <div className="px-4 py-2 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg font-medium flex items-center gap-2">
+                                            <Link
+                                                to={`/quizzes/attempts/${attemptId}`}
+                                                className="px-4 py-2 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg font-medium flex items-center gap-2 hover:bg-green-100 dark:hover:bg-green-900/50 transition"
+                                            >
                                                 <CheckCircle className="w-4 h-4" />
-                                                Terminé
-                                            </div>
+                                                Voir mes erreurs
+                                            </Link>
                                         ) : (
                                             <Link
                                                 to={`/quizzes/${quiz.id}`}

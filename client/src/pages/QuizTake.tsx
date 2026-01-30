@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, ArrowRight, ArrowLeft, AlertTriangle } from 'lucide-react';
+import { CheckCircle, ArrowRight, ArrowLeft, AlertTriangle, Info } from 'lucide-react';
 import api from '../utils/api';
 
 interface Option {
@@ -31,7 +31,7 @@ const QuizTake = () => {
     const [currentStep, setCurrentStep] = useState(0); // 0 = Intro, 1...N = Questions, N+1 = Review
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
-    const [result, setResult] = useState<{ score: number, totalPoints: number } | null>(null);
+    const [result, setResult] = useState<{ score: number, totalPoints: number, attemptId: string } | null>(null);
 
     useEffect(() => {
         if (id) {
@@ -60,7 +60,8 @@ const QuizTake = () => {
             const res = await api.post(`/quizzes/${id}/submit`, { answers });
             setResult({
                 score: res.data.attempt.score,
-                totalPoints: 20 // Always scaled to 20
+                totalPoints: 20, // Always scaled to 20
+                attemptId: res.data.attempt.id
             });
             setShowConfirmModal(false);
         } catch (error: any) {
@@ -113,12 +114,21 @@ const QuizTake = () => {
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">Votre note finale</p>
 
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-                    >
-                        Retour au cours
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <button
+                            onClick={() => navigate(`/quizzes/attempts/${result.attemptId}`)}
+                            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium flex items-center justify-center gap-2"
+                        >
+                            <Info className="w-5 h-5" />
+                            Voir mes erreurs
+                        </button>
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition font-medium"
+                        >
+                            Retour au cours
+                        </button>
+                    </div>
                 </div>
             </div>
         );
