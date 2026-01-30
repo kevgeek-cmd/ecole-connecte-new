@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { io, Socket } from 'socket.io-client';
 import api from '../utils/api';
 import { Send, User, Users, Circle, Paperclip, FileText, X } from 'lucide-react';
+import { supabase } from '../utils/supabase';
 
 interface Message {
     id: string;
@@ -44,6 +45,41 @@ const Chat = () => {
 
     const [isConnected, setIsConnected] = useState(false);
 
+    // Supabase Realtime for new messages
+    useEffect(() => {
+        if (!user) return;
+
+        console.log('[Supabase] Subscribing to Message table...');
+        const channel = supabase
+            .channel('public:Message')
+            .on('postgres_changes', { 
+                event: 'INSERT', 
+                schema: 'public', 
+                table: 'Message' 
+            }, async (payload) => {
+                console.log('[Supabase] New message received:', payload.new);
+                const newMessage = payload.new as any;
+                
+                setMessages(prev => {
+                    if (prev.find(m => String(m.id) === String(newMessage.id))) return prev;
+                    
+                    const formattedMessage: Message = {
+                        ...newMessage,
+                        sender: newMessage.sender || { firstName: '...', lastName: '' }
+                    };
+                    return [...prev, formattedMessage];
+                });
+            })
+            .subscribe((status) => {
+                console.log('[Supabase] Subscription status:', status);
+                if (status === 'SUBSCRIBED') setIsConnected(true);
+            });
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [user]);
+
     // Use a ref for user to access current value inside socket listeners
     const userRef = useRef(user);
     useEffect(() => { userRef.current = user; }, [user]);
@@ -64,49 +100,22 @@ const Chat = () => {
 
         newSocket.on('connect', () => {
             console.log('[Socket] Connected with ID:', newSocket.id);
-            setIsConnected(true);
         });
 
         newSocket.on('connect_error', (error) => {
             console.error('[Socket] Connection error:', error);
-            setIsConnected(false);
         });
 
         newSocket.on('disconnect', (reason) => {
             console.log('[Socket] Disconnected:', reason);
-            setIsConnected(false);
         });
 
         newSocket.on('receive_message', (message: Message) => {
-            console.log('[Socket] Message received:', message);
+            console.log('[Socket] Message received via socket:', message);
+            // Still handling via socket for legacy/fallback if needed, though Supabase is primary now
             setMessages((prev) => {
-                // Check for duplicates by ID
                 const isDuplicate = prev.some(m => String(m.id) === String(message.id));
-                if (isDuplicate) {
-                    console.log('[Socket] Duplicate message ignored:', message.id);
-                    return prev;
-                }
-
-                // If message is from me, try to replace the temporary optimistic message
-                const currentUserId = String(userRef.current?.id);
-                console.log('[Socket] Comparing sender', message.senderId, 'with current user', currentUserId);
-
-                if (String(message.senderId) === currentUserId) {
-                     const tempIdx = prev.findIndex(m => 
-                        String(m.senderId) === currentUserId && 
-                        String(m.id).startsWith('temp-') &&
-                        (m.content.trim() === message.content.trim() || (m.attachmentUrl && m.attachmentUrl === message.attachmentUrl))
-                     );
-                     
-                     if (tempIdx !== -1) {
-                         console.log('[Socket] Replacing temp message at index:', tempIdx);
-                         const newPrev = [...prev];
-                         newPrev[tempIdx] = message;
-                         return newPrev;
-                     }
-                }
-                
-                console.log('[Socket] Adding new message to list');
+                if (isDuplicate) return prev;
                 return [...prev, message];
             });
         });
@@ -265,10 +274,22 @@ const Chat = () => {
         
         setMessages(prev => [...prev, tempMessage]);
 
-        socket.emit('send_message', messageData);
-        setNewMessage('');
-        setSelectedFile(null);
-        if (fileInputRef.current) fileInputRef.current.value = '';
+        try {
+            const res = await api.post('/chat/send', messageData);
+            const savedMessage = res.data;
+            
+            // Replace the temporary message with the saved one
+            setMessages(prev => prev.map(m => m.id === tempMessage.id ? savedMessage : m));
+            
+            setNewMessage('');
+            setSelectedFile(null);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        } catch (error) {
+            console.error("Error sending message via API:", error);
+            alert("Erreur lors de l'envoi du message");
+            // Optionally remove the temp message or mark it as failed
+            setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
+        }
     };
 
     // Filter messages for current view

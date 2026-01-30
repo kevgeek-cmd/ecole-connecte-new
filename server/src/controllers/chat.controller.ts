@@ -3,6 +3,40 @@ import { supabase, uploadToSupabase } from "../utils/supabase.js";
 import prisma from "../utils/prisma.js";
 import type { AuthRequest } from "../middleware/auth.js";
 
+export const sendMessage = async (req: AuthRequest, res: Response) => {
+    try {
+        const { content, receiverId, classId, attachmentUrl, attachmentType } = req.body;
+        const senderId = req.user?.id;
+
+        if (!senderId) return res.status(401).json({ message: "Unauthorized" });
+
+        const message = await prisma.message.create({
+            data: {
+                content,
+                senderId,
+                receiverId: receiverId ? String(receiverId) : null,
+                classId: classId ? String(classId) : null,
+                attachmentUrl,
+                attachmentType
+            },
+            include: {
+                sender: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true
+                    }
+                }
+            }
+        });
+
+        res.status(201).json(message);
+    } catch (error) {
+        console.error("Error sending message:", error);
+        res.status(500).json({ message: "Error sending message" });
+    }
+};
+
 export const uploadChatFile = async (req: AuthRequest, res: Response) => {
     try {
         if (!req.file) {
