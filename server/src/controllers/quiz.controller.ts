@@ -73,9 +73,92 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
     }
 };
 
+export const deleteQuiz = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user?.id;
+
+        const quiz = await prisma.quiz.findUnique({
+            where: { id: String(id) },
+            include: { course: true }
+        });
+
+        if (!quiz) return res.status(404).json({ message: "Quiz not found" });
+        if (quiz.course.teacherId !== userId) {
+            return res.status(403).json({ message: "Unauthorized to delete this quiz" });
+        }
+
+        await prisma.quiz.delete({
+            where: { id: String(id) }
+        });
+
+        res.json({ message: "Quiz deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Error deleting quiz", error });
+    }
+};
+
+export const updateQuiz = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user?.id;
+        
+        const quiz = await prisma.quiz.findUnique({
+            where: { id: String(id) },
+            include: { course: true }
+        });
+
+        if (!quiz) return res.status(404).json({ message: "Quiz not found" });
+        if (quiz.course.teacherId !== userId) {
+            return res.status(403).json({ message: "Unauthorized to update this quiz" });
+        }
+
+        const validatedData = createQuizSchema.parse(req.body);
+
+        // Delete existing questions and options and recreate them
+        // This is a simpler way than trying to sync changes
+        await prisma.quizQuestion.deleteMany({
+            where: { quizId: String(id) }
+        });
+
+        const updatedQuiz = await prisma.quiz.update({
+            where: { id: String(id) },
+            data: {
+                title: validatedData.title,
+                description: validatedData.description,
+                questions: {
+                    create: validatedData.questions.map(q => ({
+                        text: q.text,
+                        type: q.type,
+                        points: q.points,
+                        options: {
+                            create: q.options
+                        }
+                    }))
+                }
+            },
+            include: {
+                questions: {
+                    include: { options: true }
+                }
+            }
+        });
+
+        res.json(updatedQuiz);
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json({ message: "Validation error", errors: (error as any).errors });
+        }
+        res.status(500).json({ message: "Error updating quiz", error });
+    }
+};
+
 export const getQuizzes = async (req: AuthRequest, res: Response) => {
     try {
         const { courseId } = req.query;
+        const userId = req.user?.id;
+        const userRole = req.user?.role;
+
         if (!courseId) return res.status(400).json({ message: "Course ID required" });
 
         const quizzes = await prisma.quiz.findMany({
@@ -83,7 +166,11 @@ export const getQuizzes = async (req: AuthRequest, res: Response) => {
             include: {
                 _count: {
                     select: { questions: true }
-                }
+                },
+                attempts: userRole === 'STUDENT' ? {
+                    where: { studentId: userId },
+                    select: { score: true }
+                } : false
             },
             orderBy: { createdAt: 'desc' }
         });
@@ -124,6 +211,18 @@ export const submitQuizAttempt = async (req: AuthRequest, res: Response) => {
         const { answers } = req.body; // { questionId: [optionId] }
 
         if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+        // Check if student already submitted an attempt
+        const existingAttempt = await prisma.quizAttempt.findFirst({
+            where: {
+                quizId: String(id),
+                studentId: userId
+            }
+        });
+
+        if (existingAttempt) {
+            return res.status(400).json({ message: "Vous avez déjà effectué ce quiz." });
+        }
 
         const quiz = await prisma.quiz.findUnique({
             where: { id: String(id) },

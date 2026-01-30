@@ -7,14 +7,17 @@ interface CreateQuizModalProps {
     courseId: string;
     onClose: () => void;
     onSuccess: () => void;
+    initialData?: any; // For editing
 }
 
 interface Option {
+    id?: string;
     text: string;
     isCorrect: boolean;
 }
 
 interface Question {
+    id?: string;
     text: string;
     type: 'SINGLE' | 'MULTIPLE';
     points: number;
@@ -27,9 +30,10 @@ interface QuizForm {
     questions: Question[];
 }
 
-const CreateQuizModal = ({ courseId, onClose, onSuccess }: CreateQuizModalProps) => {
+const CreateQuizModal = ({ courseId, onClose, onSuccess, initialData }: CreateQuizModalProps) => {
+    const isEditing = !!initialData;
     const { register, control, handleSubmit, formState: { errors } } = useForm<QuizForm>({
-        defaultValues: {
+        defaultValues: initialData || {
             questions: [{ 
                 text: '', 
                 type: 'SINGLE', 
@@ -64,11 +68,15 @@ const CreateQuizModal = ({ courseId, onClose, onSuccess }: CreateQuizModalProps)
                 }
             }
 
-            await api.post('/quizzes', { ...data, courseId });
+            if (isEditing) {
+                await api.put(`/quizzes/${initialData.id}`, { ...data, courseId });
+            } else {
+                await api.post('/quizzes', { ...data, courseId });
+            }
             onSuccess();
         } catch (err: any) {
             console.error(err);
-            const errorMessage = err.response?.data?.message || err.message || "Erreur lors de la création du QCM.";
+            const errorMessage = err.response?.data?.message || err.message || `Erreur lors de la ${isEditing ? 'modification' : 'création'} du QCM.`;
             const validationErrors = err.response?.data?.errors;
             
             if (validationErrors) {
@@ -87,7 +95,7 @@ const CreateQuizModal = ({ courseId, onClose, onSuccess }: CreateQuizModalProps)
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto py-10">
             <div className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-xl">
                 <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center sticky top-0 bg-white dark:bg-gray-800 z-10">
-                    <h2 className="text-xl font-bold dark:text-white">Créer un nouveau QCM</h2>
+                    <h2 className="text-xl font-bold dark:text-white">{isEditing ? 'Modifier le QCM' : 'Créer un nouveau QCM'}</h2>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full dark:text-gray-300">
                         <X className="w-5 h-5" />
                     </button>
@@ -162,7 +170,7 @@ const CreateQuizModal = ({ courseId, onClose, onSuccess }: CreateQuizModalProps)
                             disabled={isSubmitting}
                             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                         >
-                            {isSubmitting ? 'Création...' : 'Créer le QCM'}
+                            {isSubmitting ? (isEditing ? 'Modification...' : 'Création...') : (isEditing ? 'Modifier le QCM' : 'Créer le QCM')}
                         </button>
                     </div>
                 </form>
