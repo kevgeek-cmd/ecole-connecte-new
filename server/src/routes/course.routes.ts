@@ -19,6 +19,7 @@ router.use(authenticate);
 router.get("/library", getLibrary); // Specific route first
 router.post("/", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER", "IT_ADMIN"]), createCourse);
 router.get("/", getCourses);
+router.get("/:id", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER", "IT_ADMIN", "STUDENT"]), getCourse);
 router.delete("/:id", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER", "IT_ADMIN"]), deleteCourse);
 
 // Material routes nested under course
