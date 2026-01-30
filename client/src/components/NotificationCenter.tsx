@@ -86,27 +86,27 @@ const NotificationCenter = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg overflow-hidden z-50 border border-gray-200">
-          <div className="py-2 px-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-            <h3 className="text-sm font-semibold text-gray-700">Notifications</h3>
-            <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600">
+        <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden z-50 border border-gray-200 dark:border-gray-700">
+          <div className="py-2 px-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-white">Notifications</h3>
+            <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                 <X className="w-4 h-4" />
             </button>
           </div>
           
           <div className="max-h-96 overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="py-4 text-center text-gray-500 text-sm">Aucune notification</div>
+              <div className="py-4 text-center text-gray-500 dark:text-gray-400 text-sm">Aucune notification</div>
             ) : (
               <ul>
                 {notifications.map((notification) => (
                   <li 
                     key={notification.id} 
-                    className={`border-b border-gray-100 last:border-0 p-4 hover:bg-gray-50 transition cursor-pointer ${!notification.read ? 'bg-blue-50' : ''}`}
+                    className={`border-b border-gray-100 dark:border-gray-700 last:border-0 p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer ${!notification.read ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
                     onClick={() => !notification.read && markAsRead(notification.id)}
                   >
                     <div className="flex justify-between items-start mb-1">
-                        <span className={`font-medium text-sm ${!notification.read ? 'text-blue-800' : 'text-gray-800'}`}>
+                        <span className={`font-medium text-sm ${!notification.read ? 'text-blue-800 dark:text-blue-300' : 'text-gray-800 dark:text-gray-200'}`}>
                             {notification.title}
                         </span>
                         <div className="flex items-center gap-1">
@@ -122,8 +122,8 @@ const NotificationCenter = () => {
                             </button>
                         </div>
                     </div>
-                    <p className="text-xs text-gray-600 mb-2 line-clamp-3">{notification.message}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-3">{notification.message}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
                         {new Date(notification.createdAt).toLocaleDateString()} {new Date(notification.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                     </p>
                   </li>

@@ -278,33 +278,33 @@ const AssignmentDetails = () => {
       {/* Submit Modal */}
       {isSubmitModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-xl w-full max-w-md">
-            <h2 className="text-xl font-bold mb-6">Rendre votre devoir</h2>
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-xl w-full max-w-md shadow-xl border border-transparent dark:border-gray-700">
+            <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Rendre votre devoir</h2>
             <form onSubmit={handleSubmitSubmit(onSubmitWork)} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contenu (Texte)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contenu (Texte)</label>
                 <textarea
                   {...registerSubmit('content')}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                   rows={4}
                   placeholder="Écrivez votre réponse ici..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fichier (PDF, Word, Image...)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fichier (PDF, Word, Image...)</label>
                 <input
                   type="file"
                   {...registerSubmit('file')}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ou Lien vers un fichier (URL)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ou Lien vers un fichier (URL)</label>
                 <input
                   {...registerSubmit('fileUrl')}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                   placeholder="https://..."
                 />
               </div>
@@ -313,7 +313,7 @@ const AssignmentDetails = () => {
                 <button
                   type="button"
                   onClick={() => setIsSubmitModalOpen(false)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded transition"
+                  className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
                 >
                   Annuler
                 </button>
@@ -332,26 +332,26 @@ const AssignmentDetails = () => {
       {/* Grade Modal */}
       {isGradeModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-xl w-full max-w-md">
-            <h2 className="text-xl font-bold mb-6">Noter le devoir</h2>
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-xl w-full max-w-md shadow-xl border border-transparent dark:border-gray-700">
+            <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Noter le devoir</h2>
             <form onSubmit={handleSubmitGrade(onGradeWork)} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Note (/20)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Note (/20)</label>
                 <input
                   type="number"
                   step="0.5"
                   max="20"
                   min="0"
                   {...registerGrade('value', { required: true, min: 0, max: 20 })}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Commentaire</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Commentaire</label>
                 <textarea
                   {...registerGrade('comment')}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                   rows={3}
                   placeholder="Feedback pour l'élève..."
                 />
@@ -361,7 +361,7 @@ const AssignmentDetails = () => {
                 <button
                   type="button"
                   onClick={() => setIsGradeModalOpen(false)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded transition"
+                  className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
                 >
                   Annuler
                 </button>

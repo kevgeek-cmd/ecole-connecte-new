@@ -76,10 +76,10 @@ const CreateQuizModal = ({ courseId, onClose, onSuccess }: CreateQuizModalProps)
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto py-10">
-            <div className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-                <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
-                    <h2 className="text-xl font-bold">Créer un nouveau QCM</h2>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
+            <div className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-xl">
+                <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center sticky top-0 bg-white dark:bg-gray-800 z-10">
+                    <h2 className="text-xl font-bold dark:text-white">Créer un nouveau QCM</h2>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full dark:text-gray-300">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -87,19 +87,19 @@ const CreateQuizModal = ({ courseId, onClose, onSuccess }: CreateQuizModalProps)
                 <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Titre du QCM</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Titre du QCM</label>
                             <input
                                 {...register('title', { required: 'Titre requis' })}
-                                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                                 placeholder="Ex: Évaluation Chapitre 1"
                             />
                             {errors.title && <span className="text-red-500 text-sm">{errors.title.message}</span>}
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Description (Optionnel)</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (Optionnel)</label>
                             <textarea
                                 {...register('description')}
-                                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                                 placeholder="Instructions..."
                                 rows={2}
                             />
@@ -107,7 +107,7 @@ const CreateQuizModal = ({ courseId, onClose, onSuccess }: CreateQuizModalProps)
                     </div>
 
                     <div className="space-y-6">
-                        <h3 className="font-bold text-gray-800">Questions</h3>
+                        <h3 className="font-bold text-gray-800 dark:text-white">Questions</h3>
                         
                         {questions.map((question, qIndex) => (
                             <QuestionField 
@@ -127,7 +127,7 @@ const CreateQuizModal = ({ courseId, onClose, onSuccess }: CreateQuizModalProps)
                                 points: 1, 
                                 options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }] 
                             })}
-                            className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-blue-500 hover:text-blue-500 transition flex items-center justify-center gap-2"
+                            className="w-full py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 hover:border-blue-500 hover:text-blue-500 dark:hover:text-blue-400 transition flex items-center justify-center gap-2"
                         >
                             <Plus className="w-4 h-4" />
                             Ajouter une question
@@ -135,16 +135,16 @@ const CreateQuizModal = ({ courseId, onClose, onSuccess }: CreateQuizModalProps)
                     </div>
 
                     {error && (
-                        <div className="bg-red-50 text-red-600 p-4 rounded-lg">
+                        <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-4 rounded-lg">
                             {error}
                         </div>
                     )}
 
-                    <div className="flex justify-end gap-3 pt-4 border-t">
+                    <div className="flex justify-end gap-3 pt-4 border-t dark:border-gray-700">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-6 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                            className="px-6 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                         >
                             Annuler
                         </button>
@@ -170,11 +170,11 @@ const QuestionField = ({ qIndex, control, register, onRemove }: any) => {
     });
 
     return (
-        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 relative">
+        <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-700 relative">
             <button
                 type="button"
                 onClick={onRemove}
-                className="absolute top-4 right-4 text-gray-400 hover:text-red-500"
+                className="absolute top-4 right-4 text-gray-400 hover:text-red-500 dark:hover:text-red-400"
                 title="Supprimer la question"
             >
                 <Trash2 className="w-5 h-5" />
@@ -182,35 +182,35 @@ const QuestionField = ({ qIndex, control, register, onRemove }: any) => {
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4">
                 <div className="md:col-span-8">
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Question {qIndex + 1}</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Question {qIndex + 1}</label>
                     <input
                         {...register(`questions.${qIndex}.text`, { required: true })}
-                        className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                         placeholder="Intitulé de la question"
                     />
                 </div>
                 <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Type</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Type</label>
                     <select
                         {...register(`questions.${qIndex}.type`)}
-                        className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                     >
                         <option value="SINGLE">Choix unique</option>
                         <option value="MULTIPLE">Choix multiple</option>
                     </select>
                 </div>
                 <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Points</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Points</label>
                     <input
                         type="number"
                         min="1"
                         {...register(`questions.${qIndex}.points`, { valueAsNumber: true })}
-                        className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                     />
                 </div>
             </div>
 
-            <div className="space-y-3 pl-4 border-l-2 border-gray-300">
+            <div className="space-y-3 pl-4 border-l-2 border-gray-300 dark:border-gray-600">
                 {options.map((option: any, oIndex: number) => (
                     <div key={option.id} className="flex items-center gap-3">
                         <input
@@ -221,13 +221,13 @@ const QuestionField = ({ qIndex, control, register, onRemove }: any) => {
                         />
                         <input
                             {...register(`questions.${qIndex}.options.${oIndex}.text`, { required: true })}
-                            className="flex-1 p-2 border rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="flex-1 p-2 border rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                             placeholder={`Réponse ${oIndex + 1}`}
                         />
                         <button
                             type="button"
                             onClick={() => removeOption(oIndex)}
-                            className="text-gray-400 hover:text-red-500"
+                            className="text-gray-400 hover:text-red-500 dark:hover:text-red-400"
                             disabled={options.length <= 2}
                         >
                             <X className="w-4 h-4" />
@@ -237,7 +237,7 @@ const QuestionField = ({ qIndex, control, register, onRemove }: any) => {
                 <button
                     type="button"
                     onClick={() => appendOption({ text: '', isCorrect: false })}
-                    className="text-sm text-blue-600 hover:underline flex items-center gap-1 mt-2"
+                    className="text-sm text-blue-600 hover:underline flex items-center gap-1 mt-2 dark:text-blue-400"
                 >
                     <Plus className="w-3 h-3" /> Ajouter une réponse
                 </button>

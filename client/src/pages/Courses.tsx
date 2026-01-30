@@ -186,15 +186,15 @@ const Courses = () => {
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl w-full max-w-sm">
-            <h2 className="text-lg font-bold text-gray-800 mb-2">Confirmer la suppression</h2>
-            <p className="text-gray-600 mb-6">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl w-full max-w-sm shadow-xl border border-transparent dark:border-gray-700">
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Confirmer la suppression</h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
                 Êtes-vous sûr de vouloir supprimer ce cours ? Cette action est irréversible et supprimera tous les devoirs et contenus associés.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setIsDeleteModalOpen(false)}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
               >
                 Annuler
               </button>
@@ -212,15 +212,15 @@ const Courses = () => {
       {/* Create Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-xl w-full max-w-md">
-            <h2 className="text-xl font-bold mb-6">{isAdmin ? 'Attribuer un cours' : 'Créer un nouveau cours'}</h2>
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-xl w-full max-w-md shadow-xl border border-transparent dark:border-gray-700">
+            <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">{isAdmin ? 'Attribuer un cours' : 'Créer un nouveau cours'}</h2>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Classe</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Classe</label>
                 <select
                   {...register('classId', { required: 'La classe est requise' })}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 >
                     <option value="">Sélectionner une classe</option>
                     {classes.map(c => (
@@ -231,10 +231,10 @@ const Courses = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Matière</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Matière</label>
                 <select
                   {...register('subjectId', { required: 'La matière est requise' })}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 >
                     <option value="">Sélectionner une matière</option>
                     {subjects.map(s => (
@@ -245,22 +245,22 @@ const Courses = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Coefficient</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Coefficient</label>
                 <input
                   type="number"
                   min="1"
                   {...register('coefficient', { required: 'Le coefficient est requis', valueAsNumber: true })}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   defaultValue={1}
                 />
               </div>
 
               {isAdmin && (
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Enseignant</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Enseignant</label>
                     <select
                     {...register('teacherId', { required: 'L\'enseignant est requis' })}
-                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     >
                         <option value="">Sélectionner un enseignant</option>
                         {teachers.map(t => (
@@ -272,12 +272,12 @@ const Courses = () => {
               )}
 
               {submitError && (
-                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
+                <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm">
                   {submitError}
                 </div>
               )}
 
-              <div className="bg-blue-50 text-blue-700 p-3 rounded-lg text-sm">
+              <div className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 p-3 rounded-lg text-sm">
                 <p className="font-medium">Note :</p>
                 <p>Vous pourrez ajouter du contenu (PDF, Vidéo, etc.) une fois le cours créé, en cliquant dessus.</p>
               </div>
@@ -286,7 +286,7 @@ const Courses = () => {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded transition"
+                  className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
                   disabled={isSubmitting}
                 >
                   Annuler

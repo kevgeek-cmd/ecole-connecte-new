@@ -352,24 +352,24 @@ const Classes = () => {
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-xl w-full max-w-md">
-            <h2 className="text-xl font-bold mb-6">{editingClass ? 'Modifier la classe' : 'Ajouter une classe'}</h2>
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-xl w-full max-w-md shadow-xl border border-transparent dark:border-gray-700">
+            <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">{editingClass ? 'Modifier la classe' : 'Ajouter une classe'}</h2>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nom de la classe</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nom de la classe</label>
                 <input
                   {...register('name', { required: 'Le nom est requis' })}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   placeholder="Ex: 6ème A"
                 />
                 {errors.name && <span className="text-red-500 text-sm">{errors.name.message as string}</span>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Niveau</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Niveau</label>
                  <select 
                     {...register('level')}
-                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                  >
                     <option value="">Sélectionner un niveau</option>
                     <option value="6eme">6ème</option>
@@ -386,7 +386,7 @@ const Classes = () => {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded transition"
+                  className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
                 >
                   Annuler
                 </button>
@@ -405,10 +405,10 @@ const Classes = () => {
       {/* Students Modal */}
       {isStudentsModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-xl w-full max-w-lg max-h-[80vh] flex flex-col">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-xl border border-transparent dark:border-gray-700">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold">Élèves - {selectedClassName}</h2>
-                    <button onClick={() => setIsStudentsModalOpen(false)} className="text-gray-500 hover:text-gray-700">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Élèves - {selectedClassName}</h2>
+                    <button onClick={() => setIsStudentsModalOpen(false)} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
                         <X className="w-6 h-6" />
                     </button>
                 </div>
@@ -421,14 +421,14 @@ const Classes = () => {
                                     setIsAddingStudent(true);
                                     fetchAllStudents();
                                 }}
-                                className="text-sm bg-blue-50 text-blue-600 px-3 py-2 rounded hover:bg-blue-100 transition flex items-center gap-2"
+                                className="text-sm bg-blue-50 text-blue-600 px-3 py-2 rounded hover:bg-blue-100 transition flex items-center gap-2 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
                             >
                                 <Plus className="w-4 h-4" />
                                 Ajouter un élève existant
                             </button>
                             <button
                                 onClick={() => setIsImportingMode(true)}
-                                className="text-sm bg-green-50 text-green-600 px-3 py-2 rounded hover:bg-green-100 transition flex items-center gap-2"
+                                className="text-sm bg-green-50 text-green-600 px-3 py-2 rounded hover:bg-green-100 transition flex items-center gap-2 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50"
                             >
                                 <Upload className="w-4 h-4" />
                                 Importer Excel
@@ -438,11 +438,11 @@ const Classes = () => {
                         <>
                                     <div className="flex justify-between items-center mb-6">
                                         <div className="space-y-2">
-                                            <h3 className="font-medium text-green-800 flex items-center gap-2">
+                                            <h3 className="font-medium text-green-800 dark:text-green-300 flex items-center gap-2">
                                                 <Upload className="w-4 h-4" />
                                                 Importer des élèves (Excel)
                                             </h3>
-                                            <div className="text-xs text-green-700">
+                                            <div className="text-xs text-green-700 dark:text-green-400">
                                                 <p>Format attendu (colonnes) :</p>
                                                 <ul className="list-disc pl-4 mt-1">
                                                     <li>Nom (obligatoire)</li>
@@ -457,14 +457,14 @@ const Classes = () => {
                                     {!importPreviewData.length ? (
                                         <div className="space-y-4">
                                             <div className="space-y-2">
-                                                <label className="block text-sm text-green-700 font-medium">
+                                                <label className="block text-sm text-green-700 dark:text-green-300 font-medium">
                                                     Fichier Excel (.xlsx, .xls)
                                                 </label>
                                                 <input 
                                                     type="file" 
                                                     accept=".xlsx, .xls, .csv" 
                                                     onChange={handleFileSelect}
-                                                    className="w-full p-2 bg-white border border-green-200 rounded text-sm"
+                                                    className="w-full p-2 bg-white border border-green-200 rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                                 />
                                             </div>
                                             <div className="flex justify-end gap-2">
@@ -474,7 +474,7 @@ const Classes = () => {
                                                         setSelectedFile(null);
                                                         setImportPreviewData([]);
                                                     }}
-                                                    className="px-3 py-2 text-green-700 text-sm hover:underline"
+                                                    className="px-3 py-2 text-green-700 dark:text-green-300 text-sm hover:underline"
                                                 >
                                                     Annuler
                                                 </button>
@@ -637,9 +637,9 @@ const Classes = () => {
       {/* Password Reset Modal */}
       {isPasswordModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-              <div className="bg-white p-6 rounded-xl w-full max-w-sm">
-                  <h3 className="font-bold text-lg mb-4">Réinitialiser le mot de passe</h3>
-                  <p className="text-sm text-gray-600 mb-4">
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl w-full max-w-sm shadow-xl border border-transparent dark:border-gray-700">
+                  <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-white">Réinitialiser le mot de passe</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                       Nouvel mot de passe pour {studentToReset?.firstName} {studentToReset?.lastName}
                   </p>
                   <input
@@ -647,18 +647,18 @@ const Classes = () => {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Nouveau mot de passe"
-                      className="w-full p-2 border rounded mb-4"
+                      className="w-full p-2 border rounded mb-4 focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   />
                   <div className="flex justify-end gap-2">
                       <button 
                           onClick={() => setIsPasswordModalOpen(false)}
-                          className="px-3 py-1 text-gray-600 hover:bg-gray-100 rounded"
+                          className="px-3 py-1 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
                       >
                           Annuler
                       </button>
                       <button 
                           onClick={confirmResetPassword}
-                          className="px-3 py-1 bg-orange-600 text-white rounded hover:bg-orange-700"
+                          className="px-3 py-1 bg-orange-600 text-white rounded hover:bg-orange-700 transition"
                       >
                           Confirmer
                       </button>
@@ -670,15 +670,15 @@ const Classes = () => {
       {/* Transfer Modal */}
       {isTransferModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-              <div className="bg-white p-6 rounded-xl w-full max-w-sm">
-                  <h3 className="font-bold text-lg mb-4">Transférer l'élève</h3>
-                  <p className="text-sm text-gray-600 mb-4">
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl w-full max-w-sm shadow-xl border border-transparent dark:border-gray-700">
+                  <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-white">Transférer l'élève</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                       Déplacer {studentToTransfer?.firstName} {studentToTransfer?.lastName} vers :
                   </p>
                   <select
                       value={targetClassId}
                       onChange={(e) => setTargetClassId(e.target.value)}
-                      className="w-full p-2 border rounded mb-4"
+                      className="w-full p-2 border rounded mb-4 focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   >
                       <option value="">Sélectionner une classe</option>
                       {classes.filter(c => c.id !== selectedClassId).map(cls => (
@@ -688,14 +688,14 @@ const Classes = () => {
                   <div className="flex justify-end gap-2">
                       <button 
                           onClick={() => setIsTransferModalOpen(false)}
-                          className="px-3 py-1 text-gray-600 hover:bg-gray-100 rounded"
+                          className="px-3 py-1 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
                       >
                           Annuler
                       </button>
                       <button 
                           onClick={confirmTransfer}
                           disabled={!targetClassId}
-                          className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                          className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition"
                       >
                           Transférer
                       </button>

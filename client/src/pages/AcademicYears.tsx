@@ -309,32 +309,32 @@ const AcademicYears = () => {
       {/* Year Modal */}
       {isYearModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-xl w-full max-w-md">
-            <h2 className="text-xl font-bold mb-6">{editingYear ? 'Modifier l\'année scolaire' : 'Ajouter une année scolaire'}</h2>
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-xl w-full max-w-md shadow-xl border border-transparent dark:border-gray-700">
+            <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">{editingYear ? 'Modifier l\'année scolaire' : 'Ajouter une année scolaire'}</h2>
             <form onSubmit={handleSubmitYear(onSubmitYear)} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nom</label>
                 <input
                   {...registerYear('name', { required: 'Le nom est requis' })}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   placeholder="Ex: 2023-2024"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Début</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Début</label>
                     <input
                     type="date"
                     {...registerYear('startDate', { required: true })}
-                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Fin</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fin</label>
                     <input
                     type="date"
                     {...registerYear('endDate', { required: true })}
-                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     />
                   </div>
               </div>
@@ -342,7 +342,7 @@ const AcademicYears = () => {
                 <button
                   type="button"
                   onClick={() => setIsYearModalOpen(false)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded transition"
+                  className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
                 >
                   Annuler
                 </button>
@@ -361,32 +361,32 @@ const AcademicYears = () => {
        {/* Term Modal */}
        {isTermModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-xl w-full max-w-md">
-            <h2 className="text-xl font-bold mb-6">Nouvelle Période</h2>
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-xl w-full max-w-md shadow-xl border border-transparent dark:border-gray-700">
+            <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Nouvelle Période</h2>
             <form onSubmit={handleSubmitTerm(onSubmitTerm)} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nom</label>
                 <input
                   {...registerTerm('name', { required: 'Le nom est requis' })}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   placeholder="Ex: Trimestre 1"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Début</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Début</label>
                     <input
                     type="date"
                     {...registerTerm('startDate', { required: true })}
-                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Fin</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fin</label>
                     <input
                     type="date"
                     {...registerTerm('endDate', { required: true })}
-                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     />
                   </div>
               </div>
@@ -394,7 +394,7 @@ const AcademicYears = () => {
                 <button
                   type="button"
                   onClick={() => setIsTermModalOpen(false)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded transition"
+                  className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
                 >
                   Annuler
                 </button>

@@ -38,25 +38,25 @@ const QuizList = ({ courseId, isTeacher, quizzes, onUpdate }: QuizListProps) => 
 
             <div className="grid gap-4">
                 {quizzes.length === 0 && (
-                    <div className="text-center py-10 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                        <p className="text-gray-500">Aucun QCM disponible pour le moment.</p>
+                    <div className="text-center py-10 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
+                        <p className="text-gray-500 dark:text-gray-400">Aucun QCM disponible pour le moment.</p>
                     </div>
                 )}
                 
                 {quizzes.map((quiz) => (
-                    <div key={quiz.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition">
+                    <div key={quiz.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition">
                         <div className="flex justify-between items-start">
                             <div>
-                                <h3 className="text-lg font-bold text-gray-800">{quiz.title}</h3>
-                                {quiz.description && <p className="text-gray-600 mt-1">{quiz.description}</p>}
-                                <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                                <h3 className="text-lg font-bold text-gray-800 dark:text-white">{quiz.title}</h3>
+                                {quiz.description && <p className="text-gray-600 dark:text-gray-300 mt-1">{quiz.description}</p>}
+                                <div className="flex items-center gap-4 mt-3 text-sm text-gray-500 dark:text-gray-400">
                                     <span className="flex items-center gap-1">
                                         <Clock className="w-4 h-4" />
                                         {quiz._count.questions} questions
                                     </span>
                                     {/* For students, show best score if attempted */}
                                     {!isTeacher && quiz.attempts && quiz.attempts.length > 0 && (
-                                        <span className="flex items-center gap-1 text-green-600 font-medium">
+                                        <span className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
                                             <CheckCircle className="w-4 h-4" />
                                             Dernier score: {quiz.attempts[0].score.toFixed(1)}/20
                                         </span>
@@ -66,13 +66,13 @@ const QuizList = ({ courseId, isTeacher, quizzes, onUpdate }: QuizListProps) => 
                             
                             <div>
                                 {isTeacher ? (
-                                    <div className="text-sm text-gray-500 italic">
+                                    <div className="text-sm text-gray-500 dark:text-gray-400 italic">
                                         (Visible par les élèves)
                                     </div>
                                 ) : (
                                     <Link
                                         to={`/quizzes/${quiz.id}`}
-                                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition font-medium"
+                                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition font-medium"
                                     >
                                         <PlayCircle className="w-4 h-4" />
                                         {quiz.attempts && quiz.attempts.length > 0 ? 'Refaire' : 'Commencer'}

@@ -107,12 +107,12 @@ const StudentReportCards = () => {
   return (
     <div className="space-y-6">
         <div className="flex justify-between items-center no-print">
-            <h1 className="text-3xl font-bold text-gray-800">Mes Bulletins</h1>
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Mes Bulletins</h1>
             <div className="flex gap-4">
                 <select 
                     value={selectedTermId} 
                     onChange={(e) => setSelectedTermId(e.target.value)}
-                    className="p-2 border rounded-md shadow-sm"
+                    className="p-2 border rounded-md shadow-sm bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
                 >
                     {terms.map(term => (
                         <option key={term.id} value={term.id}>{term.name}</option>
@@ -129,7 +129,7 @@ const StudentReportCards = () => {
             </div>
         </div>
 
-        {loading && <div className="text-center py-8">Chargement du bulletin...</div>}
+        {loading && <div className="text-center py-8 text-gray-600 dark:text-gray-400">Chargement du bulletin...</div>}
         {error && <div className="text-center py-8 text-red-500">{error}</div>}
 
         {reportCard && !loading && (

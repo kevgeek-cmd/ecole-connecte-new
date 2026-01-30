@@ -106,7 +106,7 @@ export const getCourse = async (req: AuthRequest, res: Response) => {
     if (!id) return res.status(400).json({ message: "ID required" });
 
     const course = await prisma.course.findUnique({
-      where: { id },
+      where: { id: String(id) },
       include: {
         class: true,
         subject: true,

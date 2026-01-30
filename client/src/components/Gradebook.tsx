@@ -101,30 +101,30 @@ const Gradebook = ({ courseId }: GradebookProps) => {
     }
   };
 
-  if (loading) return <div className="p-4 text-center">Chargement du carnet de notes...</div>;
-  if (error) return <div className="p-4 text-center text-red-500">{error}</div>;
+  if (loading) return <div className="p-4 text-center text-gray-800 dark:text-gray-200">Chargement du carnet de notes...</div>;
+  if (error) return <div className="p-4 text-center text-red-500 dark:text-red-400">{error}</div>;
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
-      <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-        <Save className="w-5 h-5 text-blue-600" />
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-x-auto">
+      <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+        <Save className="w-5 h-5 text-blue-600 dark:text-blue-400" />
         Carnet de Notes
       </h2>
       
       {students.length === 0 ? (
-        <p className="text-gray-500 italic">Aucun élève inscrit dans ce cours.</p>
+        <p className="text-gray-500 dark:text-gray-400 italic">Aucun élève inscrit dans ce cours.</p>
       ) : assignments.length === 0 ? (
-        <p className="text-gray-500 italic">Aucun devoir créé pour ce cours.</p>
+        <p className="text-gray-500 dark:text-gray-400 italic">Aucun devoir créé pour ce cours.</p>
       ) : (
         <table className="w-full border-collapse min-w-[600px]">
           <thead>
-            <tr className="bg-gray-50">
-              <th className="p-3 text-left border text-sm font-semibold text-gray-600 sticky left-0 bg-gray-50 z-10">Élève</th>
+            <tr className="bg-gray-50 dark:bg-gray-700">
+              <th className="p-3 text-left border dark:border-gray-600 text-sm font-semibold text-gray-600 dark:text-gray-300 sticky left-0 bg-gray-50 dark:bg-gray-700 z-10">Élève</th>
               {assignments.map(assignment => (
-                <th key={assignment.id} className="p-3 text-center border text-sm font-semibold text-gray-600 min-w-[100px]">
+                <th key={assignment.id} className="p-3 text-center border dark:border-gray-600 text-sm font-semibold text-gray-600 dark:text-gray-300 min-w-[100px]">
                   <div className="flex flex-col">
-                    <span>{assignment.title}</span>
-                    <span className="text-xs font-normal text-gray-400">/20</span>
+                    <span className="text-gray-800 dark:text-white">{assignment.title}</span>
+                    <span className="text-xs font-normal text-gray-400 dark:text-gray-500">/20</span>
                   </div>
                 </th>
               ))}
@@ -132,8 +132,8 @@ const Gradebook = ({ courseId }: GradebookProps) => {
           </thead>
           <tbody>
             {students.map(student => (
-              <tr key={student.id} className="hover:bg-gray-50">
-                <td className="p-3 border text-sm font-medium text-gray-800 sticky left-0 bg-white">
+              <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                <td className="p-3 border dark:border-gray-600 text-sm font-medium text-gray-800 dark:text-gray-200 sticky left-0 bg-white dark:bg-gray-800">
                   {student.lastName} {student.firstName}
                 </td>
                 {assignments.map(assignment => {
@@ -142,14 +142,14 @@ const Gradebook = ({ courseId }: GradebookProps) => {
                   const isSuccess = saveSuccess === key;
                   
                   return (
-                    <td key={assignment.id} className="p-2 border text-center relative">
+                    <td key={assignment.id} className="p-2 border dark:border-gray-600 text-center relative">
                       <div className="flex items-center justify-center gap-2">
                         <input
                           type="number"
                           min="0"
                           max="20"
                           step="0.5"
-                          className={`w-16 p-1 text-center border rounded focus:ring-2 focus:ring-blue-500 outline-none ${isSuccess ? 'border-green-500 bg-green-50' : 'border-gray-300'}`}
+                          className={`w-16 p-1 text-center border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:text-white ${isSuccess ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : 'border-gray-300 dark:border-gray-600'}`}
                           defaultValue={getGradeValue(student.id, assignment.id)}
                           onBlur={(e) => {
                             const val = e.target.value;

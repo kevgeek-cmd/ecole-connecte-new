@@ -157,16 +157,22 @@ const Chat = () => {
         setNewMessage('');
     };
 
-    // Filter messages for current view (optimistic update or just display filter)
-    // Actually the socket listener adds all messages. We should filter them or rely on backend fetch.
-    // Ideally we only append if it matches current contact.
+    // Filter messages for current view
     const displayMessages = messages.filter(m => {
-        if (!selectedContact) return false;
+        if (!selectedContact || !user) return false;
+        
+        const currentUserId = String(user.id);
+        const contactId = String(selectedContact.id);
+        
         if (selectedContact.type === 'class') {
-            return m.classId === selectedContact.id; // classId needed in Message interface locally if we want to filter
+            return m.classId === contactId; 
         } else {
-            return (m.senderId === selectedContact.id && m.receiverId === user?.id) ||
-                   (m.senderId === user?.id && m.receiverId === selectedContact.id);
+            // Check if message is between me and contact
+            const senderId = String(m.senderId);
+            const receiverId = m.receiverId ? String(m.receiverId) : null;
+            
+            return (senderId === contactId && receiverId === currentUserId) ||
+                   (senderId === currentUserId && receiverId === contactId);
         }
     });
     // Note: The Message interface above didn't include classId/receiverId. Let's add them.
@@ -243,7 +249,7 @@ const Chat = () => {
                         <form onSubmit={handleSendMessage} className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex gap-2">
                             <input
                                 type="text"
-                                className="flex-1 border border-gray-300 dark:border-gray-600 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                                className="flex-1 border border-gray-300 dark:border-gray-600 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
                                 placeholder="Écrivez votre message..."
                                 value={newMessage}
                                 onChange={(e) => setNewMessage(e.target.value)}

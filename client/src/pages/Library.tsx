@@ -212,7 +212,7 @@ const Library = () => {
       {/* Upload Modal */}
       {isUploadModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md border border-transparent dark:border-gray-700">
                 <div className="p-6 border-b dark:border-gray-700">
                     <h2 className="text-xl font-bold dark:text-white">Ajouter un document</h2>
                 </div>

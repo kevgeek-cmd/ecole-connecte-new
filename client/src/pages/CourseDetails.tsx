@@ -379,21 +379,21 @@ const CourseDetails = () => {
       {/* Delete Assignment Confirmation Modal */}
       {isDeleteAssignModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl w-full max-w-sm">
-            <h2 className="text-lg font-bold text-gray-800 mb-2">Confirmer la suppression</h2>
-            <p className="text-gray-600 mb-6">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl w-full max-w-sm border border-transparent dark:border-gray-700 shadow-xl">
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Confirmer la suppression</h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
                 Êtes-vous sûr de vouloir supprimer ce devoir ? Cette action est irréversible et supprimera toutes les notes et rendus associés.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setIsDeleteAssignModalOpen(false)}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
               >
                 Annuler
               </button>
               <button
                 onClick={confirmDeleteAssignment}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
               >
                 Supprimer
               </button>
@@ -405,21 +405,21 @@ const CourseDetails = () => {
       {/* Delete Material Confirmation Modal */}
       {isDeleteMatModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl w-full max-w-sm">
-            <h2 className="text-lg font-bold text-gray-800 mb-2">Confirmer la suppression</h2>
-            <p className="text-gray-600 mb-6">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl w-full max-w-sm border border-transparent dark:border-gray-700 shadow-xl">
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Confirmer la suppression</h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
                 Êtes-vous sûr de vouloir supprimer ce support de cours ? Cette action est irréversible.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setIsDeleteMatModalOpen(false)}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
               >
                 Annuler
               </button>
               <button
                 onClick={confirmDeleteMaterial}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
               >
                 Supprimer
               </button>
@@ -431,52 +431,52 @@ const CourseDetails = () => {
       {/* Create Assignment Modal */}
       {isAssignmentModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-xl w-full max-w-md">
-            <h2 className="text-xl font-bold mb-6">Nouveau Devoir</h2>
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-xl w-full max-w-md border border-transparent dark:border-gray-700 shadow-xl">
+            <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Nouveau Devoir</h2>
             <form onSubmit={handleSubmitAssign(onSubmitAssignment)} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Titre</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Titre</label>
                 <input
                   {...registerAssign('title', { required: 'Le titre est requis' })}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                   placeholder="Ex: Exercices Chapitre 1"
                 />
                 {errorsAssign.title && <span className="text-red-500 text-sm">{errorsAssign.title.message as string}</span>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
                 <textarea
                   {...registerAssign('description')}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                   placeholder="Instructions..."
                   rows={3}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fichier (PDF/Word)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fichier (PDF/Word)</label>
                 <input
                   type="file"
                   {...registerAssign('file')}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   accept=".pdf,.doc,.docx"
                 />
-                <p className="text-xs text-gray-500 mt-1">Facultatif : Joindre un fichier d'instructions.</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Facultatif : Joindre un fichier d'instructions.</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date limite</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date limite</label>
                 <input
                   type="date"
                   {...registerAssign('dueDate', { required: 'La date est requise' })}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 />
                 {errorsAssign.dueDate && <span className="text-red-500 text-sm">{errorsAssign.dueDate.message as string}</span>}
               </div>
 
               {assignmentError && (
-                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
+                <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm">
                   {assignmentError}
                 </div>
               )}
@@ -485,7 +485,7 @@ const CourseDetails = () => {
                 <button
                   type="button"
                   onClick={() => setIsAssignmentModalOpen(false)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded transition"
+                  className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
                   disabled={isSubmittingAssign}
                 >
                   Annuler
@@ -513,24 +513,24 @@ const CourseDetails = () => {
       {/* Create Material Modal */}
       {isMaterialModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-xl w-full max-w-md">
-            <h2 className="text-xl font-bold mb-6">Ajouter un support</h2>
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-xl w-full max-w-md border border-transparent dark:border-gray-700 shadow-xl">
+            <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Ajouter un support</h2>
             <form onSubmit={handleSubmitMat(onSubmitMaterial)} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Titre</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Titre</label>
                 <input
                   {...registerMat('title', { required: 'Le titre est requis' })}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                   placeholder="Ex: Cours Chapitre 1 (PDF)"
                 />
                 {errorsMat.title && <span className="text-red-500 text-sm">{errorsMat.title.message as string}</span>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
                 <select
                     {...registerMat('type', { required: true })}
-                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 >
                     <option value="PDF">PDF / Document</option>
                     <option value="VIDEO">Vidéo</option>
@@ -540,23 +540,23 @@ const CourseDetails = () => {
 
               {selectedMatType === 'LINK' || selectedMatType === 'VIDEO' ? (
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         {selectedMatType === 'VIDEO' ? 'Lien Vidéo (YouTube, Vimeo...)' : 'URL / Lien'}
                     </label>
                     <input
                     {...registerMat('url', { required: 'L\'URL est requise' })}
-                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                     placeholder={selectedMatType === 'VIDEO' ? 'https://www.youtube.com/watch?v=...' : 'https://...'}
                     />
                     {errorsMat.url && <span className="text-red-500 text-sm">{errorsMat.url.message as string}</span>}
                 </div>
               ) : (
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Fichier (PDF, Word...)</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fichier (PDF, Word...)</label>
                     <input
                     type="file"
                     {...registerMat('file', { required: 'Le fichier est requis' })}
-                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     accept=".pdf,.doc,.docx,.ppt,.pptx"
                     />
                     {errorsMat.file && <span className="text-red-500 text-sm">{errorsMat.file.message as string}</span>}
@@ -564,7 +564,7 @@ const CourseDetails = () => {
               )}
 
               {materialError && (
-                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
+                <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm">
                   {materialError}
                 </div>
               )}
@@ -573,7 +573,7 @@ const CourseDetails = () => {
                 <button
                   type="button"
                   onClick={() => setIsMaterialModalOpen(false)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded transition"
+                  className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
                   disabled={isSubmittingMat}
                 >
                   Annuler
