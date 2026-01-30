@@ -8,10 +8,11 @@ const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: "*", // Allow all origins for debugging, we can restrict later
     methods: ["GET", "POST"],
     credentials: true
-  }
+  },
+  allowEIO3: true // Compatibility for some clients
 });
 
 setupSocket(io);

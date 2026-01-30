@@ -51,9 +51,15 @@ const Chat = () => {
     useEffect(() => {
         if (!token) return;
 
-        const newSocket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000', {
+        // Use the same URL as the API, ensuring it's the base URL without /api
+        const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        console.log('[Socket] Attempting connection to:', socketUrl);
+
+        const newSocket = io(socketUrl, {
             auth: { token },
-            transports: ['websocket', 'polling'] // Try both for better compatibility
+            transports: ['websocket', 'polling'],
+            reconnectionAttempts: 5,
+            timeout: 10000
         });
 
         newSocket.on('connect', () => {
