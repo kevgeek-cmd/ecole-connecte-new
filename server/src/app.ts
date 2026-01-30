@@ -30,6 +30,10 @@ app.use(cors({
     : true, // Allow all in development (or strictly localhost)
   credentials: true
 }));
+// Fix for helmet usage: it's a default export that returns a middleware function, 
+// but sometimes treated as a namespace. In ESM/TS with allowSyntheticDefaultImports, 
+// we should just call it. If it fails, it might be due to import mismatch.
+// Trying simpler invocation or check if it needs .default
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(morgan("dev"));
 app.use(express.json());
