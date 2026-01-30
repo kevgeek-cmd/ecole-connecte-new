@@ -110,21 +110,23 @@ const CourseDetails = () => {
 
   const fetchCourseDetails = async () => {
     try {
-      const assignmentsRes = await api.get(`/assignments?courseId=${id}`);
+      if (!id) return;
+
+      const [assignmentsRes, materialsRes, quizzesRes, courseRes] = await Promise.all([
+        api.get(`/assignments?courseId=${id}`),
+        api.get(`/courses/${id}/materials`),
+        api.get(`/quizzes?courseId=${id}`),
+        api.get(`/courses/${id}`)
+      ]);
+
       setAssignments(assignmentsRes.data);
-
-      const materialsRes = await api.get(`/courses/${id}/materials`);
       setMaterials(materialsRes.data);
-
-      const quizzesRes = await api.get(`/quizzes?courseId=${id}`);
       setQuizzes(quizzesRes.data);
-      
-      const coursesRes = await api.get('/courses');
-      const foundCourse = coursesRes.data.find((c: CourseModel) => c.id === id);
-      setCourse(foundCourse);
+      setCourse(courseRes.data);
 
     } catch (error) {
       console.error('Error fetching course details', error);
+      // Optional: Handle redirect or error state
     }
   };
 

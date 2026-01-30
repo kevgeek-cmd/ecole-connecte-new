@@ -38,6 +38,10 @@ const Chat = () => {
     const [newMessage, setNewMessage] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    // Use a ref for user to access current value inside socket listeners
+    const userRef = useRef(user);
+    useEffect(() => { userRef.current = user; }, [user]);
+
     useEffect(() => {
         if (!token) return;
 
@@ -50,7 +54,31 @@ const Chat = () => {
         });
 
         newSocket.on('receive_message', (message: Message) => {
-            setMessages((prev) => [...prev, message]);
+            setMessages((prev) => {
+                // If message is from me, replace the temporary optimistic message
+                if (message.senderId === userRef.current?.id) {
+                     // Find a temp message (id is timestamp-like) with same content
+                     const tempIdx = prev.findIndex(m => 
+                        m.senderId === userRef.current?.id && 
+                        m.content === message.content && 
+                        m.id.length > 10 // Simple heuristic for timestamp vs uuid
+                     );
+                     
+                     if (tempIdx !== -1) {
+                         const newPrev = [...prev];
+                         newPrev[tempIdx] = message;
+                         return newPrev;
+                     }
+                     
+                     // If no temp message found (maybe race condition or didn't optimize), check for duplicates by ID
+                     if (prev.some(m => m.id === message.id)) return prev;
+                } else {
+                     // Check for duplicates
+                     if (prev.some(m => m.id === message.id)) return prev;
+                }
+                
+                return [...prev, message];
+            });
         });
         
         // Listen for user status updates
@@ -152,6 +180,23 @@ const Chat = () => {
             receiverId: selectedContact.type === 'user' ? selectedContact.id : undefined,
             classId: selectedContact.type === 'class' ? selectedContact.id : undefined
         };
+
+        // Optimistic update
+        const tempMessage: Message = {
+            id: Date.now().toString(), // Temporary ID
+            content: newMessage,
+            senderId: user?.id || '',
+            receiverId: messageData.receiverId,
+            classId: messageData.classId,
+            sender: {
+                id: user?.id || '',
+                firstName: user?.firstName || '',
+                lastName: user?.lastName || ''
+            },
+            createdAt: new Date().toISOString()
+        };
+        
+        setMessages(prev => [...prev, tempMessage]);
 
         socket.emit('send_message', messageData);
         setNewMessage('');
