@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { io, Socket } from 'socket.io-client';
 import api from '../utils/api';
-import { Send, User, Users, Circle, Paperclip, FileText, X } from 'lucide-react';
+import { Send, User, Users, Circle, Paperclip, FileText, X, ArrowLeft } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 
 interface Message {
@@ -40,10 +40,20 @@ const Chat = () => {
     const [newMessage, setNewMessage] = useState('');
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [showContactList, setShowContactList] = useState(true);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [isConnected, setIsConnected] = useState(false);
+
+    // Gérer l'affichage mobile : si un contact est sélectionné, on cache la liste
+    useEffect(() => {
+        if (selectedContact) {
+            setShowContactList(false);
+        } else {
+            setShowContactList(true);
+        }
+    }, [selectedContact]);
 
     // Supabase Realtime for new messages
     useEffect(() => {
@@ -367,9 +377,12 @@ const Chat = () => {
     };
 
     return (
-        <div className="flex h-[calc(100vh-100px)] bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
-            {/* Sidebar */}
-            <div className="w-1/4 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+        <div className="flex h-[calc(100vh-120px)] md:h-[calc(100vh-100px)] bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700 relative">
+            {/* Sidebar (Contacts) */}
+            <div className={`
+                ${showContactList ? 'flex' : 'hidden md:flex'} 
+                w-full md:w-1/4 border-r border-gray-200 dark:border-gray-700 flex-col
+            `}>
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
                     <h2 className="font-semibold text-gray-700 dark:text-gray-200">Discussions</h2>
                     <div className="flex items-center gap-1">
@@ -378,122 +391,141 @@ const Chat = () => {
                     </div>
                 </div>
                 <div className="flex-1 overflow-y-auto">
-                    {contacts.map(contact => (
-                        <div 
-                            key={contact.id}
-                            onClick={() => setSelectedContact(contact)}
-                            className={`p-4 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition ${selectedContact?.id === contact.id ? 'bg-blue-50 dark:bg-gray-700' : ''}`}
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="bg-gray-200 dark:bg-gray-600 p-2 rounded-full">
-                                    {contact.type === 'class' ? <Users className="w-5 h-5 text-gray-600 dark:text-gray-300" /> : <User className="w-5 h-5 text-gray-600 dark:text-gray-300" />}
+                    {contacts.length > 0 ? (
+                        contacts.map(contact => (
+                            <div 
+                                key={contact.id}
+                                onClick={() => setSelectedContact(contact)}
+                                className={`p-4 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition ${selectedContact?.id === contact.id ? 'bg-blue-50 dark:bg-gray-700' : ''}`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-gray-200 dark:bg-gray-600 p-2 rounded-full shrink-0">
+                                        {contact.type === 'class' ? <Users className="w-5 h-5 text-gray-600 dark:text-gray-300" /> : <User className="w-5 h-5 text-gray-600 dark:text-gray-300" />}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="font-medium text-gray-900 dark:text-white truncate">
+                                            {contact.type === 'class' ? contact.name : `${contact.firstName} ${contact.lastName}`}
+                                        </p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                            {contact.type === 'class' ? 'Classe' : (contact.role === 'TEACHER' ? 'Professeur' : 'Élève')}
+                                        </p>
+                                    </div>
+                                    {contact.isOnline && <Circle className="w-2.5 h-2.5 text-green-500 fill-current shrink-0" />}
                                 </div>
-                                <div>
-                                    <p className="font-medium text-gray-900 dark:text-white">
-                                        {contact.type === 'class' ? contact.name : `${contact.firstName} ${contact.lastName}`}
-                                    </p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                                        {contact.type === 'class' ? 'Classe' : (contact.role === 'TEACHER' ? 'Professeur' : 'Élève')}
-                                    </p>
-                                </div>
-                                {contact.isOnline && <Circle className="w-3 h-3 text-green-500 fill-current ml-auto" />}
                             </div>
+                        ))
+                    ) : (
+                        <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                            Aucun contact trouvé
                         </div>
-                    ))}
+                    )}
                 </div>
             </div>
 
             {/* Chat Area */}
-            <div className="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900">
+            <div className={`
+                ${!showContactList ? 'flex' : 'hidden md:flex'} 
+                flex-1 flex-col bg-gray-50 dark:bg-gray-900 w-full
+            `}>
                 {selectedContact ? (
                     <>
                         {/* Header */}
-                        <div className="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                             <div className="flex items-center gap-3">
-                                <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-full">
+                        <div className="p-3 md:p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2 md:gap-3">
+                             <button 
+                                onClick={() => setSelectedContact(null)}
+                                className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                             >
+                                <ArrowLeft className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+                             </button>
+                             <div className="flex items-center gap-3 min-w-0">
+                                <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-full shrink-0">
                                     {selectedContact.type === 'class' ? <Users className="w-5 h-5 text-blue-600 dark:text-blue-300" /> : <User className="w-5 h-5 text-blue-600 dark:text-blue-300" />}
                                 </div>
-                                <h3 className="font-bold text-gray-800 dark:text-white">
+                                <h3 className="font-bold text-gray-800 dark:text-white truncate">
                                     {selectedContact.type === 'class' ? selectedContact.name : `${selectedContact.firstName} ${selectedContact.lastName}`}
                                 </h3>
                              </div>
                         </div>
 
                         {/* Messages */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                            {displayMessages.map((msg) => {
-                                const isMe = String(msg.senderId) === String(user?.id);
-                                return (
-                                    <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                                        <div className={`max-w-[70%] p-3 rounded-lg ${
-                                            isMe 
-                                                ? 'bg-blue-600 text-white rounded-br-none shadow-md' 
-                                                : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-sm rounded-bl-none border border-transparent dark:border-gray-600'
-                                        }`}>
-                                            {!isMe && <p className="text-xs font-bold mb-1 text-blue-600 dark:text-blue-400">{msg.sender.firstName} {msg.sender.lastName}</p>}
-                                            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                                            {renderAttachment(msg)}
-                                            <p className={`text-[10px] mt-1 text-right ${isMe ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
-                                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </p>
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                            {displayMessages.length > 0 ? (
+                                displayMessages.map((msg) => {
+                                    const isMe = String(msg.senderId) === String(user?.id);
+                                    return (
+                                        <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                                            <div className={`max-w-[85%] md:max-w-[70%] p-3 rounded-2xl ${
+                                                isMe 
+                                                    ? 'bg-blue-600 text-white rounded-br-none shadow-sm' 
+                                                    : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-sm rounded-bl-none border border-transparent dark:border-gray-600'
+                                            }`}>
+                                                {!isMe && <p className="text-[11px] font-bold mb-1 text-blue-600 dark:text-blue-400">{msg.sender.firstName} {msg.sender.lastName}</p>}
+                                                <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
+                                                {renderAttachment(msg)}
+                                                <p className={`text-[9px] mt-1 text-right ${isMe ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                                                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
+                                    )
+                                })
+                            ) : (
+                                <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400 italic">
+                                    Aucun message. Commencez la discussion !
+                                </div>
+                            )}
                             <div ref={messagesEndRef} />
                         </div>
 
                         {/* Input */}
-                        <form onSubmit={handleSendMessage} className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex flex-col gap-2">
+                        <form onSubmit={handleSendMessage} className="p-3 md:p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex flex-col gap-2">
                             {selectedFile && (
                                 <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 p-2 rounded text-sm">
                                     <Paperclip className="w-4 h-4 text-gray-500" />
-                                    <span className="truncate max-w-xs dark:text-gray-300">{selectedFile.name}</span>
+                                    <span className="truncate max-w-[200px] dark:text-gray-300">{selectedFile.name}</span>
                                     <button 
-                                        type="button" 
+                                        type="button"
                                         onClick={() => setSelectedFile(null)}
-                                        className="ml-auto hover:text-red-500"
+                                        className="ml-auto p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
                                     >
-                                        <X className="w-4 h-4" />
+                                        <X className="w-4 h-4 text-gray-500" />
                                     </button>
                                 </div>
                             )}
-                            <div className="flex gap-2 items-end">
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    onChange={handleFileSelect}
-                                    className="hidden"
-                                    id="file-upload"
-                                />
+                            <div className="flex items-center gap-2">
                                 <button
                                     type="button"
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition"
-                                    title="Joindre un fichier"
+                                    className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition shrink-0"
                                 >
                                     <Paperclip className="w-5 h-5" />
                                 </button>
-                                <input
+                                <input 
+                                    type="file" 
+                                    ref={fileInputRef}
+                                    onChange={handleFileSelect}
+                                    className="hidden"
+                                />
+                                <input 
                                     type="text"
-                                    className="flex-1 border border-gray-300 dark:border-gray-600 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
-                                    placeholder="Écrivez votre message..."
                                     value={newMessage}
                                     onChange={(e) => setNewMessage(e.target.value)}
+                                    placeholder="Écrivez votre message..."
+                                    className="flex-1 p-2 md:p-3 bg-gray-100 dark:bg-gray-700 border-none rounded-full focus:ring-2 focus:ring-blue-500 text-sm dark:text-white"
                                 />
                                 <button 
-                                    type="submit" 
-                                    className="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition flex items-center justify-center w-10 h-10 disabled:opacity-50"
+                                    type="submit"
                                     disabled={(!newMessage.trim() && !selectedFile) || isUploading}
+                                    className="p-2 md:p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition shrink-0 shadow-sm"
                                 >
-                                    {isUploading ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div> : <Send className="w-5 h-5" />}
+                                    <Send className="w-5 h-5" />
                                 </button>
                             </div>
                         </form>
                     </>
                 ) : (
-                    <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
-                        Sélectionnez une discussion pour commencer
+                    <div className="hidden md:flex flex-1 items-center justify-center text-gray-500 dark:text-gray-400">
+                        Sélectionnez un contact pour commencer à discuter
                     </div>
                 )}
             </div>

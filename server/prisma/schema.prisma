@@ -1,9 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
+// --- Configuration Prisma ---
 generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -11,135 +8,136 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Enums removed for SQLite compatibility
+// --- Modèles de Données ---
 
+/**
+ * Modèle Ecole
+ * Représente un établissement scolaire dans le système.
+ */
+model School {
+  id        String   @id @default(uuid())
+  name      String   // Nom de l'école
+  address   String?  // Adresse physique
+  phone     String?  // Numéro de téléphone
+  email     String?  @unique
+  logo      String?  // URL du logo
+  isActive  Boolean  @default(true) // Permet de suspendre l'accès à une école
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-// Models
+  // Relations
+  users         User[]
+  classes       Class[]
+  subjects      Subject[]
+  academicYears AcademicYear[]
+}
 
+/**
+ * Modèle Utilisateur
+ * Gère tous les profils (Super Admin, Admin Ecole, Prof, Elève).
+ */
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
-  password  String
+  password  String   // Mot de passe crypté (Haché)
   firstName String
   lastName  String
-  role      String   @default("STUDENT")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  schoolId        String? // Null for Super Admin
-  school          School?          @relation(fields: [schoolId], references: [id])
+  role      String   @default("STUDENT") // SUPER_ADMIN, SCHOOL_ADMIN, TEACHER, STUDENT, IT_ADMIN
+  avatar    String?
   
-  // School Admin relations
-  managedSchool   School?          @relation("SchoolManager")
+  // Relation avec l'école (Optionnel pour le Super Admin)
+  schoolId  String?
+  school    School?  @relation(fields: [schoolId], references: [id], onDelete: SetNull)
 
-  // Teacher relations
-  coursesTaught   Course[]
-
-  // Student relations
-  enrollments     Enrollment[]
-  submissions     Submission[]
-  grades          Grade[]
-  notifications   Notification[]
+  // Relations spécifiques
+  courses      Course[]      // Si l'utilisateur est un professeur
+  enrollments  Enrollment[]  // Si l'utilisateur est un élève
+  grades       Grade[]       // Notes obtenues par l'élève
+  submissions  Submission[]  // Devoirs rendus par l'élève
+  quizAttempts QuizAttempt[] // Tentatives de quiz
   
-  // Chat relations
+  // Messagerie
   sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
-  isOnline         Boolean   @default(false)
-  
-  // Quiz relations
-  quizAttempts     QuizAttempt[]
-}
 
-model Message {
-  id        String   @id @default(uuid())
-  content   String
-  createdAt DateTime @default(now())
-  
-  senderId  String
-  sender    User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  
-  receiverId String?
-  receiver   User?   @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
-  
-  classId   String?
-  class     Class?    @relation(fields: [classId], references: [id], onDelete: Cascade)
-  
-  attachmentUrl String?
-  attachmentType String? // "IMAGE", "PDF", "DOC", "VIDEO"
-}
-
-model Notification {
-  id        String   @id @default(uuid())
-  title     String
-  message   String
-  createdAt DateTime @default(now())
-  read      Boolean  @default(false)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model School {
-  id        String   @id @default(uuid())
-  name      String
-  address   String?
-  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  // Relations
-  users           User[]
-  managerId       String? @unique
-  manager         User?   @relation("SchoolManager", fields: [managerId], references: [id], onDelete: SetNull)
-  classes         Class[]
-  subjects        Subject[]
-  academicYears   AcademicYear[]
 }
 
+/**
+ * Modèle Année Scolaire
+ * Définit les périodes de cours pour une école.
+ */
 model AcademicYear {
   id        String   @id @default(uuid())
-  name      String   // e.g., "2023-2024"
+  name      String   // ex: "2023-2024"
   startDate DateTime
   endDate   DateTime
   schoolId  String
-  school    School   @relation(fields: [schoolId], references: [id])
-  terms     Term[]
-  active    Boolean  @default(false)
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  
+  terms     Term[]   // Trimestres ou semestres
 }
 
+/**
+ * Modèle Trimestre / Période
+ * Gère le découpage de l'année scolaire.
+ */
 model Term {
   id             String     @id @default(uuid())
-  name           String     // e.g., "Trimestre 1"
+  name           String     // ex: "Trimestre 1"
   startDate      DateTime
   endDate        DateTime
-  status         String     @default("OPEN") // TermStatus enum: OPEN, CLOSED
+  status         String     @default("OPEN") // Statut : OPEN (ouvert aux notes) ou CLOSED
   academicYearId String
   academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
   grades         Grade[]
 }
 
+/**
+ * Modèle Classe
+ */
 model Class {
   id        String   @id @default(uuid())
-  name      String   // e.g., "Terminal A"
-  level     String?  // e.g., "Terminal"
+  name      String   // ex: "Terminale S1"
+  level     String?  // ex: "Lycée"
   schoolId  String
   school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   
-  // Relations
   enrollments Enrollment[]
   courses     Course[]
   messages    Message[]
 }
 
+/**
+ * Modèle Matière
+ */
 model Subject {
   id        String   @id @default(uuid())
-  name      String   // e.g., "Mathématiques"
-  code      String?  // e.g., "MATH"
+  name      String   // ex: "Mathématiques"
+  code      String?  // ex: "MATH01"
   schoolId  String
   school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   courses   Course[]
 }
 
+/**
+ * Modèle Inscription
+ * Lie un élève à une classe pour une période donnée.
+ */
+model Enrollment {
+  id        String   @id @default(uuid())
+  studentId String
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classId   String
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  joinedAt  DateTime @default(now())
+}
+
+/**
+ * Modèle Cours
+ * Représente l'assignation d'un prof à une matière dans une classe.
+ */
 model Course {
   id        String   @id @default(uuid())
   classId   String
@@ -149,132 +147,143 @@ model Course {
   teacherId String
   teacher   User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   
-  coefficient Int    @default(1)
+  coefficient Int    @default(1) // Importance de la matière pour la moyenne
 
-  // Relations
   materials    Material[]
   assignments  Assignment[]
   quizzes      Quiz[]
 }
 
-model Enrollment {
-  id        String   @id @default(uuid())
-  studentId String
-  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  classId   String
-  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
-  joinedAt  DateTime @default(now())
-
-  @@unique([studentId, classId])
-}
-
+/**
+ * Modèle Support de Cours
+ */
 model Material {
   id        String   @id @default(uuid())
   title     String
-  type      String   // e.g., "PDF", "VIDEO"
-  url       String
+  type      String   // ex: "PDF", "VIDEO", "LINK"
+  url       String   // Lien vers le fichier (Supabase Storage)
   courseId  String
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }
 
+/**
+ * Modèle Devoir
+ */
 model Assignment {
   id          String   @id @default(uuid())
   title       String
   description String?
   dueDate     DateTime
+  points      Int      @default(20)
   courseId    String
   course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   
   submissions Submission[]
   grades      Grade[]
+  createdAt   DateTime @default(now())
 }
 
+/**
+ * Modèle Rendu de Devoir
+ */
 model Submission {
   id           String   @id @default(uuid())
+  content      String?  // Texte ou commentaire
+  fileUrl      String?  // URL du fichier rendu
+  submittedAt  DateTime @default(now())
+  studentId    String
+  student      User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
   assignmentId String
   assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  studentId    String
-  student      User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  fileUrl      String?
-  content      String?
-  submittedAt  DateTime @default(now())
   
-  grade        Grade?
+  grade        Grade?   // Note associée à ce rendu
 }
 
+/**
+ * Modèle Note
+ */
 model Grade {
-  id           String   @id @default(uuid())
-  value        Float
+  id           String      @id @default(uuid())
+  value        Float       // La note brute (ex: 15.5)
   comment      String?
-  
   studentId    String
-  student      User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  
-  // Grade can be linked to an assignment or just a term grade
-  assignmentId String?
-  assignment   Assignment? @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  submissionId String? @unique
-  submission   Submission? @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-
+  student      User        @relation(fields: [studentId], references: [id], onDelete: Cascade)
   termId       String?
-  term         Term?       @relation(fields: [termId], references: [id], onDelete: Cascade)
-
-  createdAt    DateTime @default(now())
+  term         Term?       @relation(fields: [termId], references: [id])
+  assignmentId String?
+  assignment   Assignment? @relation(fields: [assignmentId], references: [id])
+  submissionId String?     @unique
+  submission   Submission? @relation(fields: [submissionId], references: [id])
+  
+  createdAt    DateTime    @default(now())
 }
 
+/**
+ * Modèle Message (Messagerie Instantanée)
+ */
+model Message {
+  id          String   @id @default(uuid())
+  content     String
+  senderId    String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  recipientId String?  // Si message privé
+  recipient   User?    @relation("ReceivedMessages", fields: [recipientId], references: [id])
+  classId     String?  // Si message de groupe (classe)
+  class       Class?   @relation(fields: [classId], references: [id])
+  
+  attachmentUrl  String? // URL d'un fichier joint
+  attachmentType String? // Type de fichier joint
+
+  createdAt   DateTime @default(now())
+}
+
+/**
+ * Modèles Quiz et Évaluations
+ */
 model Quiz {
   id          String   @id @default(uuid())
   title       String
   description String?
+  timeLimit   Int?     // En minutes
   courseId    String
   course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  published   Boolean  @default(false)
   
-  questions   QuizQuestion[]
+  questions   Question[]
   attempts    QuizAttempt[]
+  createdAt   DateTime @default(now())
 }
 
-model QuizQuestion {
-  id        String   @id @default(uuid())
-  quizId    String
-  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  text      String
-  type      String   // "SINGLE", "MULTIPLE"
-  points    Int      @default(1)
-  
-  options   QuizOption[]
-  answers   QuizAnswer[]
-}
-
-model QuizOption {
-  id         String       @id @default(uuid())
-  questionId String
-  question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  text       String
-  isCorrect  Boolean      @default(false)
+model Question {
+  id          String   @id @default(uuid())
+  text        String
+  type        String   @default("MULTIPLE_CHOICE")
+  options     String[] // Liste des choix possibles
+  correctAnswer String
+  points      Int      @default(1)
+  quizId      String
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
 }
 
 model QuizAttempt {
-  id        String   @id @default(uuid())
-  quizId    String
-  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  studentId String
-  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  score     Float
-  startedAt DateTime @default(now())
-  completedAt DateTime?
-  
-  answers   QuizAnswer[]
+  id          String   @id @default(uuid())
+  score       Float
+  completedAt DateTime @default(now())
+  studentId   String
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  quizId      String
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
 }
 
-model QuizAnswer {
-  id           String       @id @default(uuid())
-  attemptId    String
-  attempt      QuizAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
-  questionId   String
-  question     QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  selectedOptions String[] // Array of Option IDs
+/**
+ * Modèle Notification
+ */
+model Notification {
+  id        String   @id @default(uuid())
+  title     String
+  message   String
+  type      String   // ex: "INFO", "ALERT", "BROADCAST"
+  targetId  String?  // ID de l'utilisateur ou du rôle cible
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
