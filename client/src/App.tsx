@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Login from './pages/Login';
@@ -19,26 +19,7 @@ import QuizAttemptsList from './pages/QuizAttemptsList';
 import QuizAttemptDetail from './pages/QuizAttemptDetail';
 import Broadcast from './pages/Broadcast';
 import ProtectedRoute from './components/ProtectedRoute';
-import Sidebar from './components/Sidebar';
-
-import NotificationCenter from './components/NotificationCenter';
-
-const Layout = () => (
-  <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-    <Sidebar />
-    <div className="flex-1 ml-64 flex flex-col h-screen overflow-hidden">
-      {/* Top Header for Notifications */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-end px-8 shrink-0 transition-colors duration-200">
-          <NotificationCenter />
-      </header>
-      
-      {/* Main Content Scrollable Area */}
-      <main className="flex-1 overflow-auto p-8 text-gray-900 dark:text-gray-100">
-        <Outlet />
-      </main>
-    </div>
-  </div>
-);
+import MainLayout from './layouts/MainLayout';
 
 function App() {
   return (
@@ -50,7 +31,7 @@ function App() {
           
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
-            <Route element={<Layout />}>
+            <Route element={<MainLayout />}>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
               
