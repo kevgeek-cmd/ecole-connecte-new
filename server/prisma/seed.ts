@@ -19,19 +19,23 @@ async function main() {
   ];
 
   for (const adminData of admins) {
-    let admin = await prisma.user.findUnique({ where: { email: adminData.email } });
-    if (!admin) {
-      admin = await prisma.user.create({
-        data: {
-          email: adminData.email,
-          password: adminData.password,
-          firstName: adminData.firstName,
-          lastName: adminData.lastName,
-          role: 'SUPER_ADMIN',
-        },
-      });
-      console.log('Created Super Admin:', admin.email);
-    }
+    const admin = await prisma.user.upsert({
+      where: { email: adminData.email },
+      update: {
+        password: adminData.password,
+        firstName: adminData.firstName,
+        lastName: adminData.lastName,
+        role: 'SUPER_ADMIN',
+      },
+      create: {
+        email: adminData.email,
+        password: adminData.password,
+        firstName: adminData.firstName,
+        lastName: adminData.lastName,
+        role: 'SUPER_ADMIN',
+      },
+    });
+    console.log('Upserted Super Admin:', admin.email);
   }
 
   // 2. Create School
@@ -47,6 +51,12 @@ async function main() {
       },
     });
     console.log('Created School:', school.name);
+  } else {
+    school = await prisma.school.update({
+      where: { id: school.id },
+      data: { isActive: true }
+    });
+    console.log('Updated School:', school.name);
   }
 
   // Ensure user accounts are also linked to this school if needed, 
@@ -63,61 +73,80 @@ async function main() {
       },
     });
     console.log('Created School:', school2.name);
+  } else {
+     school2 = await prisma.school.update({
+      where: { id: school2.id },
+      data: { isActive: true }
+    });
   }
 
   // 3. Create School Admin
   const schoolAdminEmail = 'admin@ecole.com';
-  let schoolAdmin = await prisma.user.findUnique({ where: { email: schoolAdminEmail } });
-
-  if (!schoolAdmin) {
-    schoolAdmin = await prisma.user.create({
-      data: {
+  
+  const schoolAdmin = await prisma.user.upsert({
+    where: { email: schoolAdminEmail },
+    update: {
+        password: hashedPassword,
+        firstName: 'Directeur',
+        lastName: 'Ecole',
+        role: 'SCHOOL_ADMIN',
+        schoolId: school.id,
+    },
+    create: {
         email: schoolAdminEmail,
         password: hashedPassword,
         firstName: 'Directeur',
         lastName: 'Ecole',
         role: 'SCHOOL_ADMIN',
         schoolId: school.id,
-      },
-    });
-    console.log('Created School Admin:', schoolAdmin.email);
-  }
+    }
+  });
+  console.log('Upserted School Admin:', schoolAdmin.email);
+
 
   // 4. Create Teacher
   const teacherEmail = 'prof@ecole.com';
-  let teacher = await prisma.user.findUnique({ where: { email: teacherEmail } });
-
-  if (!teacher) {
-    teacher = await prisma.user.create({
-      data: {
+  const teacher = await prisma.user.upsert({
+    where: { email: teacherEmail },
+    update: {
+        password: hashedPassword,
+        firstName: 'Jean',
+        lastName: 'Professeur',
+        role: 'TEACHER',
+        schoolId: school.id,
+    },
+    create: {
         email: teacherEmail,
         password: hashedPassword,
         firstName: 'Jean',
         lastName: 'Professeur',
         role: 'TEACHER',
         schoolId: school.id,
-      },
-    });
-    console.log('Created Teacher:', teacher.email);
-  }
+    }
+  });
+  console.log('Upserted Teacher:', teacher.email);
 
   // 5. Create Student
   const studentEmail = 'eleve@ecole.com';
-  let student = await prisma.user.findUnique({ where: { email: studentEmail } });
-
-  if (!student) {
-    student = await prisma.user.create({
-      data: {
+  const student = await prisma.user.upsert({
+    where: { email: studentEmail },
+    update: {
+        password: hashedPassword,
+        firstName: 'Paul',
+        lastName: 'Etudiant',
+        role: 'STUDENT',
+        schoolId: school.id,
+    },
+    create: {
         email: studentEmail,
         password: hashedPassword,
         firstName: 'Paul',
         lastName: 'Etudiant',
         role: 'STUDENT',
         schoolId: school.id,
-      },
-    });
-    console.log('Created Student:', student.email);
-  }
+    }
+  });
+  console.log('Upserted Student:', student.email);
 }
 
 main()
