@@ -61,7 +61,26 @@ const Chat = () => {
                 const newMessage = payload.new as any;
                 
                 setMessages(prev => {
+                    // Check if message already exists by ID
                     if (prev.find(m => String(m.id) === String(newMessage.id))) return prev;
+                    
+                    // ALSO: Check if we have an optimistic message with same content and sender
+                    // that was sent very recently (within 5 seconds)
+                    const now = new Date();
+                    const duplicateOptimistic = prev.find(m => 
+                        String(m.id).startsWith('temp-') && 
+                        m.content === newMessage.content &&
+                        String(m.senderId) === String(newMessage.senderId) &&
+                        (now.getTime() - new Date(m.createdAt).getTime()) < 5000
+                    );
+
+                    if (duplicateOptimistic) {
+                        // Replace the temp message with the real one to avoid double display
+                        return prev.map(m => m.id === duplicateOptimistic.id ? {
+                            ...newMessage,
+                            sender: newMessage.sender || duplicateOptimistic.sender
+                        } : m);
+                    }
                     
                     const formattedMessage: Message = {
                         ...newMessage,
@@ -279,7 +298,16 @@ const Chat = () => {
             const savedMessage = res.data;
             
             // Replace the temporary message with the saved one
-            setMessages(prev => prev.map(m => m.id === tempMessage.id ? savedMessage : m));
+            setMessages(prev => {
+                // Check if the message was already added by Supabase Realtime
+                const alreadyExists = prev.some(m => String(m.id) === String(savedMessage.id));
+                if (alreadyExists) {
+                    // Remove the temp message since the real one is already there
+                    return prev.filter(m => m.id !== tempMessage.id);
+                }
+                // Otherwise replace the temp message
+                return prev.map(m => m.id === tempMessage.id ? savedMessage : m);
+            });
             
             setNewMessage('');
             setSelectedFile(null);
