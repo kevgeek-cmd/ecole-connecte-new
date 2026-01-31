@@ -8,13 +8,6 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
         const { content, recipientId, classId, attachmentUrl, attachmentType } = req.body;
         const senderId = req.user?.id;
 
-        console.log("SendMessage Request:", { 
-            body: req.body, 
-            senderId,
-            recipientIdType: typeof recipientId,
-            classIdType: typeof classId
-        });
-
         if (!senderId) return res.status(401).json({ message: "Unauthorized" });
 
         // Validate recipient if provided
