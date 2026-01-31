@@ -9,7 +9,7 @@ interface Message {
     id: string;
     content: string;
     senderId: string;
-    receiverId?: string | null;
+    recipientId?: string | null;
     classId?: string | null;
     attachmentUrl?: string | null;
     attachmentType?: 'IMAGE' | 'PDF' | 'DOC' | 'VIDEO' | null;
@@ -278,7 +278,7 @@ const Chat = () => {
 
         const messageData = {
             content: newMessage || (selectedFile ? `📎 ${selectedFile.name}` : ''),
-            receiverId: selectedContact.type === 'user' ? selectedContact.id : undefined,
+            recipientId: selectedContact.type === 'user' ? selectedContact.id : undefined,
             classId: selectedContact.type === 'class' ? selectedContact.id : undefined,
             attachmentUrl,
             attachmentType
@@ -289,7 +289,7 @@ const Chat = () => {
             id: `temp-${Date.now()}`,
             content: messageData.content,
             senderId: user?.id || '',
-            receiverId: messageData.receiverId,
+            recipientId: messageData.recipientId,
             classId: messageData.classId,
             attachmentUrl: attachmentUrl,
             attachmentType: attachmentType as any,
@@ -341,10 +341,10 @@ const Chat = () => {
             return m.classId === contactId; 
         } else {
             const senderId = String(m.senderId);
-            const receiverId = m.receiverId ? String(m.receiverId) : null;
+            const recipientId = m.recipientId ? String(m.recipientId) : null;
             
-            return (senderId === contactId && receiverId === currentUserId) ||
-                   (senderId === currentUserId && receiverId === contactId);
+            return (senderId === contactId && recipientId === currentUserId) ||
+                   (senderId === currentUserId && recipientId === contactId);
         }
     });
 

@@ -80,11 +80,11 @@ export const setupSocket = (io: Server) => {
         try {
             const senderId = String(userId);
             const targetClassId = data.classId ? String(data.classId) : null;
-            const targetReceiverId = data.receiverId ? String(data.receiverId) : null;
+            const targetRecipientId = data.recipientId ? String(data.recipientId) : null;
             
-            console.log(`[Socket] Incoming message from ${senderId} to ${targetClassId ? 'class:'+targetClassId : 'user:'+targetReceiverId}`);
+            console.log(`[Socket] Incoming message from ${senderId} to ${targetClassId ? 'class:'+targetClassId : 'user:'+targetRecipientId}`);
 
-            if (!targetClassId && !targetReceiverId) {
+            if (!targetClassId && !targetRecipientId) {
                 console.log("[Socket] Error: No target specified");
                 return;
             }
@@ -93,7 +93,7 @@ export const setupSocket = (io: Server) => {
                 data: {
                     content: data.content || "",
                     senderId: senderId,
-                    recipientId: targetClassId ? null : targetReceiverId,
+                    recipientId: targetClassId ? null : targetRecipientId,
                     classId: targetClassId,
                     attachmentUrl: data.attachmentUrl || null,
                     attachmentType: data.attachmentType || null
@@ -108,8 +108,8 @@ export const setupSocket = (io: Server) => {
                 const clients = await io.in(roomName).fetchSockets();
                 console.log(`[Socket] Emitting to class ${roomName} (${clients.length} connected)`);
                 io.to(roomName).emit("receive_message", message);
-            } else if (targetReceiverId) {
-                const receiverRoom = `user:${targetReceiverId}`;
+            } else if (targetRecipientId) {
+                const receiverRoom = `user:${targetRecipientId}`;
                 const senderRoom = `user:${senderId}`;
                 
                 const receiverClients = await io.in(receiverRoom).fetchSockets();
