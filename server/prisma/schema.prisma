@@ -43,9 +43,7 @@ model User {
   firstName String
   lastName  String
   role      String   @default("STUDENT") // SUPER_ADMIN, SCHOOL_ADMIN, TEACHER, STUDENT, IT_ADMIN
-  avatar    String?
   isOnline  Boolean  @default(false)
-  
   // Relation avec l'école (Optionnel pour le Super Admin)
   schoolId  String?
   school    School?  @relation("SchoolUsers", fields: [schoolId], references: [id], onDelete: SetNull)
