@@ -16,14 +16,14 @@ const router = Router();
 
 router.use(authenticate);
 
-router.post("/", authorize(["TEACHER"]), createQuiz);
+router.post("/", authorize(["TEACHER", "SCHOOL_ADMIN"]), createQuiz);
 router.get("/", getQuizzes); // Filter by courseId in query
 router.get("/attempts", authorize(["STUDENT"]), getMyAttempts);
 router.get("/:id", getQuiz);
-router.get("/:id/attempts", authorize(["TEACHER"]), getQuizAttempts);
+router.get("/:id/attempts", authorize(["TEACHER", "SCHOOL_ADMIN"]), getQuizAttempts);
 router.get("/attempts/:id", getAttemptDetail);
-router.put("/:id", authorize(["TEACHER"]), updateQuiz);
-router.delete("/:id", authorize(["TEACHER"]), deleteQuiz);
+router.put("/:id", authorize(["TEACHER", "SCHOOL_ADMIN"]), updateQuiz);
+router.delete("/:id", authorize(["TEACHER", "SCHOOL_ADMIN"]), deleteQuiz);
 router.post("/:id/submit", authorize(["STUDENT"]), submitQuizAttempt);
 
 export default router;
