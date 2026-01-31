@@ -10,6 +10,26 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
 
         if (!senderId) return res.status(401).json({ message: "Unauthorized" });
 
+        // Validate recipient if provided
+        if (recipientId) {
+            const recipient = await prisma.user.findUnique({
+                where: { id: String(recipientId) }
+            });
+            if (!recipient) {
+                return res.status(404).json({ message: "Recipient user not found" });
+            }
+        }
+
+        // Validate class if provided
+        if (classId) {
+             const classObj = await prisma.class.findUnique({
+                 where: { id: String(classId) }
+             });
+             if (!classObj) {
+                 return res.status(404).json({ message: "Class not found" });
+             }
+        }
+
         const message = await prisma.message.create({
             data: {
                 content,

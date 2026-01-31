@@ -14,7 +14,9 @@ const createQuizSchema = z.object({
     options: z.array(z.object({
       text: z.string().min(1),
       isCorrect: z.boolean()
-    })).min(2)
+    })).min(2).refine((options) => options.some(opt => opt.isCorrect), {
+      message: "At least one option must be correct"
+    })
   })).min(1)
 });
 
@@ -22,8 +24,7 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?.id;
         console.log("Creating quiz for user:", userId);
-        console.log("Quiz data:", JSON.stringify(req.body, null, 2));
-
+        
         const validatedData = createQuizSchema.parse(req.body);
 
         // Verify teacher owns the course
@@ -46,18 +47,21 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
                 courseId: validatedData.courseId,
                 published: true,
                 questions: {
-                    create: validatedData.questions.map(q => ({
-                        text: q.text,
-                        type: q.type,
-                        points: q.points,
-                        correctAnswer: q.options.find(opt => opt.isCorrect)?.text || "",
-                        options: {
-                            create: q.options.map(opt => ({
-                                text: opt.text,
-                                isCorrect: opt.isCorrect
-                            }))
-                        }
-                    }))
+                    create: validatedData.questions.map(q => {
+                        const correctOption = q.options.find(opt => opt.isCorrect);
+                        return {
+                            text: q.text,
+                            type: q.type,
+                            points: q.points,
+                            correctAnswer: correctOption ? correctOption.text : q.options[0].text, // Fallback safe
+                            options: {
+                                create: q.options.map(opt => ({
+                                    text: opt.text,
+                                    isCorrect: opt.isCorrect
+                                }))
+                            }
+                        };
+                    })
                 }
             },
             include: {
