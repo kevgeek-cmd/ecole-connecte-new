@@ -322,9 +322,9 @@ const Chat = () => {
             setNewMessage('');
             setSelectedFile(null);
             if (fileInputRef.current) fileInputRef.current.value = '';
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error sending message via API:", error);
-            alert("Erreur lors de l'envoi du message");
+            alert(`Erreur lors de l'envoi du message: ${error.response?.data?.message || error.message}`);
             // Optionally remove the temp message or mark it as failed
             setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
         }
