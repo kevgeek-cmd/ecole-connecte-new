@@ -95,19 +95,17 @@ export const broadcastNotification = async (req: AuthRequest, res: Response) => 
       return res.json({ message: "No users found to notify" });
     }
 
-    // Bulk create notifications
-    // Prisma createMany is supported in Postgres
-    const notificationsData = users.map((u) => ({
-      title,
-      message,
-      userId: u.id,
-      read: false,
-      type: "BROADCAST"
-    }));
-
-    await prisma.notification.createMany({
-      data: notificationsData,
-    });
+    // Bulk create notifications using a loop for better compatibility if createMany fails
+    for (const u of users) {
+      await prisma.notification.create({
+        data: {
+          title,
+          message,
+          userId: u.id,
+          read: false
+        }
+      });
+    }
 
     res.status(201).json({ message: `Notification sent to ${users.length} users` });
   } catch (error) {

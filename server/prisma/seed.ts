@@ -7,22 +7,31 @@ async function main() {
   console.log('Seeding database...');
 
   const hashedPassword = await bcrypt.hash('password123', 10);
+  const userPassword = await bcrypt.hash('nestorkoffi', 10);
 
   // 1. Create Super Admin
   const superAdminEmail = 'superadmin@example.com';
-  let superAdmin = await prisma.user.findUnique({ where: { email: superAdminEmail } });
+  const userEmail = 'llateamd@gmail.com';
 
-  if (!superAdmin) {
-    superAdmin = await prisma.user.create({
-      data: {
-        email: superAdminEmail,
-        password: hashedPassword,
-        firstName: 'Super',
-        lastName: 'Admin',
-        role: 'SUPER_ADMIN',
-      },
-    });
-    console.log('Created Super Admin:', superAdmin.email);
+  const admins = [
+    { email: superAdminEmail, password: hashedPassword, firstName: 'Super', lastName: 'Admin' },
+    { email: userEmail, password: userPassword, firstName: 'User', lastName: 'Admin' }
+  ];
+
+  for (const adminData of admins) {
+    let admin = await prisma.user.findUnique({ where: { email: adminData.email } });
+    if (!admin) {
+      admin = await prisma.user.create({
+        data: {
+          email: adminData.email,
+          password: adminData.password,
+          firstName: adminData.firstName,
+          lastName: adminData.lastName,
+          role: 'SUPER_ADMIN',
+        },
+      });
+      console.log('Created Super Admin:', admin.email);
+    }
   }
 
   // 2. Create School
@@ -34,9 +43,26 @@ async function main() {
       data: {
         name: schoolName,
         address: '123 Rue de l\'École',
+        isActive: true,
       },
     });
     console.log('Created School:', school.name);
+  }
+
+  // Ensure user accounts are also linked to this school if needed, 
+  // though SUPER_ADMIN doesn't strictly need it.
+  // Let's create another school for variety
+  const school2Name = 'Lycée Excellence';
+  let school2 = await prisma.school.findFirst({ where: { name: school2Name } });
+  if (!school2) {
+    school2 = await prisma.school.create({
+      data: {
+        name: school2Name,
+        address: '456 Avenue des Talents',
+        isActive: true,
+      },
+    });
+    console.log('Created School:', school2.name);
   }
 
   // 3. Create School Admin

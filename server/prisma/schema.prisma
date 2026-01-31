@@ -16,9 +16,6 @@ model School {
   id        String   @id @default(uuid())
   name      String   // Nom de l'école
   address   String?  // Adresse physique
-  phone     String?  // Numéro de téléphone
-  email     String?  @unique
-  logo      String?  // URL du logo
   isActive  Boolean  @default(true) // Permet de suspendre l'accès à une école
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -281,7 +278,6 @@ model Notification {
   id        String   @id @default(uuid())
   title     String
   message   String
-  type      String   // ex: "INFO", "ALERT", "BROADCAST"
   userId    String?  // ID de l'utilisateur cible
   read      Boolean  @default(false)
   createdAt DateTime @default(now())

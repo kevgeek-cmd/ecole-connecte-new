@@ -36,6 +36,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
    * Bascule entre le mode clair et le mode sombre.
    */
   const toggleTheme = () => {
+    console.log('Toggling theme from', theme);
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
