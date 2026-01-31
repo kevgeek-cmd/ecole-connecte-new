@@ -136,12 +136,12 @@ const AssignmentDetails = () => {
 
   return (
     <div className="p-6">
-      <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 mb-6">
+      <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6">
         <div className="flex flex-col md:flex-row justify-between md:items-start gap-4">
             <div>
-                <h1 className="text-3xl font-bold text-gray-800 mb-2">{assignment.title}</h1>
-                <div className="flex items-center gap-4 text-gray-500 mb-4">
-                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-bold uppercase">
+                <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">{assignment.title}</h1>
+                <div className="flex items-center gap-4 text-gray-500 dark:text-gray-400 mb-4">
+                    <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs px-2 py-1 rounded font-bold uppercase">
                         {assignment.course.subject.name}
                     </span>
                     <span className="flex items-center gap-1 text-sm">
@@ -149,7 +149,7 @@ const AssignmentDetails = () => {
                         Pour le {new Date(assignment.dueDate).toLocaleDateString()}
                     </span>
                 </div>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap mb-4">
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap mb-4">
                     {cleanDescription(assignment.description)}
                 </p>
                 {getAssignmentFile(assignment.description) && (
@@ -157,7 +157,7 @@ const AssignmentDetails = () => {
                         href={getFileUrl(getAssignmentFile(assignment.description)!)} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-100 transition border border-blue-200"
+                        className="inline-flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 px-4 py-2 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition border border-blue-200 dark:border-blue-800"
                     >
                         <FileText className="w-5 h-5" />
                         Télécharger le sujet du devoir
@@ -168,35 +168,35 @@ const AssignmentDetails = () => {
             {!isTeacher && (
                 <div className="min-w-[200px]">
                     {mySubmission ? (
-                        <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-                            <div className="flex items-center gap-2 text-green-700 font-bold mb-2">
+                        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4 rounded-lg">
+                            <div className="flex items-center gap-2 text-green-700 dark:text-green-400 font-bold mb-2">
                                 <CheckCircle className="w-5 h-5" />
                                 Devoir rendu
                             </div>
-                            <p className="text-sm text-green-600 mb-2">
+                            <p className="text-sm text-green-600 dark:text-green-500 mb-2">
                                 Le {new Date(mySubmission.createdAt).toLocaleDateString()}
                             </p>
                             {mySubmission.grade ? (
-                                <div className="mt-4 p-4 bg-white rounded-lg border border-green-300 shadow-sm">
+                                <div className="mt-4 p-4 bg-white dark:bg-gray-900 rounded-lg border border-green-300 dark:border-green-900 shadow-sm">
                                     <div className="flex items-center gap-2 mb-1">
                                         <Award className="w-6 h-6 text-yellow-500" />
-                                        <span className="text-lg font-bold text-gray-800">Note obtenue</span>
+                                        <span className="text-lg font-bold text-gray-800 dark:text-white">Note obtenue</span>
                                     </div>
-                                    <p className="text-3xl font-bold text-blue-600 mb-1">{mySubmission.grade.value}<span className="text-base text-gray-400">/20</span></p>
+                                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">{mySubmission.grade.value}<span className="text-base text-gray-400">/20</span></p>
                                     {mySubmission.grade.comment && (
-                                        <div className="mt-2 pt-2 border-t border-gray-100">
-                                            <p className="text-sm text-gray-600 italic">"{mySubmission.grade.comment}"</p>
+                                        <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 italic">"{mySubmission.grade.comment}"</p>
                                         </div>
                                     )}
                                 </div>
                             ) : (
-                                <p className="text-xs text-gray-500 italic mt-2">En attente de correction</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 italic mt-2">En attente de correction</p>
                             )}
                         </div>
                     ) : (
                         <button
                             onClick={() => setIsSubmitModalOpen(true)}
-                            className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition shadow-lg shadow-blue-200"
+                            className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition shadow-lg shadow-blue-200 dark:shadow-none"
                         >
                             <Upload className="w-5 h-5" />
                             Rendre le devoir
@@ -208,16 +208,16 @@ const AssignmentDetails = () => {
       </div>
 
       {isTeacher && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="p-6 border-b border-gray-100">
-                  <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                      <User className="w-5 h-5 text-gray-500" />
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+              <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+                  <h2 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                      <User className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                       Travaux des élèves ({submissions.length})
                   </h2>
               </div>
               <div className="overflow-x-auto">
                   <table className="w-full text-left">
-                      <thead className="bg-gray-50 text-gray-500 text-sm uppercase">
+                      <thead className="bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-300 text-sm uppercase">
                           <tr>
                               <th className="p-4">Élève</th>
                               <th className="p-4">Date de remise</th>
@@ -226,24 +226,24 @@ const AssignmentDetails = () => {
                               <th className="p-4">Action</th>
                           </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100">
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                           {submissions.length === 0 ? (
                               <tr>
-                                  <td colSpan={5} className="p-8 text-center text-gray-500 italic">Aucun travail rendu pour le moment.</td>
+                                  <td colSpan={5} className="p-8 text-center text-gray-500 dark:text-gray-400 italic">Aucun travail rendu pour le moment.</td>
                               </tr>
                           ) : (
                               submissions.map(sub => (
-                                  <tr key={sub.id} className="hover:bg-gray-50">
-                                      <td className="p-4 font-medium">
+                                  <tr key={sub.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                      <td className="p-4 font-medium text-gray-900 dark:text-white">
                                           {sub.student.firstName} {sub.student.lastName}
                                       </td>
-                                      <td className="p-4 text-sm text-gray-500">
+                                      <td className="p-4 text-sm text-gray-500 dark:text-gray-400">
                                           {new Date(sub.createdAt).toLocaleDateString()} à {new Date(sub.createdAt).toLocaleTimeString().slice(0,5)}
                                       </td>
                                       <td className="p-4">
-                                          {sub.content && <p className="text-sm text-gray-700 line-clamp-2">{sub.content}</p>}
+                                          {sub.content && <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">{sub.content}</p>}
                                           {sub.fileUrl && (
-                                            <a href={getFileUrl(sub.fileUrl)} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-sm hover:underline block mt-1">
+                                            <a href={getFileUrl(sub.fileUrl)} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 text-sm hover:underline block mt-1">
                                                 Voir le fichier
                                             </a>
                                         )}
@@ -251,16 +251,16 @@ const AssignmentDetails = () => {
                                       <td className="p-4">
                                           {sub.grade ? (
                                               <div>
-                                                  <span className="font-bold text-gray-800">{sub.grade.value}/20</span>
+                                                  <span className="font-bold text-gray-800 dark:text-white">{sub.grade.value}/20</span>
                                               </div>
                                           ) : (
-                                              <span className="text-gray-400 text-sm">-</span>
+                                              <span className="text-gray-400 dark:text-gray-500 text-sm">-</span>
                                           )}
                                       </td>
                                       <td className="p-4">
                                           <button 
                                             onClick={() => openGradeModal(sub.id)}
-                                            className="text-blue-600 hover:bg-blue-50 p-2 rounded transition"
+                                            className="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 p-2 rounded transition"
                                             title="Noter"
                                           >
                                               <Award className="w-5 h-5" />

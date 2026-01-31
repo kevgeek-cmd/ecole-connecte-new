@@ -353,15 +353,15 @@ const Chat = () => {
             );
         } else {
             return (
-                <a 
-                    href={msg.attachmentUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="flex items-center gap-2 mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded text-blue-600 hover:underline"
-                >
-                    {msg.attachmentType === 'PDF' ? <FileText className="w-4 h-4" /> : <Paperclip className="w-4 h-4" />}
-                    <span>Voir la pièce jointe</span>
-                </a>
+                    <a 
+                        href={msg.attachmentUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="flex items-center gap-2 mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                        {msg.attachmentType === 'PDF' ? <FileText className="w-4 h-4" /> : <Paperclip className="w-4 h-4" />}
+                        <span>Voir la pièce jointe</span>
+                    </a>
             );
         }
     };
@@ -374,7 +374,7 @@ const Chat = () => {
                     <h2 className="font-semibold text-gray-700 dark:text-gray-200">Discussions</h2>
                     <div className="flex items-center gap-1">
                         <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500 animate-pulse'}`}></div>
-                        <span className="text-[10px] text-gray-500 uppercase">{isConnected ? 'Connecté' : 'Déconnecté'}</span>
+                        <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase">{isConnected ? 'Connecté' : 'Déconnecté'}</span>
                     </div>
                 </div>
                 <div className="flex-1 overflow-y-auto">
@@ -427,13 +427,13 @@ const Chat = () => {
                                     <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                                         <div className={`max-w-[70%] p-3 rounded-lg ${
                                             isMe 
-                                                ? 'bg-blue-600 text-white rounded-br-none' 
-                                                : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-white shadow-sm rounded-bl-none'
+                                                ? 'bg-blue-600 text-white rounded-br-none shadow-md' 
+                                                : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-sm rounded-bl-none border border-transparent dark:border-gray-600'
                                         }`}>
-                                            {!isMe && <p className="text-xs font-bold mb-1 opacity-70">{msg.sender.firstName} {msg.sender.lastName}</p>}
+                                            {!isMe && <p className="text-xs font-bold mb-1 text-blue-600 dark:text-blue-400">{msg.sender.firstName} {msg.sender.lastName}</p>}
                                             <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                                             {renderAttachment(msg)}
-                                            <p className="text-[10px] mt-1 opacity-70 text-right">
+                                            <p className={`text-[10px] mt-1 text-right ${isMe ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
                                                 {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </p>
                                         </div>

@@ -192,8 +192,8 @@ const AcademicYears = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          <Calendar className="w-8 h-8 text-blue-600" />
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+          <Calendar className="w-8 h-8 text-blue-600 dark:text-blue-400" />
           Années Scolaires
         </h1>
         <button
@@ -207,34 +207,34 @@ const AcademicYears = () => {
 
       <div className="space-y-4">
         {years.map((year) => (
-          <div key={year.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div key={year.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div 
-                className="p-6 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition"
+                className="p-6 flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                 onClick={() => toggleYearExpand(year.id)}
             >
               <div className="flex items-center gap-4">
-                  <div className="bg-blue-100 p-2 rounded-lg">
-                      <Calendar className="w-6 h-6 text-blue-600" />
+                  <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg">
+                      <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-800">{year.name}</h3>
-                    <p className="text-sm text-gray-500">
+                    <h3 className="text-xl font-bold text-gray-800 dark:text-white">{year.name}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                         {new Date(year.startDate).toLocaleDateString()} - {new Date(year.endDate).toLocaleDateString()}
                     </p>
                   </div>
               </div>
               <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                <span className="text-sm text-gray-500">{year.terms.length} Périodes</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">{year.terms.length} Périodes</span>
                 <button 
                     onClick={() => handleEditClick(year)}
-                    className="p-1 text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded transition"
+                    className="p-1 text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 rounded transition"
                     title="Modifier"
                 >
                     <Edit className="w-4 h-4" />
                 </button>
                 <button 
                     onClick={() => handleDeleteClick(year.id)}
-                    className="p-1 text-red-600 bg-red-50 hover:bg-red-100 rounded transition"
+                    className="p-1 text-red-600 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 rounded transition"
                     title="Supprimer"
                 >
                     <Trash2 className="w-4 h-4" />
@@ -244,37 +244,37 @@ const AcademicYears = () => {
             </div>
 
             {expandedYearId === year.id && (
-                <div className="bg-gray-50 p-6 border-t border-gray-100">
+                <div className="bg-gray-50 dark:bg-gray-900/50 p-6 border-t border-gray-100 dark:border-gray-700">
                     <div className="flex justify-between items-center mb-4">
-                        <h4 className="font-bold text-gray-700">Périodes / Trimestres</h4>
+                        <h4 className="font-bold text-gray-700 dark:text-gray-300">Périodes / Trimestres</h4>
                         <button 
                             onClick={(e) => { e.stopPropagation(); openTermModal(year.id); }}
-                            className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                            className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
                         >
                             <Plus className="w-3 h-3" /> Ajouter une période
                         </button>
                     </div>
                     
                     {year.terms.length === 0 ? (
-                        <p className="text-sm text-gray-500 italic">Aucune période définie.</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 italic">Aucune période définie.</p>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {year.terms.map(term => (
-                                <div key={term.id} className="bg-white p-4 rounded border border-gray-200">
+                                <div key={term.id} className="bg-white dark:bg-gray-800 p-4 rounded border border-gray-200 dark:border-gray-700">
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-center gap-2">
-                                            <span className="font-bold">{term.name}</span>
+                                            <span className="font-bold text-gray-900 dark:text-white">{term.name}</span>
                                             <div className="flex gap-1">
                                                 <button 
                                                     onClick={() => handleEditTermClick(term)}
-                                                    className="text-yellow-600 hover:bg-yellow-50 p-1 rounded"
+                                                    className="text-yellow-600 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/30 p-1 rounded"
                                                     title="Modifier"
                                                 >
                                                     <Edit className="w-3 h-3" />
                                                 </button>
                                                 <button 
                                                     onClick={() => handleDeleteTermClick(term.id)}
-                                                    className="text-red-600 hover:bg-red-50 p-1 rounded"
+                                                    className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 p-1 rounded"
                                                     title="Supprimer"
                                                 >
                                                     <Trash2 className="w-3 h-3" />
@@ -285,15 +285,15 @@ const AcademicYears = () => {
                                             onClick={() => handleToggleStatus(term.id, term.status)}
                                             className={`text-xs px-2 py-1 rounded border transition-colors ${
                                                 term.status === 'OPEN' 
-                                                ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-200' 
-                                                : 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200'
+                                                ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 border-green-200 dark:border-green-800 hover:bg-green-200 dark:hover:bg-green-900/50' 
+                                                : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
                                             }`}
                                             title="Cliquez pour changer le statut"
                                         >
                                             {term.status === 'OPEN' ? 'OUVERT' : 'FERMÉ'}
                                         </button>
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-2">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                                         {new Date(term.startDate).toLocaleDateString()} - {new Date(term.endDate).toLocaleDateString()}
                                     </p>
                                 </div>

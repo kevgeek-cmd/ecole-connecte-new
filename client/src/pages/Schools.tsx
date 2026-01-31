@@ -140,7 +140,7 @@ const Schools = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Gestion des Écoles</h1>
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Gestion des Écoles</h1>
         <div className="relative group">
             <button
             onClick={openCreateModal}

@@ -285,8 +285,8 @@ const Classes = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          <School className="w-8 h-8 text-blue-600" />
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+          <School className="w-8 h-8 text-blue-600 dark:text-blue-400" />
           Gestion des Classes
         </h1>
         <button
@@ -300,46 +300,46 @@ const Classes = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {classes.map((cls) => (
-          <div key={cls.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition">
+          <div key={cls.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h3 className="text-xl font-bold text-gray-800">{cls.name}</h3>
-                {cls.level && <p className="text-sm text-gray-500">Niveau: {cls.level}</p>}
+                <h3 className="text-xl font-bold text-gray-800 dark:text-white">{cls.name}</h3>
+                {cls.level && <p className="text-sm text-gray-500 dark:text-gray-400">Niveau: {cls.level}</p>}
               </div>
-              <div className="bg-blue-50 p-2 rounded-full">
-                 <GraduationCap className="w-6 h-6 text-blue-500" />
+              <div className="bg-blue-50 dark:bg-blue-900/30 p-2 rounded-full">
+                 <GraduationCap className="w-6 h-6 text-blue-500 dark:text-blue-400" />
               </div>
             </div>
             
-            <div className="flex gap-4 text-sm text-gray-600 border-t pt-4">
+            <div className="flex gap-4 text-sm text-gray-600 dark:text-gray-400 border-t dark:border-gray-700 pt-4">
                 <div className="flex flex-col">
-                    <span className="font-bold text-lg">{cls._count?.enrollments || 0}</span>
-                    <span className="text-xs uppercase text-gray-400">Élèves</span>
+                    <span className="font-bold text-lg text-gray-900 dark:text-white">{cls._count?.enrollments || 0}</span>
+                    <span className="text-xs uppercase text-gray-400 dark:text-gray-500">Élèves</span>
                 </div>
                 <div className="flex flex-col">
-                    <span className="font-bold text-lg">{cls._count?.courses || 0}</span>
-                    <span className="text-xs uppercase text-gray-400">Cours</span>
+                    <span className="font-bold text-lg text-gray-900 dark:text-white">{cls._count?.courses || 0}</span>
+                    <span className="text-xs uppercase text-gray-400 dark:text-gray-500">Cours</span>
                 </div>
             </div>
             
              <div className="flex gap-2 mt-4">
                 <button 
                     onClick={() => handleViewStudents(cls.id, cls.name)}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 rounded transition"
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 rounded transition"
                 >
                     <Users className="w-4 h-4" />
                     Élèves
                 </button>
                 <button 
                     onClick={() => handleEditClick(cls)}
-                    className="flex items-center justify-center p-2 text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded transition"
+                    className="flex items-center justify-center p-2 text-yellow-600 bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900/50 rounded transition"
                     title="Modifier la classe"
                 >
                     <Edit className="w-4 h-4" />
                 </button>
                 <button 
                     onClick={() => handleDeleteClick(cls.id)}
-                    className="flex items-center justify-center p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded transition"
+                    className="flex items-center justify-center p-2 text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 rounded transition"
                     title="Supprimer la classe"
                 >
                     <Trash2 className="w-4 h-4" />

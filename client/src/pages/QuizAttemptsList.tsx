@@ -86,7 +86,7 @@ const QuizAttemptsList = () => {
                                                 <p className="font-medium text-gray-800 dark:text-white">
                                                     {attempt.student.firstName} {attempt.student.lastName}
                                                 </p>
-                                                <p className="text-xs text-gray-500">{attempt.student.email}</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">{attempt.student.email}</p>
                                             </div>
                                         </div>
                                     </td>

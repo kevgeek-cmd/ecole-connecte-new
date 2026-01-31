@@ -224,12 +224,12 @@ const Users = () => {
           {selectedGroupId && (
             <button 
               onClick={() => setSelectedGroupId(null)}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
             >
-              <ArrowLeft className="w-6 h-6 text-gray-600" />
+              <ArrowLeft className="w-6 h-6 text-gray-600 dark:text-gray-400" />
             </button>
           )}
-          <h1 className="text-2xl font-bold text-gray-800">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
             {selectedGroup ? selectedGroup.title : 'Gestion des Utilisateurs'}
           </h1>
         </div>
@@ -248,76 +248,76 @@ const Users = () => {
             <div 
               key={group.id}
               onClick={() => setSelectedGroupId(group.id)}
-              className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow cursor-pointer border border-gray-100"
+              className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow cursor-pointer border border-gray-100 dark:border-gray-700"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className={`p-3 rounded-lg ${
-                  group.type === 'admin' ? 'bg-purple-100 text-purple-600' :
-                  group.type === 'teacher' ? 'bg-yellow-100 text-yellow-600' :
-                  group.type === 'class' ? 'bg-blue-100 text-blue-600' :
-                  'bg-gray-100 text-gray-600'
+                  group.type === 'admin' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' :
+                  group.type === 'teacher' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' :
+                  group.type === 'class' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' :
+                  'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                 }`}>
                   {group.type === 'admin' && <UserCog className="w-6 h-6" />}
                   {group.type === 'teacher' && <GraduationCap className="w-6 h-6" />}
                   {group.type === 'class' && <School className="w-6 h-6" />}
                   {group.type === 'other' && <UsersIcon className="w-6 h-6" />}
                 </div>
-                <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm font-medium">
+                <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full text-sm font-medium">
                   {group.count}
                 </span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-800">{group.title}</h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{group.title}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 {group.count} {group.count === 1 ? 'utilisateur' : 'utilisateurs'}
               </p>
             </div>
           ))}
         </div>
       ) : (
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rôle</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Classe</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">École</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nom</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Rôle</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Classe</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">École</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {selectedGroup?.users.map((u) => (
                 <tr key={u.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{u.firstName} {u.lastName}</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">{u.firstName} {u.lastName}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{u.email}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">{u.email}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                      ${u.role === 'SUPER_ADMIN' ? 'bg-red-100 text-red-800' : 
-                        u.role === 'SCHOOL_ADMIN' ? 'bg-purple-100 text-purple-800' :
-                        u.role === 'IT_ADMIN' ? 'bg-indigo-100 text-indigo-800' :
-                        u.role === 'TEACHER' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
+                      ${u.role === 'SUPER_ADMIN' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400' : 
+                        u.role === 'SCHOOL_ADMIN' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400' :
+                        u.role === 'IT_ADMIN' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-400' :
+                        u.role === 'TEACHER' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400' : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'}`}>
                       {u.role}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{u.enrollments?.[0]?.class?.name || '-'}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">{u.enrollments?.[0]?.class?.name || '-'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{u.school?.name || '-'}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">{u.school?.name || '-'}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       <div className="flex items-center gap-2">
                           {(currentUser?.role === 'SUPER_ADMIN' || 
                             (currentUser?.role === 'SCHOOL_ADMIN' && u.role !== 'SUPER_ADMIN') ||
                             (currentUser?.role === 'IT_ADMIN' && (u.role === 'TEACHER' || u.role === 'STUDENT' || u.id === currentUser?.id))) && (
                             <button 
                                 onClick={() => handleEditClick(u)}
-                                className="p-1 text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded transition"
+                                className="p-1 text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 rounded transition"
                                 title="Modifier"
                             >
                                 <Edit className="w-4 h-4" />
@@ -329,7 +329,7 @@ const Users = () => {
                             (currentUser?.role === 'IT_ADMIN' && (u.role === 'TEACHER' || u.role === 'STUDENT'))) && (
                             <button 
                                 onClick={() => handleDeleteClick(u.id)}
-                                className="p-1 text-red-600 bg-red-50 hover:bg-red-100 rounded transition"
+                                className="p-1 text-red-600 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 rounded transition"
                                 title="Supprimer"
                             >
                                 <Trash2 className="w-4 h-4" />
