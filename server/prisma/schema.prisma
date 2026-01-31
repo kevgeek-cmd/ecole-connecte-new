@@ -10,10 +10,8 @@ datasource db {
 
 // --- Modèles de Données ---
 
-/**
- * Modèle Ecole
- * Représente un établissement scolaire dans le système.
- */
+/// Modèle Ecole
+/// Représente un établissement scolaire dans le système.
 model School {
   id        String   @id @default(uuid())
   name      String   // Nom de l'école
@@ -32,10 +30,8 @@ model School {
   academicYears AcademicYear[]
 }
 
-/**
- * Modèle Utilisateur
- * Gère tous les profils (Super Admin, Admin Ecole, Prof, Elève).
- */
+/// Modèle Utilisateur
+/// Gère tous les profils (Super Admin, Admin Ecole, Prof, Elève).
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -64,10 +60,8 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
-/**
- * Modèle Année Scolaire
- * Définit les périodes de cours pour une école.
- */
+/// Modèle Année Scolaire
+/// Définit les périodes de cours pour une école.
 model AcademicYear {
   id        String   @id @default(uuid())
   name      String   // ex: "2023-2024"
@@ -79,10 +73,8 @@ model AcademicYear {
   terms     Term[]   // Trimestres ou semestres
 }
 
-/**
- * Modèle Trimestre / Période
- * Gère le découpage de l'année scolaire.
- */
+/// Modèle Trimestre / Période
+/// Gère le découpage de l'année scolaire.
 model Term {
   id             String     @id @default(uuid())
   name           String     // ex: "Trimestre 1"
@@ -94,9 +86,7 @@ model Term {
   grades         Grade[]
 }
 
-/**
- * Modèle Classe
- */
+/// Modèle Classe
 model Class {
   id        String   @id @default(uuid())
   name      String   // ex: "Terminale S1"
@@ -109,9 +99,7 @@ model Class {
   messages    Message[]
 }
 
-/**
- * Modèle Matière
- */
+/// Modèle Matière
 model Subject {
   id        String   @id @default(uuid())
   name      String   // ex: "Mathématiques"
@@ -121,10 +109,8 @@ model Subject {
   courses   Course[]
 }
 
-/**
- * Modèle Inscription
- * Lie un élève à une classe pour une période donnée.
- */
+/// Modèle Inscription
+/// Lie un élève à une classe pour une période donnée.
 model Enrollment {
   id        String   @id @default(uuid())
   studentId String
@@ -134,10 +120,8 @@ model Enrollment {
   joinedAt  DateTime @default(now())
 }
 
-/**
- * Modèle Cours
- * Représente l'assignation d'un prof à une matière dans une classe.
- */
+/// Modèle Cours
+/// Représente l'assignation d'un prof à une matière dans une classe.
 model Course {
   id        String   @id @default(uuid())
   classId   String
@@ -154,9 +138,7 @@ model Course {
   quizzes      Quiz[]
 }
 
-/**
- * Modèle Support de Cours
- */
+/// Modèle Support de Cours
 model Material {
   id        String   @id @default(uuid())
   title     String
@@ -167,9 +149,7 @@ model Material {
   createdAt DateTime @default(now())
 }
 
-/**
- * Modèle Devoir
- */
+/// Modèle Devoir
 model Assignment {
   id          String   @id @default(uuid())
   title       String
@@ -184,9 +164,7 @@ model Assignment {
   createdAt   DateTime @default(now())
 }
 
-/**
- * Modèle Rendu de Devoir
- */
+/// Modèle Rendu de Devoir
 model Submission {
   id           String   @id @default(uuid())
   content      String?  // Texte ou commentaire
@@ -200,9 +178,7 @@ model Submission {
   grade        Grade?   // Note associée à ce rendu
 }
 
-/**
- * Modèle Note
- */
+/// Modèle Note
 model Grade {
   id           String      @id @default(uuid())
   value        Float       // La note brute (ex: 15.5)
@@ -219,9 +195,7 @@ model Grade {
   createdAt    DateTime    @default(now())
 }
 
-/**
- * Modèle Message (Messagerie Instantanée)
- */
+/// Modèle Message (Messagerie Instantanée)
 model Message {
   id          String   @id @default(uuid())
   content     String
@@ -238,9 +212,7 @@ model Message {
   createdAt   DateTime @default(now())
 }
 
-/**
- * Modèles Quiz et Évaluations
- */
+/// Modèles Quiz et Évaluations
 model Quiz {
   id          String   @id @default(uuid())
   title       String
@@ -275,9 +247,7 @@ model QuizAttempt {
   quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
 }
 
-/**
- * Modèle Notification
- */
+/// Modèle Notification
 model Notification {
   id        String   @id @default(uuid())
   title     String
