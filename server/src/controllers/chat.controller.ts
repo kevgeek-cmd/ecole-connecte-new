@@ -5,7 +5,7 @@ import type { AuthRequest } from "../middleware/auth.js";
 
 export const sendMessage = async (req: AuthRequest, res: Response) => {
     try {
-        const { content, receiverId, classId, attachmentUrl, attachmentType } = req.body;
+        const { content, recipientId, classId, attachmentUrl, attachmentType } = req.body;
         const senderId = req.user?.id;
 
         if (!senderId) return res.status(401).json({ message: "Unauthorized" });
@@ -14,7 +14,7 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
             data: {
                 content,
                 senderId,
-                receiverId: receiverId ? String(receiverId) : null,
+                recipientId: recipientId ? String(recipientId) : null,
                 classId: classId ? String(classId) : null,
                 attachmentUrl,
                 attachmentType
@@ -89,8 +89,8 @@ export const getPrivateHistory = async (req: AuthRequest, res: Response) => {
         const messages = await prisma.message.findMany({
             where: {
                 OR: [
-                    { senderId: currentUserId, receiverId: String(userId) },
-                    { senderId: String(userId), receiverId: currentUserId }
+                    { senderId: currentUserId, recipientId: String(userId) },
+                    { senderId: String(userId), recipientId: currentUserId }
                 ]
             },
             include: {
@@ -124,7 +124,7 @@ export const getContacts = async (req: AuthRequest, res: Response) => {
                              enrollments: {
                                  include: { 
                                      student: {
-                                         select: { id: true, firstName: true, lastName: true, role: true, isOnline: true }
+                                         select: { id: true, firstName: true, lastName: true, role: true }
                                      } 
                                  }
                              }
@@ -135,11 +135,13 @@ export const getContacts = async (req: AuthRequest, res: Response) => {
              
              const studentMap = new Map();
              courses.forEach(c => {
-                 c.class.enrollments.forEach(e => {
-                     if (!studentMap.has(e.student.id)) {
-                         studentMap.set(e.student.id, e.student);
-                     }
-                 });
+                 if (c.class && c.class.enrollments) {
+                    c.class.enrollments.forEach(e => {
+                        if (e.student && !studentMap.has(e.student.id)) {
+                            studentMap.set(e.student.id, e.student);
+                        }
+                    });
+                 }
              });
              contacts = Array.from(studentMap.values());
         } 
@@ -153,7 +155,7 @@ export const getContacts = async (req: AuthRequest, res: Response) => {
                              courses: {
                                  include: { 
                                      teacher: {
-                                         select: { id: true, firstName: true, lastName: true, role: true, isOnline: true }
+                                         select: { id: true, firstName: true, lastName: true, role: true }
                                      } 
                                  }
                              }
@@ -164,11 +166,13 @@ export const getContacts = async (req: AuthRequest, res: Response) => {
              
              const teacherMap = new Map();
              enrollments.forEach(e => {
-                 e.class.courses.forEach(c => {
-                     if (!teacherMap.has(c.teacher.id)) {
-                         teacherMap.set(c.teacher.id, c.teacher);
-                     }
-                 });
+                 if (e.class && e.class.courses) {
+                    e.class.courses.forEach(c => {
+                        if (c.teacher && !teacherMap.has(c.teacher.id)) {
+                            teacherMap.set(c.teacher.id, c.teacher);
+                        }
+                    });
+                 }
              });
              contacts = Array.from(teacherMap.values());
         }

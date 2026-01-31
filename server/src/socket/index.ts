@@ -93,7 +93,7 @@ export const setupSocket = (io: Server) => {
                 data: {
                     content: data.content || "",
                     senderId: senderId,
-                    receiverId: targetClassId ? null : targetReceiverId,
+                    recipientId: targetClassId ? null : targetReceiverId,
                     classId: targetClassId,
                     attachmentUrl: data.attachmentUrl || null,
                     attachmentType: data.attachmentType || null

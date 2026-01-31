@@ -21,11 +21,11 @@ export const createSchool = async (req: Request, res: Response) => {
     const { name, address, managerId, isActive } = createSchoolSchema.parse(req.body);
 
     // Verify manager exists and has no school
-    const manager = await prisma.user.findUnique({ where: { id: managerId } });
+    const manager = await prisma.user.findUnique({ where: { id: managerId }, include: { managedSchool: true } });
     if (!manager) {
       return res.status(404).json({ message: "Administrateur non trouvé" });
     }
-    if (manager.schoolId) {
+    if (manager.managedSchool) {
       return res.status(400).json({ message: "Cet administrateur gère déjà une école" });
     }
 

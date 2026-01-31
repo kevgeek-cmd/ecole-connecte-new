@@ -23,8 +23,12 @@ model School {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Gestionnaire de l'école
+  managerId String?  @unique
+  manager   User?    @relation("SchoolManager", fields: [managerId], references: [id])
+
   // Relations
-  users         User[]
+  users         User[] @relation("SchoolUsers")
   classes       Class[]
   subjects      Subject[]
   academicYears AcademicYear[]
@@ -40,10 +44,14 @@ model User {
   lastName  String
   role      String   @default("STUDENT") // SUPER_ADMIN, SCHOOL_ADMIN, TEACHER, STUDENT, IT_ADMIN
   avatar    String?
+  isOnline  Boolean  @default(false)
   
   // Relation avec l'école (Optionnel pour le Super Admin)
   schoolId  String?
-  school    School?  @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  school    School?  @relation("SchoolUsers", fields: [schoolId], references: [id], onDelete: SetNull)
+
+  // Si l'utilisateur est un gestionnaire d'école
+  managedSchool School? @relation("SchoolManager")
 
   // Relations spécifiques
   courses      Course[]      // Si l'utilisateur est un professeur
@@ -217,34 +225,57 @@ model Quiz {
   id          String   @id @default(uuid())
   title       String
   description String?
+  published   Boolean  @default(false)
   timeLimit   Int?     // En minutes
   courseId    String
   course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   
-  questions   Question[]
+  questions   QuizQuestion[]
   attempts    QuizAttempt[]
   createdAt   DateTime @default(now())
 }
 
-model Question {
+model QuizQuestion {
   id          String   @id @default(uuid())
   text        String
   type        String   @default("MULTIPLE_CHOICE")
-  options     String[] // Liste des choix possibles
-  correctAnswer String
   points      Int      @default(1)
   quizId      String
   quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  
+  options     QuizOption[]
+  answers     QuizAnswer[]
+  correctAnswer String // Texte de la réponse correcte pour simplifier
+}
+
+model QuizOption {
+  id          String   @id @default(uuid())
+  text        String
+  isCorrect   Boolean  @default(false)
+  questionId  String
+  question    QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
 model QuizAttempt {
   id          String   @id @default(uuid())
   score       Float
+  startedAt   DateTime @default(now())
   completedAt DateTime @default(now())
   studentId   String
   student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
   quizId      String
   quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  answers     QuizAnswer[]
+}
+
+model QuizAnswer {
+  id              String   @id @default(uuid())
+  attemptId       String
+  attempt         QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId      String
+  question        QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOptions String[] // IDs des options sélectionnées
+  isCorrect       Boolean
 }
 
 /// Modèle Notification
@@ -253,7 +284,7 @@ model Notification {
   title     String
   message   String
   type      String   // ex: "INFO", "ALERT", "BROADCAST"
-  targetId  String?  // ID de l'utilisateur ou du rôle cible
-  isRead    Boolean  @default(false)
+  userId    String?  // ID de l'utilisateur cible
+  read      Boolean  @default(false)
   createdAt DateTime @default(now())
 }

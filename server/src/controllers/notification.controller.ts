@@ -102,6 +102,7 @@ export const broadcastNotification = async (req: AuthRequest, res: Response) => 
       message,
       userId: u.id,
       read: false,
+      type: "BROADCAST"
     }));
 
     await prisma.notification.createMany({

@@ -44,22 +44,24 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
                 title: validatedData.title,
                 description: validatedData.description,
                 courseId: validatedData.courseId,
-                published: true, // Auto publish for now, or add field in schema
+                published: true,
                 questions: {
                     create: validatedData.questions.map(q => ({
                         text: q.text,
                         type: q.type,
                         points: q.points,
+                        correctAnswer: q.options.find(opt => opt.isCorrect)?.text || "",
                         options: {
-                            create: q.options
+                            create: q.options.map(opt => ({
+                                text: opt.text,
+                                isCorrect: opt.isCorrect
+                            }))
                         }
                     }))
                 }
             },
             include: {
-                questions: {
-                    include: { options: true }
-                }
+                questions: true
             }
         });
 
@@ -131,8 +133,12 @@ export const updateQuiz = async (req: AuthRequest, res: Response) => {
                         text: q.text,
                         type: q.type,
                         points: q.points,
+                        correctAnswer: q.options.find(opt => opt.isCorrect)?.text || "",
                         options: {
-                            create: q.options
+                            create: q.options.map(opt => ({
+                                text: opt.text,
+                                isCorrect: opt.isCorrect
+                            }))
                         }
                     }))
                 }
@@ -349,7 +355,8 @@ export const submitQuizAttempt = async (req: AuthRequest, res: Response) => {
 
             attemptAnswers.push({
                 questionId: question.id,
-                selectedOptions: userSelectedOptionIds
+                selectedOptions: userSelectedOptionIds,
+                isCorrect: isCorrect
             });
         }
 
