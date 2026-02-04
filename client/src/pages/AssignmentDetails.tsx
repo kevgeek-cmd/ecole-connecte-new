@@ -243,9 +243,15 @@ const AssignmentDetails = () => {
                                       <td className="p-4">
                                           {sub.content && <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">{sub.content}</p>}
                                           {sub.fileUrl && (
-                                            <a href={getFileUrl(sub.fileUrl)} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 text-sm hover:underline block mt-1">
-                                                Voir le fichier
-                                            </a>
+                                              <div className="mt-1">
+                                                  {(sub.fileUrl.endsWith('.mp3') || sub.fileUrl.endsWith('.wav') || sub.fileUrl.endsWith('.ogg') || sub.fileUrl.endsWith('.webm')) ? (
+                                                      <audio controls src={getFileUrl(sub.fileUrl)} className="h-8 w-48 mt-1" />
+                                                  ) : (
+                                                      <a href={getFileUrl(sub.fileUrl)} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 text-sm hover:underline block">
+                                                          Voir le fichier
+                                                      </a>
+                                                  )}
+                                              </div>
                                         )}
                                       </td>
                                       <td className="p-4">
@@ -292,12 +298,14 @@ const AssignmentDetails = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fichier (PDF, Word, Image...)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fichier (PDF, Word, Image, Audio MP3...)</label>
                 <input
                   type="file"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.mp3,.wav,.ogg,.webm"
                   {...registerSubmit('file')}
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 />
+                <p className="text-xs text-gray-500 mt-1">Formats acceptés : PDF, Word, Images, MP3 (max 20MB)</p>
               </div>
 
               <div>

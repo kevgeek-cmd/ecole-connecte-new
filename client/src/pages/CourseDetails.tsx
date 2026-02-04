@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import api, { getFileUrl } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useForm } from 'react-hook-form';
-import { Book, FileText, Upload, Video, File, Link as LinkIcon, Plus, Trash2 } from 'lucide-react';
+import { Book, FileText, Upload, Video, File, Link as LinkIcon, Plus, Trash2, FolderPlus, Folder } from 'lucide-react';
 import Gradebook from '../components/Gradebook';
 import QuizList from '../components/QuizList';
 
@@ -24,7 +24,7 @@ interface AssignmentModel {
   };
   submissions?: {
     grade?: {
-        value: number;
+      value: number;
     }
   }[];
 }
@@ -35,6 +35,13 @@ interface MaterialModel {
     type: 'PDF' | 'VIDEO' | 'LINK';
     url: string;
     createdAt: string;
+    source?: string;
+}
+
+interface ChapterModel {
+  id: string;
+  title: string;
+  materials: MaterialModel[];
 }
 
 const CourseDetails = () => {
@@ -43,15 +50,20 @@ const CourseDetails = () => {
   const [course, setCourse] = useState<CourseModel | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [assignments, setAssignments] = useState<AssignmentModel[]>([]);
-  const [materials, setMaterials] = useState<MaterialModel[]>([]);
+  
+  // Chapter & Material State
+  const [chapters, setChapters] = useState<ChapterModel[]>([]);
+  const [orphanMaterials, setOrphanMaterials] = useState<MaterialModel[]>([]);
   
   const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
   const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
+  const [isChapterModalOpen, setIsChapterModalOpen] = useState(false);
   
   const [assignmentError, setAssignmentError] = useState<string | null>(null);
   const [materialError, setMaterialError] = useState<string | null>(null);
   const [isSubmittingAssign, setIsSubmittingAssign] = useState(false);
   const [isSubmittingMat, setIsSubmittingMat] = useState(false);
+  const [isSubmittingChap, setIsSubmittingChap] = useState(false);
   
   const [assignmentToDelete, setAssignmentToDelete] = useState<string | null>(null);
   const [isDeleteAssignModalOpen, setIsDeleteAssignModalOpen] = useState(false);
@@ -63,7 +75,8 @@ const CourseDetails = () => {
   const [activeTab, setActiveTab] = useState<'CONTENT' | 'GRADES' | 'QUIZZES'>('CONTENT');
 
   const { register: registerAssign, handleSubmit: handleSubmitAssign, reset: resetAssign, formState: { errors: errorsAssign } } = useForm<{ title: string; description?: string; dueDate: string; file?: FileList }>();
-  const { register: registerMat, handleSubmit: handleSubmitMat, reset: resetMat, watch: watchMat, formState: { errors: errorsMat } } = useForm<{ title: string; type: string; url: string; file?: FileList }>();
+  const { register: registerMat, handleSubmit: handleSubmitMat, reset: resetMat, watch: watchMat, formState: { errors: errorsMat } } = useForm<{ title: string; type: string; url: string; source?: string; chapterId?: string; file?: FileList }>();
+  const { register: registerChap, handleSubmit: handleSubmitChap, reset: resetChap } = useForm<{ title: string }>();
 
   const isTeacher = user?.role === 'TEACHER' || user?.role === 'SCHOOL_ADMIN';
 
@@ -114,31 +127,33 @@ const CourseDetails = () => {
       if (!id) return;
       setError(null);
 
-      // Fetch course first to ensure it exists and we have access
+      // Fetch course first
       try {
         const courseRes = await api.get(`/courses/${id}`);
         setCourse(courseRes.data);
       } catch (err) {
         console.error("Error fetching course info", err);
         setError("Impossible de charger les détails du cours.");
-        // If course fetch fails, no point fetching others
         return; 
       }
 
-      // Fetch other data independently so one failure doesn't block the UI
+      // Fetch other data
       const fetchAssignments = api.get(`/assignments?courseId=${id}`)
         .then(res => setAssignments(res.data))
         .catch(err => console.error("Error fetching assignments", err));
 
-      const fetchMaterials = api.get(`/courses/${id}/materials`)
-        .then(res => setMaterials(res.data))
-        .catch(err => console.error("Error fetching materials", err));
+      const fetchChapters = api.get(`/courses/${id}/chapters`)
+        .then(res => {
+            setChapters(res.data.chapters);
+            setOrphanMaterials(res.data.orphanMaterials);
+        })
+        .catch(err => console.error("Error fetching chapters", err));
 
       const fetchQuizzes = api.get(`/quizzes?courseId=${id}`)
         .then(res => setQuizzes(res.data))
         .catch(err => console.error("Error fetching quizzes", err));
 
-      await Promise.allSettled([fetchAssignments, fetchMaterials, fetchQuizzes]);
+      await Promise.allSettled([fetchAssignments, fetchChapters, fetchQuizzes]);
 
     } catch (error) {
       console.error('Error fetching course details', error);
@@ -155,11 +170,7 @@ const CourseDetails = () => {
     try {
       setIsSubmittingAssign(true);
       setAssignmentError(null);
-      // Handle Assignment creation with file upload if supported later.
-      // For now we send JSON, but if I added file upload support on backend for assignment creation, 
-      // I should use FormData here.
-      // The user wants "Assignments... PDF or Word".
-      // Backend now supports file upload for assignments.
+      
       const formData = new FormData();
       formData.append('title', data.title);
       formData.append('description', data.description || '');
@@ -185,7 +196,22 @@ const CourseDetails = () => {
     }
   };
 
-  const onSubmitMaterial = async (data: { title: string; type: string; url: string; file?: FileList }) => {
+  const onSubmitChapter = async (data: { title: string }) => {
+      try {
+          setIsSubmittingChap(true);
+          await api.post(`/courses/${id}/chapters`, data);
+          setIsChapterModalOpen(false);
+          resetChap();
+          fetchCourseDetails();
+      } catch (error) {
+          console.error("Error creating chapter", error);
+          alert("Erreur lors de la création du chapitre");
+      } finally {
+          setIsSubmittingChap(false);
+      }
+  }
+
+  const onSubmitMaterial = async (data: { title: string; type: string; url: string; source?: string; chapterId?: string; file?: FileList }) => {
       try {
           setIsSubmittingMat(true);
           setMaterialError(null);
@@ -201,6 +227,8 @@ const CourseDetails = () => {
           const formData = new FormData();
           formData.append('title', data.title);
           formData.append('type', data.type);
+          if (data.source) formData.append('source', data.source);
+          if (data.chapterId) formData.append('chapterId', data.chapterId);
           
           if (data.type === 'LINK' || data.type === 'VIDEO') {
                formData.append('url', data.url);
@@ -228,7 +256,7 @@ const CourseDetails = () => {
   const getMaterialIcon = (type: string) => {
       switch (type) {
           case 'VIDEO': return <Video className="w-5 h-5 text-red-500" />;
-          case 'PDF': return <File className="w-5 h-5 text-red-500" />; // Should be FileText or similar
+          case 'PDF': return <File className="w-5 h-5 text-red-500" />;
           case 'LINK': return <LinkIcon className="w-5 h-5 text-blue-500" />;
           default: return <FileText className="w-5 h-5 text-gray-500" />;
       }
@@ -254,36 +282,43 @@ const CourseDetails = () => {
                 <p className="text-gray-500 dark:text-gray-400 mt-1">Classe: {course.class?.name} • Prof: {course.teacher?.firstName} {course.teacher?.lastName}</p>
             </div>
             {isTeacher && activeTab === 'CONTENT' && (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            onClick={() => setIsChapterModalOpen(true)}
+                            className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition shadow-sm"
+                        >
+                            <FolderPlus className="w-4 h-4" />
+                            Nouveau Chapitre
+                        </button>
                         <button
                             onClick={() => setIsMaterialModalOpen(true)}
                             className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition shadow-sm"
                         >
                             <Plus className="w-4 h-4" />
-                            Ajouter un contenu (PDF/Vidéo)
+                            Ajouter Contenu
                         </button>
                         <button
                             onClick={() => setIsAssignmentModalOpen(true)}
                             className="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-600 transition shadow-sm"
                         >
                             <Upload className="w-4 h-4" />
-                            Ajouter un devoir
+                            Ajouter Devoir
                         </button>
                     </div>
                 )}
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 dark:border-gray-700">
+        <div className="flex border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
             <button
-                className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'CONTENT' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                className={`px-6 py-3 font-medium text-sm transition-colors relative whitespace-nowrap ${activeTab === 'CONTENT' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                 onClick={() => setActiveTab('CONTENT')}
             >
                 Contenu du cours
                 {activeTab === 'CONTENT' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 dark:bg-blue-400"></div>}
             </button>
             <button
-                className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'QUIZZES' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                className={`px-6 py-3 font-medium text-sm transition-colors relative whitespace-nowrap ${activeTab === 'QUIZZES' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                 onClick={() => setActiveTab('QUIZZES')}
             >
                 QCM & Quiz
@@ -291,7 +326,7 @@ const CourseDetails = () => {
             </button>
             {isTeacher && (
                 <button
-                    className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'GRADES' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                    className={`px-6 py-3 font-medium text-sm transition-colors relative whitespace-nowrap ${activeTab === 'GRADES' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                     onClick={() => setActiveTab('GRADES')}
                 >
                     Notes & Évaluations
@@ -302,8 +337,9 @@ const CourseDetails = () => {
       </div>
 
       {activeTab === 'CONTENT' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column: Assignments */}
+            <div className="lg:col-span-1">
                 <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
                     <FileText className="w-5 h-5" />
                     Devoirs à rendre
@@ -311,7 +347,7 @@ const CourseDetails = () => {
                 <div className="space-y-4">
                     {assignments.length === 0 && <p className="text-gray-500 dark:text-gray-400 italic">Aucun devoir.</p>}
                     {assignments.map(assignment => (
-                        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition hover:border-blue-300 dark:hover:border-blue-500 group relative">
+                        <div key={assignment.id} className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition hover:border-blue-300 dark:hover:border-blue-500 group relative">
                                 <Link to={`/assignments/${assignment.id}`} className="block h-full">
                                 <div className="flex justify-between items-start pr-8">
                                     <h3 className="font-bold text-gray-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">{assignment.title}</h3>
@@ -348,43 +384,56 @@ const CourseDetails = () => {
                 </div>
             </div>
 
-            <div>
+            {/* Right Column: Chapters & Materials */}
+            <div className="lg:col-span-2">
                 <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    Supports de cours
+                    <Book className="w-5 h-5" />
+                    Programme & Supports
                 </h2>
-                <div className="space-y-3">
-                    {materials.length === 0 && <p className="text-gray-500 dark:text-gray-400 italic">Aucun support de cours.</p>}
-                    {materials.map(material => (
-                        <div 
-                            key={material.id} 
-                            className="flex items-center justify-between bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition group"
-                        >
-                            <a 
-                                href={getFileUrl(material.url)} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-3 flex-1"
-                            >
-                                <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded">
-                                    {getMaterialIcon(material.type)}
-                                </div>
-                                <div>
-                                    <h3 className="font-medium text-gray-800 dark:text-white">{material.title}</h3>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(material.createdAt).toLocaleDateString()}</p>
-                                </div>
-                            </a>
-                            {isTeacher && (
-                                <button 
-                                    onClick={(e) => openDeleteMaterialModal(material.id, e)}
-                                    className="text-gray-400 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition"
-                                    title="Supprimer"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            )}
+                <div className="space-y-6">
+                    {/* Chapters Loop */}
+                    {chapters.map(chapter => (
+                        <div key={chapter.id} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                            <div className="bg-gray-50 dark:bg-gray-700/50 p-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
+                                <Folder className="w-5 h-5 text-indigo-500" />
+                                <h3 className="font-bold text-gray-800 dark:text-white text-lg">{chapter.title}</h3>
+                            </div>
+                            <div className="p-2 space-y-1">
+                                {chapter.materials.length === 0 && <p className="text-sm text-gray-500 dark:text-gray-400 p-2 italic">Aucun contenu dans ce chapitre.</p>}
+                                {chapter.materials.map(material => (
+                                    <MaterialItem 
+                                        key={material.id} 
+                                        material={material} 
+                                        isTeacher={isTeacher} 
+                                        onDelete={(e) => openDeleteMaterialModal(material.id, e)} 
+                                        getIcon={getMaterialIcon}
+                                    />
+                                ))}
+                            </div>
                         </div>
                     ))}
+
+                    {/* Orphan Materials (Autre) */}
+                    {(orphanMaterials.length > 0 || chapters.length === 0) && (
+                        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                            <div className="bg-gray-50 dark:bg-gray-700/50 p-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
+                                <Folder className="w-5 h-5 text-gray-500" />
+                                <h3 className="font-bold text-gray-800 dark:text-white text-lg">Autres ressources</h3>
+                            </div>
+                            <div className="p-2 space-y-1">
+                                {orphanMaterials.length === 0 && <p className="text-sm text-gray-500 dark:text-gray-400 p-2 italic">Aucun contenu.</p>}
+                                {orphanMaterials.map(material => (
+                                    <MaterialItem 
+                                        key={material.id} 
+                                        material={material} 
+                                        isTeacher={isTeacher} 
+                                        onDelete={(e) => openDeleteMaterialModal(material.id, e)} 
+                                        getIcon={getMaterialIcon}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -400,21 +449,11 @@ const CourseDetails = () => {
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl w-full max-w-sm border border-transparent dark:border-gray-700 shadow-xl">
             <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Confirmer la suppression</h2>
             <p className="text-gray-600 dark:text-gray-300 mb-6">
-                Êtes-vous sûr de vouloir supprimer ce devoir ? Cette action est irréversible et supprimera toutes les notes et rendus associés.
+                Êtes-vous sûr de vouloir supprimer ce devoir ? Cette action est irréversible.
             </p>
             <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setIsDeleteAssignModalOpen(false)}
-                className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={confirmDeleteAssignment}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-              >
-                Supprimer
-              </button>
+              <button onClick={() => setIsDeleteAssignModalOpen(false)} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">Annuler</button>
+              <button onClick={confirmDeleteAssignment} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Supprimer</button>
             </div>
           </div>
         </div>
@@ -429,19 +468,34 @@ const CourseDetails = () => {
                 Êtes-vous sûr de vouloir supprimer ce support de cours ? Cette action est irréversible.
             </p>
             <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setIsDeleteMatModalOpen(false)}
-                className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={confirmDeleteMaterial}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-              >
-                Supprimer
-              </button>
+              <button onClick={() => setIsDeleteMatModalOpen(false)} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">Annuler</button>
+              <button onClick={confirmDeleteMaterial} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Supprimer</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Chapter Modal */}
+      {isChapterModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-xl w-full max-w-md border border-transparent dark:border-gray-700 shadow-xl">
+            <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Nouveau Chapitre</h2>
+            <form onSubmit={handleSubmitChap(onSubmitChapter)} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Titre du chapitre</label>
+                <input
+                  {...registerChap('title', { required: 'Le titre est requis' })}
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+                  placeholder="Ex: Chapitre 1 - Introduction"
+                />
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button type="button" onClick={() => setIsChapterModalOpen(false)} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition">Annuler</button>
+                <button type="submit" disabled={isSubmittingChap} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+                    {isSubmittingChap ? 'Création...' : 'Créer'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
@@ -513,14 +567,7 @@ const CourseDetails = () => {
                   className={`px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition flex items-center gap-2 ${isSubmittingAssign ? 'opacity-70 cursor-not-allowed' : ''}`}
                   disabled={isSubmittingAssign}
                 >
-                  {isSubmittingAssign ? (
-                    <>
-                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                      Création...
-                    </>
-                  ) : (
-                    'Créer'
-                  )}
+                  {isSubmittingAssign ? 'Création...' : 'Créer'}
                 </button>
               </div>
             </form>
@@ -531,17 +578,39 @@ const CourseDetails = () => {
       {/* Create Material Modal */}
       {isMaterialModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-xl w-full max-w-md border border-transparent dark:border-gray-700 shadow-xl">
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-xl w-full max-w-md border border-transparent dark:border-gray-700 shadow-xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Ajouter un support</h2>
             <form onSubmit={handleSubmitMat(onSubmitMaterial)} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Chapitre</label>
+                <select
+                    {...registerMat('chapterId')}
+                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                >
+                    <option value="">-- Aucun (Général) --</option>
+                    {chapters.map(c => (
+                        <option key={c.id} value={c.id}>{c.title}</option>
+                    ))}
+                </select>
+              </div>
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Titre</label>
                 <input
                   {...registerMat('title', { required: 'Le titre est requis' })}
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-                  placeholder="Ex: Cours Chapitre 1 (PDF)"
+                  placeholder="Ex: Cours PDF"
                 />
                 {errorsMat.title && <span className="text-red-500 text-sm">{errorsMat.title.message as string}</span>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Source / Auteur (Facultatif)</label>
+                <input
+                  {...registerMat('source')}
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+                  placeholder="Ex: Manuel page 12 ou Nom de l'auteur"
+                />
               </div>
 
               <div>
@@ -601,14 +670,7 @@ const CourseDetails = () => {
                   className={`px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition flex items-center gap-2 ${isSubmittingMat ? 'opacity-70 cursor-not-allowed' : ''}`}
                   disabled={isSubmittingMat}
                 >
-                  {isSubmittingMat ? (
-                    <>
-                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                      Ajout...
-                    </>
-                  ) : (
-                    'Ajouter'
-                  )}
+                  {isSubmittingMat ? 'Ajout...' : 'Ajouter'}
                 </button>
               </div>
             </form>
@@ -618,5 +680,39 @@ const CourseDetails = () => {
     </div>
   );
 };
+
+// Helper Component for Material Item
+const MaterialItem = ({ material, isTeacher, onDelete, getIcon }: { material: MaterialModel, isTeacher: boolean, onDelete: (e: React.MouseEvent) => void, getIcon: (t: string) => JSX.Element }) => (
+    <div 
+        className="flex items-center justify-between bg-white dark:bg-gray-800 p-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition group border border-transparent hover:border-gray-200 dark:hover:border-gray-600"
+    >
+        <a 
+            href={getFileUrl(material.url)} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 flex-1"
+        >
+            <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded text-gray-600 dark:text-gray-300">
+                {getIcon(material.type)}
+            </div>
+            <div>
+                <h3 className="font-medium text-gray-800 dark:text-white text-sm">{material.title}</h3>
+                <div className="flex gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <span>{new Date(material.createdAt).toLocaleDateString()}</span>
+                    {material.source && <span>• Source: {material.source}</span>}
+                </div>
+            </div>
+        </a>
+        {isTeacher && (
+            <button 
+                onClick={onDelete}
+                className="text-gray-400 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition"
+                title="Supprimer"
+            >
+                <Trash2 className="w-4 h-4" />
+            </button>
+        )}
+    </div>
+);
 
 export default CourseDetails;

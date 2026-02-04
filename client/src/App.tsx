@@ -38,6 +38,10 @@ function App() {
               {/* Super Admin Routes */}
               <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']} />}>
                 <Route path="/schools" element={<Schools />} />
+              </Route>
+
+              {/* Broadcast - Super Admin & School Admin */}
+              <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'SCHOOL_ADMIN']} />}>
                 <Route path="/broadcast" element={<Broadcast />} />
               </Route>
 
@@ -56,6 +60,7 @@ function App() {
                 <Route path="/courses/:id" element={<CourseDetails />} />
                 <Route path="/assignments/:id" element={<AssignmentDetails />} />
                 <Route path="/library" element={<Library />} />
+                <Route path="/agenda" element={<Agenda />} />
                 <Route path="/chat" element={<Chat />} />
                 <Route path="/quizzes/:id" element={<QuizTake />} />
                 <Route path="/quizzes/:id/attempts" element={<QuizAttemptsList />} />
@@ -63,9 +68,9 @@ function App() {
               </Route>
 
               {/* Student Only */}
-              <Route element={<ProtectedRoute allowedRoles={['STUDENT']} />}>
+              {/* <Route element={<ProtectedRoute allowedRoles={['STUDENT']} />}>
                  <Route path="/report-cards" element={<StudentReportCards />} />
-              </Route>
+              </Route> */}
 
             </Route>
           </Route>

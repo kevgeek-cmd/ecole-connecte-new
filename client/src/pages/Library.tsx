@@ -8,11 +8,13 @@ interface Material {
   title: string;
   type: string;
   url: string;
+  source?: string;
   courseId: string;
   createdAt: string;
   course: {
     class: {
       name: string;
+      level: string;
     };
     subject: {
       name: string;
@@ -36,6 +38,7 @@ const Library = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('ALL');
+  const [levelFilter, setLevelFilter] = useState('ALL');
   
   // Upload State
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -46,6 +49,7 @@ const Library = () => {
       title: '',
       type: 'PDF',
       url: '', // For manual URL
+      source: '',
       file: null as File | null
   });
 
@@ -105,12 +109,15 @@ const Library = () => {
       }
   };
 
+  const availableLevels = Array.from(new Set(materials.map(m => m.course.class.level).filter(Boolean)));
+
   const filteredMaterials = materials.filter((material) => {
     const matchesSearch = material.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           material.course.subject.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           material.course.class.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = typeFilter === 'ALL' || material.type === typeFilter;
-    return matchesSearch && matchesType;
+    const matchesLevel = levelFilter === 'ALL' || material.course.class.level === levelFilter;
+    return matchesSearch && matchesType && matchesLevel;
   });
 
   const getIcon = (type: string) => {
@@ -150,6 +157,20 @@ const Library = () => {
         </div>
         <div className="flex items-center gap-2">
           <Filter className="w-5 h-5 text-gray-400" />
+          
+          {availableLevels.length > 0 && (
+             <select
+                className="border border-gray-300 dark:border-gray-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                value={levelFilter}
+                onChange={(e) => setLevelFilter(e.target.value)}
+            >
+                <option value="ALL">Tous les niveaux</option>
+                {availableLevels.map(level => (
+                    <option key={level} value={level}>{level}</option>
+                ))}
+            </select>
+          )}
+
           <select
             className="border border-gray-300 dark:border-gray-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             value={typeFilter}
@@ -188,6 +209,7 @@ const Library = () => {
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                   {material.course.class.name} • Prof. {material.course.teacher.lastName}
+                  {material.source && <span className="block text-xs mt-1 italic text-gray-400">Source : {material.source}</span>}
               </p>
 
               <div className="mt-auto pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
@@ -242,6 +264,17 @@ const Library = () => {
                             value={newMaterial.title}
                             onChange={e => setNewMaterial({...newMaterial, title: e.target.value})}
                             required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-1 dark:text-gray-300">Source (Optionnel)</label>
+                        <input 
+                            type="text"
+                            placeholder="Ex: Ministère de l'Éducation, Manuel scolaire..."
+                            className="w-full border rounded p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            value={newMaterial.source}
+                            onChange={e => setNewMaterial({...newMaterial, source: e.target.value})}
                         />
                     </div>
 

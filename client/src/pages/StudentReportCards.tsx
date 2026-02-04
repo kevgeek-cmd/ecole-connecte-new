@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
-import { Printer } from 'lucide-react';
+import { Printer, User, BookOpen } from 'lucide-react';
 
 interface ReportCardData {
   student: {
@@ -42,30 +43,71 @@ interface Term {
 }
 
 const StudentReportCards = () => {
+  const { user } = useAuth();
   const [reportCard, setReportCard] = useState<ReportCardData | null>(null);
   const [terms, setTerms] = useState<Term[]>([]);
   const [selectedTermId, setSelectedTermId] = useState<string>('');
+  
+  // Admin/Teacher Selection State
+  const [classes, setClasses] = useState<{id: string, name: string}[]>([]);
+  const [students, setStudents] = useState<{id: string, firstName: string, lastName: string}[]>([]);
+  const [selectedClassId, setSelectedClassId] = useState<string>('');
+  const [selectedStudentId, setSelectedStudentId] = useState<string>('');
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchTerms();
-  }, []);
+    if (user?.role !== 'STUDENT') {
+        fetchClasses();
+    }
+  }, [user]);
 
   useEffect(() => {
-    if (selectedTermId) {
-      fetchReportCard(selectedTermId);
-    } else if (terms.length > 0) {
-        // Auto select first open term or first term
-        const openTerm = terms.find(t => t.status === 'OPEN');
-        if (openTerm) {
-            setSelectedTermId(openTerm.id);
-        } else {
-            setSelectedTermId(terms[0].id);
+    if (selectedClassId) {
+        fetchClassStudents(selectedClassId);
+    } else {
+        setStudents([]);
+        setSelectedStudentId('');
+    }
+  }, [selectedClassId]);
+
+  useEffect(() => {
+    // Logic for triggering fetch
+    if (user?.role === 'STUDENT') {
+        if (selectedTermId) fetchReportCard(selectedTermId);
+    } else {
+        // For Admin/Teacher, need both student and term
+        if (selectedTermId && selectedStudentId) {
+            fetchReportCard(selectedTermId, selectedStudentId);
+        } else if (selectedStudentId && terms.length > 0 && !selectedTermId) {
+             // Auto-select term if student selected but term not (unlikely due to initial load)
+             const openTerm = terms.find(t => t.status === 'OPEN') || terms[0];
+             if (openTerm) setSelectedTermId(openTerm.id);
         }
     }
-  }, [terms, selectedTermId]);
+  }, [terms, selectedTermId, selectedStudentId, user]);
+
+  const fetchClasses = async () => {
+      try {
+          const response = await api.get('/classes');
+          setClasses(response.data);
+      } catch (err) {
+          console.error("Error fetching classes", err);
+      }
+  };
+
+  const fetchClassStudents = async (classId: string) => {
+      try {
+          const response = await api.get(`/classes/${classId}/students`);
+          setStudents(response.data);
+      } catch (err) {
+          console.error("Error fetching students", err);
+      }
+  };
+
 
   const fetchTerms = async () => {
     try {
@@ -85,11 +127,16 @@ const StudentReportCards = () => {
     }
   };
 
-  const fetchReportCard = async (termId: string) => {
+  const fetchReportCard = async (termId: string, studentId?: string) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get(`/grades/report-card?termId=${termId}`);
+      let url = `/grades/report-card?termId=${termId}`;
+      if (studentId) {
+          url = `/grades/report-card/${studentId}?termId=${termId}`;
+      }
+      
+      const response = await api.get(url);
       setReportCard(response.data);
     } catch (err) {
       console.error("Error fetching report card", err);
@@ -106,9 +153,46 @@ const StudentReportCards = () => {
 
   return (
     <div className="space-y-6">
-        <div className="flex justify-between items-center no-print">
-            <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Mes Bulletins</h1>
-            <div className="flex gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 no-print">
+            <div>
+                <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Bulletins de Notes</h1>
+                {user?.role !== 'STUDENT' && <p className="text-gray-500 dark:text-gray-400">Consultez les bulletins des élèves</p>}
+            </div>
+            
+            <div className="flex flex-wrap gap-3 items-center">
+                {user?.role !== 'STUDENT' && (
+                    <>
+                        <div className="flex items-center gap-2">
+                            <BookOpen className="w-4 h-4 text-gray-500" />
+                            <select 
+                                value={selectedClassId}
+                                onChange={(e) => setSelectedClassId(e.target.value)}
+                                className="p-2 border rounded-md shadow-sm bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
+                            >
+                                <option value="">Choisir une classe...</option>
+                                {classes.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <User className="w-4 h-4 text-gray-500" />
+                            <select 
+                                value={selectedStudentId}
+                                onChange={(e) => setSelectedStudentId(e.target.value)}
+                                disabled={!selectedClassId}
+                                className="p-2 border rounded-md shadow-sm bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px] disabled:opacity-50"
+                            >
+                                <option value="">Choisir un élève...</option>
+                                {students.map(s => (
+                                    <option key={s.id} value={s.id}>{s.lastName} {s.firstName}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </>
+                )}
+
                 <select 
                     value={selectedTermId} 
                     onChange={(e) => setSelectedTermId(e.target.value)}
@@ -124,10 +208,17 @@ const StudentReportCards = () => {
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
                 >
                     <Printer className="w-4 h-4" />
-                    Imprimer / PDF
+                    Imprimer
                 </button>
             </div>
         </div>
+
+        {user?.role !== 'STUDENT' && !selectedStudentId && (
+            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
+                <User className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500 dark:text-gray-400">Veuillez sélectionner une classe et un élève pour voir le bulletin</p>
+            </div>
+        )}
 
         {loading && <div className="text-center py-8 text-gray-600 dark:text-gray-400">Chargement du bulletin...</div>}
         {error && <div className="text-center py-8 text-red-500">{error}</div>}

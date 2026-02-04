@@ -1,7 +1,7 @@
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, User, School, BookOpen, GraduationCap, LayoutDashboard, FileText, Megaphone, Moon, Sun, Library, MessageCircle, X } from 'lucide-react';
+import { LogOut, User, School, BookOpen, GraduationCap, LayoutDashboard, FileText, Megaphone, Moon, Sun, Library, MessageCircle, X, Calendar } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import ConfirmationModal from './ConfirmationModal';
 
@@ -99,6 +99,16 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                 <User className="w-5 h-5" />
                 Utilisateurs
               </Link>
+              {user.role === 'SCHOOL_ADMIN' && (
+                 <Link to="/broadcast" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/broadcast' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
+                   <Megaphone className="w-5 h-5" />
+                   Annonces
+                 </Link>
+              )}
+              <Link to="/report-cards" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/report-cards' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
+                <FileText className="w-5 h-5" />
+                Bulletins
+              </Link>
             </>
           )}
 
@@ -108,6 +118,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                 <BookOpen className="w-5 h-5" />
                 Mes Cours
               </Link>
+              <Link to="/agenda" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/agenda' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
+                <Calendar className="w-5 h-5" />
+                Agenda
+              </Link>
               <Link to="/library" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/library' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
                 <Library className="w-5 h-5" />
                 Bibliothèque
@@ -116,15 +130,14 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                 <MessageCircle className="w-5 h-5" />
                 Messages
               </Link>
+              <Link to="/report-cards" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/report-cards' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
+                <FileText className="w-5 h-5" />
+                {user.role === 'STUDENT' ? 'Mes Bulletins' : 'Bulletins'}
+              </Link>
             </>
           )}
 
-          {user.role === 'STUDENT' && (
-              <Link to="/report-cards" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/report-cards' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
-                <FileText className="w-5 h-5" />
-                Mes Bulletins
-              </Link>
-          )}
+          {/* Removed separate student section since merged above */}
         </nav>
 
         <div className="p-4 border-t border-gray-800 space-y-4">
