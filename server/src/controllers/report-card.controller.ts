@@ -41,7 +41,7 @@ export const getStudentReportCard = async (req: AuthRequest, res: Response) => {
             assignments: {
                 include: {
                     grades: {
-                        where: { studentId }
+                        where: { studentId: String(studentId) }
                     }
                 }
             }
@@ -109,7 +109,7 @@ export const getClassReportCard = async (req: AuthRequest, res: Response) => {
         const students = await prisma.user.findMany({
             where: {
                 enrollments: {
-                    some: { classId }
+                    some: { classId: String(classId) }
                 },
                 role: 'STUDENT'
             },
@@ -124,7 +124,7 @@ export const getClassReportCard = async (req: AuthRequest, res: Response) => {
              // Reuse logic or duplicate simplified version
              // Fetch all courses and grades
              const courses = await prisma.course.findMany({
-                where: { classId },
+                where: { classId: String(classId) },
                 include: { 
                     subject: true,
                     assignments: {
