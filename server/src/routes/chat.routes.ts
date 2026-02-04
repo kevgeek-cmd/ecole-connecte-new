@@ -1,10 +1,9 @@
 import { Router } from "express";
 import { authenticate } from "../middleware/auth.js";
 import { getClassHistory, getPrivateHistory, getContacts, uploadChatFile, sendMessage } from "../controllers/chat.controller.js";
-import multer from "multer";
+import { upload } from "../middleware/upload.js";
 
 const router = Router();
-const upload = multer({ storage: multer.memoryStorage() });
 
 router.use(authenticate);
 

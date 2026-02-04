@@ -55,15 +55,29 @@ export const getLibrary = async (req: AuthRequest, res: Response) => {
         orderBy: { createdAt: 'desc' }
       });
     } else if (role === "STUDENT") {
+      // Logic MVP: Access by Level
+      // 1. Get student's enrollments to find their level(s)
+      const enrollments = await prisma.enrollment.findMany({
+        where: { studentId: userId },
+        include: { class: true }
+      });
+      
+      const levels = [...new Set(enrollments.map(e => e.class.level).filter(l => l !== null))];
+      const enrolledClassIds = enrollments.map(e => e.classId);
+
       materials = await prisma.material.findMany({
         where: {
           course: {
             class: {
-              enrollments: {
-                some: {
-                  studentId: userId,
-                },
-              },
+              OR: [
+                // Option 1: Direct enrollment (Legacy/Fallback)
+                { id: { in: enrolledClassIds } },
+                // Option 2: Same level in same school
+                {
+                   level: { in: levels as string[] },
+                   schoolId: schoolId // Ensure same school
+                }
+              ]
             },
           },
         },
@@ -257,11 +271,68 @@ export const getCourses = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const createChapter = async (req: AuthRequest, res: Response) => {
+  try {
+    const { courseId } = req.params;
+    const { title } = req.body;
+
+    if (!courseId || !title) return res.status(400).json({ message: "Course ID and Title required" });
+
+    // Verify ownership
+    if (req.user?.role === "TEACHER") {
+      const course = await prisma.course.findUnique({ where: { id: courseId } });
+      if (!course || course.teacherId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+    }
+
+    const chapter = await prisma.chapter.create({
+      data: {
+        title,
+        courseId
+      }
+    });
+
+    res.status(201).json(chapter);
+  } catch (error) {
+    res.status(500).json({ message: "Error creating chapter", error });
+  }
+};
+
+export const getCourseChapters = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params; // courseId
+        if (!id) return res.status(400).json({ message: "ID required" });
+
+        // Get chapters with materials
+        const chapters = await prisma.chapter.findMany({
+            where: { courseId: String(id) },
+            include: {
+                materials: true
+            },
+            orderBy: { createdAt: 'asc' }
+        });
+
+        // Get orphans materials (no chapter)
+        const orphanMaterials = await prisma.material.findMany({
+            where: { 
+                courseId: String(id),
+                chapterId: null
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        res.json({ chapters, orphanMaterials });
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching course content", error });
+    }
+};
+
 export const addMaterial = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params; // courseId
     // If file uploaded, url comes from file path
-    let { title, type, url } = req.body;
+    let { title, type, url, source, chapterId } = req.body;
 
     if (req.file) {
         const publicUrl = await uploadToSupabase(req.file);
@@ -300,6 +371,8 @@ export const addMaterial = async (req: AuthRequest, res: Response) => {
         title,
         type,
         url,
+        source: source || null,
+        chapterId: chapterId || null,
         courseId: id as string,
       },
     });

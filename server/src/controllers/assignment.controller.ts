@@ -156,11 +156,24 @@ export const submitAssignment = async (req: AuthRequest, res: Response) => {
     let fileUrl = req.body.fileUrl;
 
     if (req.file) {
+        // Validation spécifique pour les fichiers audio (Devoir oral)
+        if (req.file.mimetype.startsWith('audio/')) {
+            // Taille max 20MB pour l'audio
+            if (req.file.size > 20 * 1024 * 1024) {
+                return res.status(400).json({ message: "Le fichier audio dépasse la taille limite de 20MB." });
+            }
+            // Formats acceptés (redondant avec upload.ts mais explicite pour le message d'erreur)
+            const allowedAudio = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/webm'];
+            if (!allowedAudio.includes(req.file.mimetype)) {
+                 return res.status(400).json({ message: "Format audio non supporté. Utilisez MP3, WAV, OGG ou WEBM." });
+            }
+        }
+
         const publicUrl = await uploadToSupabase(req.file);
         if (publicUrl) {
             fileUrl = publicUrl;
         } else {
-             return res.status(500).json({ message: "Failed to upload file" });
+             return res.status(500).json({ message: "Échec de l'upload du fichier." });
         }
     }
 

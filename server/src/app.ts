@@ -67,6 +67,7 @@ app.use("/api/grades", gradeRoutes);       // Notes et bulletins
 app.use("/api/notifications", notificationRoutes); // Notifications et annonces
 app.use("/api/chat", chatRoutes);           // Messagerie instantanée
 app.use("/api/quizzes", quizRoutes);       // Quiz et évaluations
+app.use("/api/report-cards", reportCardRoutes); // Bulletins scolaires
 
 // Route de test pour vérifier que l'API est en ligne
 app.get("/", (req, res) => {

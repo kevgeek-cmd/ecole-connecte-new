@@ -18,7 +18,12 @@ const fileFilter = (req: any, file: any, cb: any) => {
     'image/jpeg',
     'image/png',
     'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'audio/mpeg',
+    'audio/wav',
+    'audio/ogg',
+    'audio/webm',
+    'audio/mp3'
   ];
   
   if (allowedTypes.includes(file.mimetype)) {

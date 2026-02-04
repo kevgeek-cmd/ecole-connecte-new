@@ -139,6 +139,16 @@ model Course {
   materials    Material[]
   assignments  Assignment[]
   quizzes      Quiz[]
+  chapters     Chapter[]
+}
+
+model Chapter {
+  id        String   @id @default(uuid())
+  title     String
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  materials Material[]
+  createdAt DateTime @default(now())
 }
 
 /// Modèle Support de Cours
@@ -147,8 +157,11 @@ model Material {
   title     String
   type      String   // ex: "PDF", "VIDEO", "LINK"
   url       String   // Lien vers le fichier (Supabase Storage)
+  source    String?  // Source du document (ex: "Manuel page 12", "Youtube")
   courseId  String
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  chapterId String?
+  chapter   Chapter? @relation(fields: [chapterId], references: [id])
   createdAt DateTime @default(now())
 }
 
