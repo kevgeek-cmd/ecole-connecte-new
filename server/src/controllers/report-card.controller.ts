@@ -24,7 +24,7 @@ export const getStudentReportCard = async (req: AuthRequest, res: Response) => {
 
     // 1. Get Student Enrollments to know which classes/courses they have
     const enrollments = await prisma.enrollment.findMany({
-        where: { studentId },
+        where: { studentId: String(studentId) },
         include: { class: true }
     });
 
