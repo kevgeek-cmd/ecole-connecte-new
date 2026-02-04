@@ -36,7 +36,7 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
              return res.status(404).json({ message: "Course not found" });
         }
 
-        if (course.teacherId !== userId) {
+        if (req.user?.role === "TEACHER" && course.teacherId !== userId) {
             return res.status(403).json({ message: "Unauthorized to create quiz for this course" });
         }
 

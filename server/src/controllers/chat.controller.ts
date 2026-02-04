@@ -5,10 +5,20 @@ import type { AuthRequest } from "../middleware/auth.js";
 
 export const sendMessage = async (req: AuthRequest, res: Response) => {
     try {
-        const { content, recipientId, classId, attachmentUrl, attachmentType } = req.body;
+        let { content, recipientId, receiverId, classId, attachmentUrl, attachmentType } = req.body;
         const senderId = req.user?.id;
 
+        // Handle frontend field mismatch (recipientId vs receiverId)
+        if (!recipientId && receiverId) {
+            recipientId = receiverId;
+        }
+
         if (!senderId) return res.status(401).json({ message: "Unauthorized" });
+
+        // Enforce at least one target
+        if (!recipientId && !classId) {
+             return res.status(400).json({ message: "Message must have a recipient or class target" });
+        }
 
         // Validate recipient if provided
         if (recipientId) {
