@@ -4,6 +4,7 @@ import { upload } from "../middleware/upload.js";
 import {
   createAssignment,
   getAssignments,
+  getAgenda,
   getAssignmentById,
   submitAssignment,
   getSubmissions,
@@ -16,6 +17,7 @@ const router = Router();
 router.use(authenticate);
 
 router.post("/", authorize(["TEACHER", "SCHOOL_ADMIN"]), upload.single('file'), createAssignment);
+router.get("/agenda", getAgenda); // Must be before /:id
 router.get("/", getAssignments);
 router.get("/:id", getAssignmentById);
 router.delete("/:id", authorize(["TEACHER", "SCHOOL_ADMIN"]), deleteAssignment);

@@ -83,6 +83,71 @@ export const createAssignment = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const getAgenda = async (req: AuthRequest, res: Response) => {
+    try {
+        const { level, startDate, endDate } = req.query;
+        const schoolId = req.user?.schoolId;
+
+        if (!level || !startDate || !endDate) {
+            return res.status(400).json({ message: "Level, startDate and endDate are required" });
+        }
+
+        // Parse dates
+        const start = new Date(startDate as string);
+        const end = new Date(endDate as string);
+
+        // Find classes with this level
+        // If School Admin or Teacher, restrict to their school
+        // If Student, ideally restrict to their school too (though level might be generic, usually it's school specific)
+        
+        const whereClass: any = {
+            level: String(level)
+        };
+
+        if (schoolId) {
+            whereClass.schoolId = schoolId;
+        }
+
+        const classes = await prisma.class.findMany({
+            where: whereClass,
+            select: { id: true }
+        });
+
+        const classIds = classes.map(c => c.id);
+
+        if (classIds.length === 0) {
+            return res.json([]);
+        }
+
+        // Find assignments for courses in these classes
+        const assignments = await prisma.assignment.findMany({
+            where: {
+                course: {
+                    classId: { in: classIds }
+                },
+                dueDate: {
+                    gte: start,
+                    lte: end
+                }
+            },
+            include: {
+                course: {
+                    include: {
+                        subject: true,
+                        class: true
+                    }
+                }
+            },
+            orderBy: { dueDate: 'asc' }
+        });
+
+        res.json(assignments);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error fetching agenda", error });
+    }
+};
+
 export const getAssignmentById = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;

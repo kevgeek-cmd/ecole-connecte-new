@@ -23,6 +23,7 @@ import gradeRoutes from "./routes/grade.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import quizRoutes from "./routes/quiz.routes.js";
+import reportCardRoutes from "./routes/report-card.routes.js";
 
 // Chargement des variables d'environnement
 dotenv.config();

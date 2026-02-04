@@ -77,6 +77,15 @@ export const broadcastNotification = async (req: AuthRequest, res: Response) => 
 
     // Find all target users
     let whereClause: any = {};
+    
+    // Scoping for SCHOOL_ADMIN
+    if (req.user?.role === 'SCHOOL_ADMIN') {
+        if (!req.user.schoolId) {
+            return res.status(400).json({ message: "School Admin has no school assigned" });
+        }
+        whereClause.schoolId = req.user.schoolId;
+    }
+
     if (targetRole !== "ALL") {
         whereClause.role = targetRole;
     } else {

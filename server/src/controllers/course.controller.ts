@@ -280,7 +280,7 @@ export const createChapter = async (req: AuthRequest, res: Response) => {
 
     // Verify ownership
     if (req.user?.role === "TEACHER") {
-      const course = await prisma.course.findUnique({ where: { id: courseId } });
+      const course = await prisma.course.findUnique({ where: { id: String(courseId) } });
       if (!course || course.teacherId !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
       }
@@ -289,7 +289,7 @@ export const createChapter = async (req: AuthRequest, res: Response) => {
     const chapter = await prisma.chapter.create({
       data: {
         title,
-        courseId
+        courseId: String(courseId)
       }
     });
 
