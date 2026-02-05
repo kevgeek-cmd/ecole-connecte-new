@@ -92,7 +92,7 @@ export const getPosts = async (req: AuthRequest, res: Response) => {
 
 export const getPost = async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     const post = await prisma.forumPost.findUnique({
       where: { id },
@@ -123,7 +123,7 @@ export const getPost = async (req: AuthRequest, res: Response) => {
 
 export const createComment = async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params; // Post ID
+    const { id } = req.params as { id: string }; // Post ID
     const { content } = createCommentSchema.parse(req.body);
     const authorId = req.user?.id;
 
@@ -150,7 +150,7 @@ export const createComment = async (req: AuthRequest, res: Response) => {
 
 export const deletePost = async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const userId = req.user?.id;
     const userRole = req.user?.role;
 
@@ -173,7 +173,7 @@ export const deletePost = async (req: AuthRequest, res: Response) => {
 
 export const deleteComment = async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const userId = req.user?.id;
     const userRole = req.user?.role;
 
