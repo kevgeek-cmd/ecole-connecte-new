@@ -217,6 +217,13 @@ const Users = () => {
     }
   };
 
+  const getUserGroupImage = (type: string) => {
+    if (type === 'admin') return 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=600';
+    if (type === 'teacher') return 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=600';
+    if (type === 'class') return 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=600';
+    return 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=600';
+  };
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -248,28 +255,41 @@ const Users = () => {
             <div 
               key={group.id}
               onClick={() => setSelectedGroupId(group.id)}
-              className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow cursor-pointer border border-gray-100 dark:border-gray-700"
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-100 dark:border-gray-700 group overflow-hidden flex flex-col h-full"
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className={`p-3 rounded-lg ${
-                  group.type === 'admin' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' :
-                  group.type === 'teacher' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' :
-                  group.type === 'class' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' :
-                  'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                }`}>
-                  {group.type === 'admin' && <UserCog className="w-6 h-6" />}
-                  {group.type === 'teacher' && <GraduationCap className="w-6 h-6" />}
-                  {group.type === 'class' && <School className="w-6 h-6" />}
-                  {group.type === 'other' && <UsersIcon className="w-6 h-6" />}
+              <div className="h-32 w-full relative overflow-hidden">
+                <img 
+                    src={getUserGroupImage(group.type)} 
+                    alt={group.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-70"></div>
+                <div className="absolute top-3 right-3">
+                    <span className="bg-white/90 dark:bg-gray-800/90 text-gray-800 dark:text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm backdrop-blur-sm">
+                        {group.count}
+                    </span>
                 </div>
-                <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full text-sm font-medium">
-                  {group.count}
-                </span>
+                <div className="absolute bottom-3 left-4 text-white">
+                    <div className={`p-2 rounded-lg inline-flex mb-1 backdrop-blur-sm ${
+                        group.type === 'admin' ? 'bg-purple-500/20 text-purple-100' :
+                        group.type === 'teacher' ? 'bg-yellow-500/20 text-yellow-100' :
+                        group.type === 'class' ? 'bg-blue-500/20 text-blue-100' :
+                        'bg-gray-500/20 text-gray-100'
+                    }`}>
+                        {group.type === 'admin' && <UserCog className="w-5 h-5" />}
+                        {group.type === 'teacher' && <GraduationCap className="w-5 h-5" />}
+                        {group.type === 'class' && <School className="w-5 h-5" />}
+                        {group.type === 'other' && <UsersIcon className="w-5 h-5" />}
+                    </div>
+                </div>
               </div>
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{group.title}</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {group.count} {group.count === 1 ? 'utilisateur' : 'utilisateurs'}
-              </p>
+              
+              <div className="p-5 flex-1 flex flex-col justify-center">
+                <h3 className="text-lg font-bold text-gray-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{group.title}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {group.count} {group.count === 1 ? 'utilisateur' : 'utilisateurs'}
+                </p>
+              </div>
             </div>
           ))}
         </div>

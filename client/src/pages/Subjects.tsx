@@ -96,6 +96,19 @@ const Subjects = () => {
       setIsModalOpen(true);
   }
 
+  const getSubjectImage = (name: string) => {
+    const lowerName = name.toLowerCase();
+    if (lowerName.includes('math')) return 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=80&w=600';
+    if (lowerName.includes('français') || lowerName.includes('francais')) return 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=600';
+    if (lowerName.includes('anglais') || lowerName.includes('english')) return 'https://images.unsplash.com/photo-1526304640152-d4619684e484?auto=format&fit=crop&q=80&w=600';
+    if (lowerName.includes('hist') || lowerName.includes('geo')) return 'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=600';
+    if (lowerName.includes('phys') || lowerName.includes('chimie') || lowerName.includes('science') || lowerName.includes('svt')) return 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80&w=600';
+    if (lowerName.includes('sport') || lowerName.includes('eps')) return 'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&q=80&w=600';
+    if (lowerName.includes('art') || lowerName.includes('musique')) return 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&q=80&w=600';
+    if (lowerName.includes('informatique') || lowerName.includes('tech')) return 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=600';
+    return 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=600';
+  }
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -105,7 +118,7 @@ const Subjects = () => {
         </h1>
         <button
           onClick={openCreateModal}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition"
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition shadow-sm"
         >
           <Plus className="w-4 h-4" />
           Ajouter une matière
@@ -114,31 +127,50 @@ const Subjects = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {subjects.map((subject) => (
-          <div key={subject.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-                <div className="bg-blue-50 p-3 rounded-full">
-                <BookOpen className="w-6 h-6 text-blue-500" />
-                </div>
-                <div>
-                <h3 className="text-xl font-bold text-gray-800">{subject.name}</h3>
-                {subject.code && <p className="text-sm text-gray-500 font-mono bg-gray-100 px-2 py-0.5 rounded inline-block mt-1">{subject.code}</p>}
+          <div key={subject.id} className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 group overflow-hidden flex flex-col">
+            <div className="h-32 w-full relative overflow-hidden">
+                <img 
+                    src={getSubjectImage(subject.name)} 
+                    alt={subject.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60"></div>
+                <div className="absolute bottom-3 left-4">
+                    <div className="bg-white/90 p-2 rounded-lg shadow-sm backdrop-blur-sm inline-flex">
+                        <BookOpen className="w-5 h-5 text-blue-600" />
+                    </div>
                 </div>
             </div>
-            <div className="flex gap-2">
-                <button 
-                    onClick={() => handleEditClick(subject)}
-                    className="p-2 text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded transition"
-                    title="Modifier"
-                >
-                    <Edit className="w-4 h-4" />
-                </button>
-                <button 
-                    onClick={() => handleDeleteClick(subject.id)}
-                    className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded transition"
-                    title="Supprimer"
-                >
-                    <Trash2 className="w-4 h-4" />
-                </button>
+            
+            <div className="p-5 flex-1 flex flex-col">
+                <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors">{subject.name}</h3>
+                </div>
+                
+                {subject.code && (
+                    <div className="mb-4">
+                        <span className="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-1 rounded border border-gray-200">
+                            {subject.code}
+                        </span>
+                    </div>
+                )}
+                
+                <div className="mt-auto pt-4 border-t border-gray-100 flex justify-end gap-2">
+                    <button 
+                        onClick={() => handleEditClick(subject)}
+                        className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Modifier"
+                    >
+                        <Edit className="w-4 h-4" />
+                    </button>
+                    <button 
+                        onClick={() => handleDeleteClick(subject.id)}
+                        className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Supprimer"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                </div>
             </div>
           </div>
         ))}
