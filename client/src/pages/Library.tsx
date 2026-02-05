@@ -99,7 +99,7 @@ const Library = () => {
           });
           alert("Document ajouté avec succès !");
           setIsUploadModalOpen(false);
-          setNewMaterial({ title: '', type: 'PDF', url: '', file: null });
+          setNewMaterial({ title: '', type: 'PDF', url: '', source: '', file: null });
           fetchMaterials(); // Refresh list
       } catch (error) {
           console.error("Upload failed", error);
