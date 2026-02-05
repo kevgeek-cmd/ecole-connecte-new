@@ -124,9 +124,33 @@ const Courses = () => {
     }
   };
 
+  // Images par matière (Style Africain / Éducatif)
+  const SUBJECT_IMAGES: Record<string, string> = {
+    'Mathématiques': 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=800&q=80', // Géométrie / Math
+    'Physique': 'https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?auto=format&fit=crop&w=800&q=80', // Science / Physique
+    'Chimie': 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80', // Labo
+    'SVT': 'https://images.unsplash.com/photo-1530026405186-ed1f139313f8?auto=format&fit=crop&w=800&q=80', // Nature / Plante
+    'Histoire-Géo': 'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=800&q=80', // Carte / Globe
+    'Français': 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=800&q=80', // Écriture / Livre
+    'Anglais': 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&w=800&q=80', // Livre anglais
+    'Philosophie': 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=800&q=80', // Livres anciens
+    'EPS': 'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=800&q=80', // Sport
+    'Informatique': 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=800&q=80', // Code / Ordi
+    'Arts': 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=800&q=80', // Peinture
+    'Musique': 'https://images.unsplash.com/photo-1507838153414-b4b713384ebd?auto=format&fit=crop&w=800&q=80', // Musique
+  };
+  
+  const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1501504905252-473c47e087f8?auto=format&fit=crop&w=800&q=80'; // Général éducation
+
+  const getCourseImage = (subjectName: string) => {
+    // Recherche partielle ou exacte
+    const key = Object.keys(SUBJECT_IMAGES).find(k => subjectName.includes(k));
+    return key ? SUBJECT_IMAGES[key] : DEFAULT_IMAGE;
+  };
+
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
           <Book className="w-8 h-8 text-blue-600 dark:text-blue-400" />
           {isAdmin ? 'Gestion des Cours' : 'Mes Cours'}
@@ -134,7 +158,7 @@ const Courses = () => {
         {(isAdmin || isTeacher) && (
           <button
             onClick={openModal}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition shadow-sm"
           >
             <Plus className="w-4 h-4" />
             {isAdmin ? 'Attribuer un cours' : 'Créer un cours'}
@@ -142,42 +166,59 @@ const Courses = () => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {courses.map((course) => (
           <div 
             key={course.id} 
-            className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition cursor-pointer"
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100 dark:border-gray-700 group"
             onClick={() => navigate(`/courses/${course.id}`)}
           >
-            <div className="flex justify-between items-start mb-4">
-               <div>
-                  <h3 className="text-xl font-bold text-gray-800 dark:text-white">{course.subject?.name}</h3>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded mt-1 inline-block">
-                    {course.class?.name}
-                  </span>
-                  <span className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded mt-1 inline-block ml-2">
-                    Coeff: {course.coefficient || 1}
-                  </span>
-               </div>
-               <div className="bg-blue-50 dark:bg-blue-900/30 p-2 rounded-full">
-                  <Book className="w-6 h-6 text-blue-500 dark:text-blue-400" />
-               </div>
-            </div>
-            
-            <div className="border-t dark:border-gray-700 pt-4 mt-2 flex justify-between items-center">
-                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                    <User className="w-4 h-4" />
-                    <span>Prof. {course.teacher?.firstName} {course.teacher?.lastName}</span>
+            {/* Image Header */}
+            <div className="relative h-40 overflow-hidden">
+                <img 
+                    src={getCourseImage(course.subject?.name || '')} 
+                    alt={course.subject?.name} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                <div className="absolute bottom-3 left-4 text-white">
+                    <h3 className="text-xl font-bold drop-shadow-md">{course.subject?.name}</h3>
+                    <span className="text-xs bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded text-white/90 border border-white/30">
+                        {course.class?.name}
+                    </span>
                 </div>
-                {(isAdmin || (isTeacher && user?.id === course.teacher?.id)) && (
-                    <button 
-                        onClick={(e) => openDeleteModal(course.id, e)}
-                        className="p-2 text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition"
-                        title="Supprimer le cours"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </button>
-                )}
+                <div className="absolute top-3 right-3">
+                     <span className="bg-blue-600/90 backdrop-blur-sm text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+                        Coeff: {course.coefficient || 1}
+                     </span>
+                </div>
+            </div>
+
+            {/* Content Body */}
+            <div className="p-4">
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-300">
+                             <User className="w-4 h-4" />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-xs text-gray-400 uppercase font-semibold">Enseignant</span>
+                            <span className="font-medium text-gray-800 dark:text-gray-200 truncate max-w-[120px]" title={`Prof. ${course.teacher?.firstName} ${course.teacher?.lastName}`}>
+                                {course.teacher?.firstName} {course.teacher?.lastName}
+                            </span>
+                        </div>
+                    </div>
+
+                    {(isAdmin || (isTeacher && user?.id === course.teacher?.id)) && (
+                        <button 
+                            onClick={(e) => openDeleteModal(course.id, e)}
+                            className="p-2 text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition"
+                            title="Supprimer le cours"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+                    )}
+                </div>
             </div>
           </div>
         ))}
