@@ -13,6 +13,7 @@ import CourseDetails from './pages/CourseDetails';
 import AssignmentDetails from './pages/AssignmentDetails';
 import StudentReportCards from './pages/StudentReportCards';
 import Library from './pages/Library';
+import Agenda from './pages/Agenda';
 import Chat from './pages/Chat';
 import QuizTake from './pages/QuizTake';
 import QuizAttemptsList from './pages/QuizAttemptsList';
