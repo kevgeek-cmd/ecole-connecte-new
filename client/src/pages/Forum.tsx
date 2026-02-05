@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import { MessageSquare, Plus, Search, Filter, MessageCircle, User, Paperclip, X, Trash2, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -53,6 +54,7 @@ interface CommentForm {
 
 const Forum = () => {
   const { user } = useAuth();
+  const { socket } = useSocket();
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [selectedPost, setSelectedPost] = useState<ForumPost | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -67,6 +69,109 @@ const Forum = () => {
   useEffect(() => {
     fetchPosts();
   }, [filterCategory, searchTerm]);
+
+  // Real-time updates
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewPost = (newPost: ForumPost) => {
+      // Apply filter check
+      if (filterCategory !== "ALL" && newPost.category !== filterCategory) return;
+      // Apply search check (basic)
+      if (searchTerm && !newPost.title.toLowerCase().includes(searchTerm.toLowerCase()) && !newPost.content.toLowerCase().includes(searchTerm.toLowerCase())) return;
+
+      setPosts((prev) => {
+        if (prev.some(p => p.id === newPost.id)) return prev;
+        return [newPost, ...prev];
+      });
+    };
+
+    const handlePostDeleted = (id: string) => {
+      setPosts((prev) => prev.filter((p) => p.id !== id));
+      if (selectedPost?.id === id) {
+        setSelectedPost(null);
+      }
+    };
+
+    const handleNewComment = (comment: ForumComment & { author: { id: string; firstName: string; lastName: string; role: string } }) => {
+      // Update comment count in list
+      setPosts((prev) =>
+        prev.map((p) => {
+          if (p.id === comment.postId) {
+            return {
+              ...p,
+              _count: {
+                ...p._count,
+                comments: (p._count?.comments || 0) + 1,
+              },
+            };
+          }
+          return p;
+        })
+      );
+
+      // If viewing the post, add comment
+      if (selectedPost?.id === comment.postId) {
+        setSelectedPost((prev) => {
+          if (!prev) return null;
+          if (prev.comments?.some(c => c.id === comment.id)) return prev;
+          return {
+            ...prev,
+            comments: [...(prev.comments || []), comment],
+            _count: {
+              ...prev._count,
+              comments: (prev._count?.comments || 0) + 1,
+            },
+          };
+        });
+      }
+    };
+
+    const handleCommentDeleted = ({ id, postId }: { id: string; postId: string }) => {
+       // Update comment count in list
+       setPosts((prev) =>
+        prev.map((p) => {
+          if (p.id === postId) {
+            return {
+              ...p,
+              _count: {
+                ...p._count,
+                comments: Math.max((p._count?.comments || 1) - 1, 0),
+              },
+            };
+          }
+          return p;
+        })
+      );
+
+      // If viewing the post, remove comment
+      if (selectedPost?.id === postId) {
+        setSelectedPost((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            comments: prev.comments?.filter((c) => c.id !== id),
+            _count: {
+              ...prev._count,
+              comments: Math.max((prev._count?.comments || 1) - 1, 0),
+            },
+          };
+        });
+      }
+    };
+
+    socket.on("forum:post_created", handleNewPost);
+    socket.on("forum:post_deleted", handlePostDeleted);
+    socket.on("forum:comment_created", handleNewComment);
+    socket.on("forum:comment_deleted", handleCommentDeleted);
+
+    return () => {
+      socket.off("forum:post_created", handleNewPost);
+      socket.off("forum:post_deleted", handlePostDeleted);
+      socket.off("forum:comment_created", handleNewComment);
+      socket.off("forum:comment_deleted", handleCommentDeleted);
+    };
+  }, [socket, filterCategory, searchTerm, selectedPost?.id]);
 
   const fetchPosts = async () => {
     setLoading(true);

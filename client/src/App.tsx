@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { SocketProvider } from './context/SocketContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -27,8 +28,9 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <BrowserRouter>
-          <Routes>
+        <SocketProvider>
+          <BrowserRouter>
+            <Routes>
           <Route path="/login" element={<Login />} />
           
           {/* Protected Routes */}
@@ -81,8 +83,9 @@ function App() {
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+          </BrowserRouter>
+        </SocketProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

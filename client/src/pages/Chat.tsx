@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { io, Socket } from 'socket.io-client';
+import { useSocket } from '../context/SocketContext';
 import api from '../utils/api';
 import { Send, User, Users, Circle, Paperclip, FileText, X, ArrowLeft } from 'lucide-react';
 import { supabase } from '../utils/supabase';
@@ -33,7 +33,7 @@ interface Contact {
 
 const Chat = () => {
     const { user, token } = useAuth();
-    const [socket, setSocket] = useState<Socket | null>(null);
+    const { socket } = useSocket();
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -109,59 +109,33 @@ const Chat = () => {
         };
     }, [user]);
 
-    // Use a ref for user to access current value inside socket listeners
-    const userRef = useRef(user);
-    useEffect(() => { userRef.current = user; }, [user]);
-
+    // Listen for socket events using the global socket
     useEffect(() => {
-        if (!token) return;
+        if (!socket) return;
 
-        // Use the same URL as the API, ensuring it's the base URL without /api
-        const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-        console.log('[Socket] Attempting connection to:', socketUrl);
-
-        const newSocket = io(socketUrl, {
-            auth: { token },
-            transports: ['websocket', 'polling'],
-            reconnectionAttempts: 5,
-            timeout: 10000
-        });
-
-        newSocket.on('connect', () => {
-            console.log('[Socket] Connected with ID:', newSocket.id);
-        });
-
-        newSocket.on('connect_error', (error) => {
-            console.error('[Socket] Connection error:', error);
-        });
-
-        newSocket.on('disconnect', (reason) => {
-            console.log('[Socket] Disconnected:', reason);
-        });
-
-        newSocket.on('receive_message', (message: Message) => {
+        const handleReceiveMessage = (message: Message) => {
             console.log('[Socket] Message received via socket:', message);
-            // Still handling via socket for legacy/fallback if needed, though Supabase is primary now
             setMessages((prev) => {
                 const isDuplicate = prev.some(m => String(m.id) === String(message.id));
                 if (isDuplicate) return prev;
                 return [...prev, message];
             });
-        });
-        
-        // Listen for user status updates
-        newSocket.on('user_status_update', (data: { userId: string, isOnline: boolean }) => {
+        };
+
+        const handleUserStatusUpdate = (data: { userId: string, isOnline: boolean }) => {
             setContacts(prev => prev.map(c => 
                 c.id === data.userId ? { ...c, isOnline: data.isOnline } : c
             ));
-        });
+        };
 
-        setSocket(newSocket);
+        socket.on('receive_message', handleReceiveMessage);
+        socket.on('user_status_update', handleUserStatusUpdate);
 
         return () => {
-            newSocket.disconnect();
+            socket.off('receive_message', handleReceiveMessage);
+            socket.off('user_status_update', handleUserStatusUpdate);
         };
-    }, [token]);
+    }, [socket]);
 
     useEffect(() => {
         fetchContacts();
