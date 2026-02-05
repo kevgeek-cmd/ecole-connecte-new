@@ -6,7 +6,9 @@ import type { AuthRequest } from "../middleware/auth.js";
 const broadcastSchema = z.object({
   title: z.string().min(1),
   message: z.string().min(1),
-  targetRole: z.enum(["SCHOOL_ADMIN", "TEACHER", "STUDENT", "ALL"]).default("SCHOOL_ADMIN"), // Optional targeting
+  targetRole: z.enum(["SCHOOL_ADMIN", "TEACHER", "STUDENT", "ALL"]).optional(),
+  targetSchoolIds: z.array(z.string()).optional(),
+  targetUserIds: z.array(z.string()).optional(),
 });
 
 export const getNotifications = async (req: AuthRequest, res: Response) => {
@@ -73,7 +75,7 @@ export const deleteNotification = async (req: AuthRequest, res: Response) => {
 
 export const broadcastNotification = async (req: AuthRequest, res: Response) => {
   try {
-    const { title, message, targetRole } = broadcastSchema.parse(req.body);
+    const { title, message, targetRole, targetSchoolIds, targetUserIds } = broadcastSchema.parse(req.body);
 
     // Find all target users
     let whereClause: any = {};
@@ -84,15 +86,36 @@ export const broadcastNotification = async (req: AuthRequest, res: Response) => 
             return res.status(400).json({ message: "School Admin has no school assigned" });
         }
         whereClause.schoolId = req.user.schoolId;
-    }
-
-    if (targetRole !== "ALL") {
-        whereClause.role = targetRole;
-    } else {
-        // Exclude SUPER_ADMIN from receiving their own broadcast if desired, 
-        // or keep it to see what was sent. Let's exclude sending to self maybe?
-        // simple: send to everyone except super admin
-        whereClause.role = { not: "SUPER_ADMIN" };
+        
+        // School Admin can only filter by role within their school
+        if (targetRole && targetRole !== "ALL") {
+            whereClause.role = targetRole;
+        } else {
+             whereClause.role = { not: "SUPER_ADMIN" }; // Don't notify Super Admin from School Admin broadcast
+        }
+    } else if (req.user?.role === 'SUPER_ADMIN') {
+        // Super Admin Logic
+        
+        // 1. Specific Users (e.g., Specific School Admins)
+        if (targetUserIds && targetUserIds.length > 0) {
+            whereClause.id = { in: targetUserIds };
+        }
+        // 2. Specific Schools (All users in those schools)
+        else if (targetSchoolIds && targetSchoolIds.length > 0) {
+            whereClause.schoolId = { in: targetSchoolIds };
+            // Optional: Still filter by role if provided (e.g. Teachers in specific schools)
+            if (targetRole && targetRole !== "ALL") {
+                whereClause.role = targetRole;
+            }
+        }
+        // 3. Global Role-based (e.g., All School Admins, All Teachers)
+        else if (targetRole && targetRole !== "ALL") {
+            whereClause.role = targetRole;
+        }
+        // 4. Global Broadcast (All Users)
+        else {
+             whereClause.role = { not: "SUPER_ADMIN" }; // Don't notify self
+        }
     }
 
     const users = await prisma.user.findMany({
@@ -105,19 +128,20 @@ export const broadcastNotification = async (req: AuthRequest, res: Response) => 
     }
 
     // Bulk create notifications using a loop for better compatibility if createMany fails
-    for (const u of users) {
-      await prisma.notification.create({
-        data: {
-          title,
-          message,
-          userId: u.id,
-          read: false
-        }
-      });
-    }
+    // (Prisma createMany is supported for Notification, but let's stick to loop or createMany)
+    // Using createMany is much faster for thousands of users
+    await prisma.notification.createMany({
+        data: users.map(u => ({
+            title,
+            message,
+            userId: u.id,
+            read: false
+        }))
+    });
 
     res.status(201).json({ message: `Notification sent to ${users.length} users` });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Error broadcasting notification", error });
   }
 };

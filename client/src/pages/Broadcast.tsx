@@ -1,27 +1,157 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import api from '../utils/api';
-import { Send, AlertCircle, CheckCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Send, AlertCircle, CheckCircle, Users, School, Globe, UserCheck, CheckSquare, Square } from 'lucide-react';
 
 interface BroadcastForm {
   title: string;
   message: string;
-  targetRole: 'SCHOOL_ADMIN' | 'TEACHER' | 'STUDENT' | 'ALL';
 }
 
+interface SchoolData {
+  id: string;
+  name: string;
+}
+
+interface UserData {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  school?: { name: string };
+}
+
+type TargetType = 'GLOBAL' | 'SPECIFIC_SCHOOLS' | 'SPECIFIC_ADMINS' | 'ROLE_BASED';
+
 const Broadcast = () => {
+  const { user } = useAuth();
   const { register, handleSubmit, reset, formState: { errors } } = useForm<BroadcastForm>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
+  // State for targeting logic
+  const [targetType, setTargetType] = useState<TargetType>('GLOBAL');
+  const [targetRole, setTargetRole] = useState<'ALL' | 'TEACHER' | 'STUDENT'>('ALL'); // For School Admins
+  
+  // Data lists
+  const [schools, setSchools] = useState<SchoolData[]>([]);
+  const [admins, setAdmins] = useState<UserData[]>([]);
+  
+  // Selections
+  const [selectedSchoolIds, setSelectedSchoolIds] = useState<string[]>([]);
+  const [selectedAdminIds, setSelectedAdminIds] = useState<string[]>([]);
+
+  // Loading states
+  const [loadingData, setLoadingData] = useState(false);
+
+  useEffect(() => {
+    // If School Admin, default targetType is effectively internal (handled by backend scope)
+    // but we present choices: All, Teachers, Students
+    if (user?.role === 'SCHOOL_ADMIN') {
+        setTargetRole('ALL');
+    }
+  }, [user]);
+
+  // Fetch data based on selection
+  useEffect(() => {
+    const fetchData = async () => {
+        if (user?.role !== 'SUPER_ADMIN') return;
+
+        if (targetType === 'SPECIFIC_SCHOOLS' && schools.length === 0) {
+            setLoadingData(true);
+            try {
+                const res = await api.get('/schools');
+                setSchools(res.data);
+            } catch (err) {
+                console.error("Error fetching schools", err);
+            } finally {
+                setLoadingData(false);
+            }
+        }
+
+        if (targetType === 'SPECIFIC_ADMINS' && admins.length === 0) {
+            setLoadingData(true);
+            try {
+                const res = await api.get('/users?role=SCHOOL_ADMIN');
+                setAdmins(res.data);
+            } catch (err) {
+                console.error("Error fetching admins", err);
+            } finally {
+                setLoadingData(false);
+            }
+        }
+    };
+
+    fetchData();
+  }, [targetType, user, schools.length, admins.length]);
+
+  const toggleSchoolSelection = (id: string) => {
+    setSelectedSchoolIds(prev => 
+        prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const toggleAdminSelection = (id: string) => {
+    setSelectedAdminIds(prev => 
+        prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const selectAllSchools = () => {
+      if (selectedSchoolIds.length === schools.length) setSelectedSchoolIds([]);
+      else setSelectedSchoolIds(schools.map(s => s.id));
+  };
+
+  const selectAllAdmins = () => {
+      if (selectedAdminIds.length === admins.length) setSelectedAdminIds([]);
+      else setSelectedAdminIds(admins.map(a => a.id));
+  };
+
   const onSubmit = async (data: BroadcastForm) => {
     setIsSubmitting(true);
     setStatus(null);
+
+    // Validation
+    if (user?.role === 'SUPER_ADMIN') {
+        if (targetType === 'SPECIFIC_SCHOOLS' && selectedSchoolIds.length === 0) {
+            setStatus({ type: 'error', message: "Veuillez sélectionner au moins une école." });
+            setIsSubmitting(false);
+            return;
+        }
+        if (targetType === 'SPECIFIC_ADMINS' && selectedAdminIds.length === 0) {
+            setStatus({ type: 'error', message: "Veuillez sélectionner au moins un administrateur." });
+            setIsSubmitting(false);
+            return;
+        }
+    }
+
     try {
-      const response = await api.post('/notifications/broadcast', data);
+      const payload: any = {
+        title: data.title,
+        message: data.message,
+      };
+
+      if (user?.role === 'SUPER_ADMIN') {
+          if (targetType === 'GLOBAL') {
+              payload.targetRole = 'ALL';
+          } else if (targetType === 'SPECIFIC_SCHOOLS') {
+              payload.targetSchoolIds = selectedSchoolIds;
+              payload.targetRole = 'ALL'; // All users in those schools
+          } else if (targetType === 'SPECIFIC_ADMINS') {
+              payload.targetUserIds = selectedAdminIds;
+          }
+      } else if (user?.role === 'SCHOOL_ADMIN') {
+          payload.targetRole = targetRole;
+      }
+
+      const response = await api.post('/notifications/broadcast', payload);
       
       setStatus({ type: 'success', message: response.data.message });
       reset();
+      setSelectedSchoolIds([]);
+      setSelectedAdminIds([]);
+      if (user?.role === 'SUPER_ADMIN') setTargetType('GLOBAL');
     } catch (error: any) {
       console.error("Broadcast error", error);
       setStatus({ 
@@ -34,80 +164,226 @@ const Broadcast = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-5xl mx-auto p-6">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-          <Send className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
+          <Send className="w-8 h-8 text-blue-600 dark:text-blue-400" />
           Diffuser une annonce
         </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">Envoyez des notifications à tous les utilisateurs ou à des rôles spécifiques.</p>
+        <p className="text-gray-600 dark:text-gray-400 mt-2 text-lg">
+            Envoyez des notifications ciblées aux utilisateurs, écoles ou administrateurs.
+        </p>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        {status && (
-          <div className={`mb-6 p-4 rounded-md flex items-start gap-3 ${
-            status.type === 'success' 
-              ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800' 
-              : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800'
-          }`}>
-            {status.type === 'success' ? <CheckCircle className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
-            <p>{status.message}</p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column: Target Selection */}
+          <div className="lg:col-span-1 space-y-6">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                  <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                      <Users className="w-5 h-5 text-blue-500" />
+                      Cible de l'annonce
+                  </h2>
+
+                  {user?.role === 'SUPER_ADMIN' ? (
+                      <div className="space-y-3">
+                          <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${targetType === 'GLOBAL' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
+                              <input 
+                                  type="radio" 
+                                  name="targetType" 
+                                  checked={targetType === 'GLOBAL'} 
+                                  onChange={() => setTargetType('GLOBAL')}
+                                  className="w-4 h-4 text-blue-600"
+                              />
+                              <div className="flex items-center gap-2">
+                                  <Globe className="w-4 h-4 text-gray-500" />
+                                  <span className="text-sm font-medium dark:text-white">Tout le monde (Global)</span>
+                              </div>
+                          </label>
+
+                          <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${targetType === 'SPECIFIC_SCHOOLS' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
+                              <input 
+                                  type="radio" 
+                                  name="targetType" 
+                                  checked={targetType === 'SPECIFIC_SCHOOLS'} 
+                                  onChange={() => setTargetType('SPECIFIC_SCHOOLS')}
+                                  className="w-4 h-4 text-blue-600"
+                              />
+                              <div className="flex items-center gap-2">
+                                  <School className="w-4 h-4 text-gray-500" />
+                                  <span className="text-sm font-medium dark:text-white">Écoles spécifiques</span>
+                              </div>
+                          </label>
+
+                          <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${targetType === 'SPECIFIC_ADMINS' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
+                              <input 
+                                  type="radio" 
+                                  name="targetType" 
+                                  checked={targetType === 'SPECIFIC_ADMINS'} 
+                                  onChange={() => setTargetType('SPECIFIC_ADMINS')}
+                                  className="w-4 h-4 text-blue-600"
+                              />
+                              <div className="flex items-center gap-2">
+                                  <UserCheck className="w-4 h-4 text-gray-500" />
+                                  <span className="text-sm font-medium dark:text-white">Admins spécifiques</span>
+                              </div>
+                          </label>
+                      </div>
+                  ) : (
+                      <div className="space-y-3">
+                          <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${targetRole === 'ALL' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
+                              <input 
+                                  type="radio" 
+                                  name="targetRole" 
+                                  checked={targetRole === 'ALL'} 
+                                  onChange={() => setTargetRole('ALL')}
+                                  className="w-4 h-4 text-blue-600"
+                              />
+                              <span className="text-sm font-medium dark:text-white">Tout l'établissement</span>
+                          </label>
+
+                          <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${targetRole === 'TEACHER' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
+                              <input 
+                                  type="radio" 
+                                  name="targetRole" 
+                                  checked={targetRole === 'TEACHER'} 
+                                  onChange={() => setTargetRole('TEACHER')}
+                                  className="w-4 h-4 text-blue-600"
+                              />
+                              <span className="text-sm font-medium dark:text-white">Professeurs uniquement</span>
+                          </label>
+
+                          <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${targetRole === 'STUDENT' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
+                              <input 
+                                  type="radio" 
+                                  name="targetRole" 
+                                  checked={targetRole === 'STUDENT'} 
+                                  onChange={() => setTargetRole('STUDENT')}
+                                  className="w-4 h-4 text-blue-600"
+                              />
+                              <span className="text-sm font-medium dark:text-white">Élèves uniquement</span>
+                          </label>
+                      </div>
+                  )}
+              </div>
+              
+              {/* Dynamic Selection List for Super Admin */}
+              {user?.role === 'SUPER_ADMIN' && targetType === 'SPECIFIC_SCHOOLS' && (
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                      <div className="flex justify-between items-center mb-4">
+                          <h3 className="font-bold text-gray-700 dark:text-gray-300">Sélectionner les écoles</h3>
+                          <button onClick={selectAllSchools} className="text-xs text-blue-600 hover:underline">
+                              {selectedSchoolIds.length === schools.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+                          </button>
+                      </div>
+                      <div className="max-h-60 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                          {loadingData ? (
+                              <p className="text-sm text-gray-500">Chargement...</p>
+                          ) : schools.map(school => (
+                              <div 
+                                  key={school.id}
+                                  onClick={() => toggleSchoolSelection(school.id)}
+                                  className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ${selectedSchoolIds.includes(school.id) ? 'bg-blue-50 dark:bg-blue-900/30' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                              >
+                                  {selectedSchoolIds.includes(school.id) ? 
+                                      <CheckSquare className="w-4 h-4 text-blue-600" /> : 
+                                      <Square className="w-4 h-4 text-gray-400" />
+                                  }
+                                  <span className="text-sm text-gray-700 dark:text-gray-300">{school.name}</span>
+                              </div>
+                          ))}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">
+                          {selectedSchoolIds.length} école(s) sélectionnée(s)
+                      </p>
+                  </div>
+              )}
+
+              {user?.role === 'SUPER_ADMIN' && targetType === 'SPECIFIC_ADMINS' && (
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                      <div className="flex justify-between items-center mb-4">
+                          <h3 className="font-bold text-gray-700 dark:text-gray-300">Sélectionner les admins</h3>
+                          <button onClick={selectAllAdmins} className="text-xs text-blue-600 hover:underline">
+                              {selectedAdminIds.length === admins.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+                          </button>
+                      </div>
+                      <div className="max-h-60 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                          {loadingData ? (
+                              <p className="text-sm text-gray-500">Chargement...</p>
+                          ) : admins.map(admin => (
+                              <div 
+                                  key={admin.id}
+                                  onClick={() => toggleAdminSelection(admin.id)}
+                                  className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ${selectedAdminIds.includes(admin.id) ? 'bg-blue-50 dark:bg-blue-900/30' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                              >
+                                  {selectedAdminIds.includes(admin.id) ? 
+                                      <CheckSquare className="w-4 h-4 text-blue-600" /> : 
+                                      <Square className="w-4 h-4 text-gray-400" />
+                                  }
+                                  <div className="flex flex-col">
+                                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{admin.firstName} {admin.lastName}</span>
+                                      <span className="text-xs text-gray-500">{admin.school?.name || 'Sans école'}</span>
+                                  </div>
+                              </div>
+                          ))}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">
+                          {selectedAdminIds.length} admin(s) sélectionné(s)
+                      </p>
+                  </div>
+              )}
           </div>
-        )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Titre de l'annonce</label>
-              <input
-                {...register('title', { required: 'Le titre est requis' })}
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-                placeholder="Ex: Maintenance prévue, Nouvelle fonctionnalité..."
-              />
-              {errors.title && <span className="text-red-500 text-sm">{errors.title.message}</span>}
-            </div>
+          {/* Right Column: Message Form */}
+          <div className="lg:col-span-2">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                {status && (
+                  <div className={`mb-6 p-4 rounded-md flex items-start gap-3 ${
+                    status.type === 'success' 
+                      ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800' 
+                      : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800'
+                  }`}>
+                    {status.type === 'success' ? <CheckCircle className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
+                    <p>{status.message}</p>
+                  </div>
+                )}
 
-            <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cible (Destinataires)</label>
-                <select
-                    {...register('targetRole')}
-                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                >
-                    <option value="SCHOOL_ADMIN">Administrateurs d'École (Directeurs)</option>
-                    <option value="TEACHER">Professeurs</option>
-                    <option value="STUDENT">Élèves</option>
-                    <option value="ALL">Tous les utilisateurs</option>
-                </select>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Le message sera envoyé à tous les utilisateurs ayant ce rôle.
-                </p>
-            </div>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Titre de l'annonce</label>
+                      <input
+                        {...register('title', { required: 'Le titre est requis' })}
+                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-all"
+                        placeholder="Ex: Maintenance prévue, Nouvelle fonctionnalité..."
+                      />
+                      {errors.title && <span className="text-red-500 text-sm mt-1">{errors.title.message}</span>}
+                    </div>
 
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Message</label>
-              <textarea
-                {...register('message', { required: 'Le message est requis' })}
-                rows={6}
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none resize-none dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-                placeholder="Écrivez votre message ici..."
-              />
-              {errors.message && <span className="text-red-500 text-sm">{errors.message.message}</span>}
-            </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Message</label>
+                      <textarea
+                        {...register('message', { required: 'Le message est requis' })}
+                        rows={8}
+                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-all"
+                        placeholder="Écrivez votre message ici..."
+                      />
+                      {errors.message && <span className="text-red-500 text-sm mt-1">{errors.message.message}</span>}
+                    </div>
+
+                    <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-700">
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className={`flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm hover:shadow ${
+                          isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                        }`}
+                      >
+                        <Send className="w-4 h-4" />
+                        {isSubmitting ? 'Envoi en cours...' : 'Envoyer l\'annonce'}
+                      </button>
+                    </div>
+                </form>
+              </div>
           </div>
-
-          <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-700">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition ${
-                isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
-              }`}
-            >
-              <Send className="w-4 h-4" />
-              {isSubmitting ? 'Envoi en cours...' : 'Envoyer l\'annonce'}
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   );
