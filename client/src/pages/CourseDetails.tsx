@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import api, { getFileUrl } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useForm } from 'react-hook-form';
-import { Book, FileText, Upload, Video, File, Link as LinkIcon, Plus, Trash2, FolderPlus, Folder } from 'lucide-react';
+import { Book, FileText, Video, File, Link as LinkIcon, Plus, Trash2, FolderPlus, Folder } from 'lucide-react';
 import Gradebook from '../components/Gradebook';
 import QuizList from '../components/QuizList';
 
