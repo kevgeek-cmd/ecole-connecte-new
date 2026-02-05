@@ -59,6 +59,10 @@ model User {
   sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
 
+  // Forum
+  forumPosts    ForumPost[]
+  forumComments ForumComment[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -293,5 +297,36 @@ model Notification {
   message   String
   userId    String?  // ID de l'utilisateur cible
   read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+/// Modèles Forum
+model ForumPost {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  category  String   @default("GENERAL") // GENERAL, HOMEWORK, COURSE, ANNOUNCEMENT
+  fileUrl   String?
+  fileType  String?  // PDF, IMAGE, etc.
+  
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  comments  ForumComment[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ForumComment {
+  id        String   @id @default(uuid())
+  content   String
+  
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  postId    String
+  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
   createdAt DateTime @default(now())
 }
