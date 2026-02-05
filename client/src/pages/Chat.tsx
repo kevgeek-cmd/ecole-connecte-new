@@ -32,7 +32,7 @@ interface Contact {
 }
 
 const Chat = () => {
-    const { user, token } = useAuth();
+    const { user } = useAuth();
     const { socket } = useSocket();
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [selectedContact, setSelectedContact] = useState<Contact | null>(null);

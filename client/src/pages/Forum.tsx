@@ -32,6 +32,7 @@ interface ForumComment {
   id: string;
   content: string;
   authorId: string;
+  postId?: string;
   createdAt: string;
   author: {
     id: string;
