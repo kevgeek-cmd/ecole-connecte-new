@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
-import { Calendar, ChevronLeft, ChevronRight, Clock, FileText, Filter } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, Clock, Filter } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface Assignment {
