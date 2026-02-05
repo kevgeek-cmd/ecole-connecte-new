@@ -72,7 +72,7 @@ const CourseDetails = () => {
   const [isDeleteMatModalOpen, setIsDeleteMatModalOpen] = useState(false);
 
   const [quizzes, setQuizzes] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'CONTENT' | 'GRADES' | 'QUIZZES'>('CONTENT');
+  const [activeTab, setActiveTab] = useState<'CONTENT' | 'GRADES' | 'QUIZZES' | 'ASSIGNMENTS'>('CONTENT');
 
   const { register: registerAssign, handleSubmit: handleSubmitAssign, reset: resetAssign, formState: { errors: errorsAssign } } = useForm<{ title: string; description?: string; dueDate: string; file?: FileList }>();
   const { register: registerMat, handleSubmit: handleSubmitMat, reset: resetMat, watch: watchMat, formState: { errors: errorsMat } } = useForm<{ title: string; type: string; url: string; source?: string; chapterId?: string; file?: FileList }>();
@@ -297,13 +297,6 @@ const CourseDetails = () => {
                             <Plus className="w-4 h-4" />
                             Ajouter Contenu
                         </button>
-                        <button
-                            onClick={() => setIsAssignmentModalOpen(true)}
-                            className="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-600 transition shadow-sm"
-                        >
-                            <Upload className="w-4 h-4" />
-                            Ajouter Devoir
-                        </button>
                     </div>
                 )}
         </div>
@@ -316,6 +309,13 @@ const CourseDetails = () => {
             >
                 Contenu du cours
                 {activeTab === 'CONTENT' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 dark:bg-blue-400"></div>}
+            </button>
+            <button
+                className={`px-6 py-3 font-medium text-sm transition-colors relative whitespace-nowrap ${activeTab === 'ASSIGNMENTS' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                onClick={() => setActiveTab('ASSIGNMENTS')}
+            >
+                Devoirs
+                {activeTab === 'ASSIGNMENTS' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 dark:bg-blue-400"></div>}
             </button>
             <button
                 className={`px-6 py-3 font-medium text-sm transition-colors relative whitespace-nowrap ${activeTab === 'QUIZZES' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
@@ -337,55 +337,9 @@ const CourseDetails = () => {
       </div>
 
       {activeTab === 'CONTENT' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column: Assignments */}
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+            {/* Chapters & Materials */}
             <div className="lg:col-span-1">
-                <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    Devoirs à rendre
-                </h2>
-                <div className="space-y-4">
-                    {assignments.length === 0 && <p className="text-gray-500 dark:text-gray-400 italic">Aucun devoir.</p>}
-                    {assignments.map(assignment => (
-                        <div key={assignment.id} className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition hover:border-blue-300 dark:hover:border-blue-500 group relative">
-                                <Link to={`/assignments/${assignment.id}`} className="block h-full">
-                                <div className="flex justify-between items-start pr-8">
-                                    <h3 className="font-bold text-gray-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">{assignment.title}</h3>
-                                    <div className="flex gap-2">
-                                        {assignment.submissions?.[0]?.grade && (
-                                            <span className="text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 px-2 py-1 rounded">
-                                                Note: {assignment.submissions[0].grade.value}/20
-                                            </span>
-                                        )}
-                                        <span className="text-xs font-mono bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100 px-2 py-1 rounded">
-                                            {new Date(assignment.dueDate).toLocaleDateString()}
-                                        </span>
-                                    </div>
-                                </div>
-                                {assignment.description && <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">{cleanDescription(assignment.description)}</p>}
-                                
-                                <div className="mt-4 flex justify-between items-center">
-                                    <span className="text-xs text-gray-400 dark:text-gray-500">
-                                        {isTeacher ? `${assignment._count?.submissions || 0} rendus` : 'Cliquez pour voir/rendre'}
-                                    </span>
-                                </div>
-                        </Link>
-                         {isTeacher && (
-                             <button 
-                                 onClick={(e) => openDeleteAssignmentModal(assignment.id, e)}
-                                 className="absolute top-2 right-2 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition z-10 opacity-0 group-hover:opacity-100"
-                                 title="Supprimer le devoir"
-                             >
-                                 <Trash2 className="w-4 h-4" />
-                             </button>
-                         )}
-                         </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Right Column: Chapters & Materials */}
-            <div className="lg:col-span-2">
                 <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
                     <Book className="w-5 h-5" />
                     Programme & Supports
@@ -435,6 +389,71 @@ const CourseDetails = () => {
                         </div>
                     )}
                 </div>
+            </div>
+        </div>
+      ) : activeTab === 'ASSIGNMENTS' ? (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                    <FileText className="w-6 h-6" />
+                    Devoirs à rendre
+                </h2>
+                {isTeacher && (
+                    <button
+                        onClick={() => setIsAssignmentModalOpen(true)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition shadow-sm"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Ajouter Devoir
+                    </button>
+                )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {assignments.length === 0 && <div className="col-span-full text-center text-gray-500 dark:text-gray-400 italic py-10">Aucun devoir publié.</div>}
+                {assignments.map(assignment => (
+                    <div key={assignment.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-300 hover:border-blue-300 dark:hover:border-blue-500 group relative">
+                            <Link to={`/assignments/${assignment.id}`} className="block h-full">
+                            <div className="flex flex-col h-full">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className="bg-blue-50 dark:bg-blue-900/30 p-2 rounded-lg text-blue-600 dark:text-blue-400">
+                                        <FileText className="w-6 h-6" />
+                                    </div>
+                                    <div className="flex gap-2">
+                                        {assignment.submissions?.[0]?.grade && (
+                                            <span className="text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 px-2 py-1 rounded">
+                                                {assignment.submissions[0].grade.value}/20
+                                            </span>
+                                        )}
+                                        <span className="text-xs font-mono bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100 px-2 py-1 rounded">
+                                            {new Date(assignment.dueDate).toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <h3 className="font-bold text-lg text-gray-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition mb-2">{assignment.title}</h3>
+                                
+                                {assignment.description && <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 mb-4 flex-grow">{cleanDescription(assignment.description)}</p>}
+                                
+                                <div className="mt-auto pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center text-sm">
+                                    <span className="text-gray-500 dark:text-gray-400">
+                                        {isTeacher ? `${assignment._count?.submissions || 0} rendus` : 'Voir les détails'}
+                                    </span>
+                                    <span className="text-blue-600 dark:text-blue-400 font-medium group-hover:underline">Ouvrir</span>
+                                </div>
+                            </div>
+                    </Link>
+                        {isTeacher && (
+                            <button 
+                                onClick={(e) => openDeleteAssignmentModal(assignment.id, e)}
+                                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition opacity-0 group-hover:opacity-100"
+                                title="Supprimer le devoir"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        )}
+                        </div>
+                ))}
             </div>
         </div>
       ) : activeTab === 'QUIZZES' ? (
