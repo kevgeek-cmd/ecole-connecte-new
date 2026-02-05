@@ -1,7 +1,7 @@
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, User, School, BookOpen, GraduationCap, LayoutDashboard, FileText, Megaphone, Moon, Sun, Library, MessageCircle, X, Calendar } from 'lucide-react';
+import { LogOut, User, School, BookOpen, GraduationCap, LayoutDashboard, FileText, Megaphone, Moon, Sun, Library, MessageCircle, X, Calendar, MessageSquare } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import ConfirmationModal from './ConfirmationModal';
 
@@ -62,6 +62,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           <Link to="/dashboard" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/dashboard' ? 'bg-blue-600/20 text-blue-400 border-r-4 border-blue-500' : ''}`}>
             <LayoutDashboard className="w-5 h-5" />
             Tableau de bord
+          </Link>
+
+          <Link to="/forum" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/forum' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
+            <MessageSquare className="w-5 h-5" />
+            Forum École
           </Link>
 
           {user.role === 'SUPER_ADMIN' && (

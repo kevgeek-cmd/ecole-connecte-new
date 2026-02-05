@@ -19,6 +19,7 @@ import QuizTake from './pages/QuizTake';
 import QuizAttemptsList from './pages/QuizAttemptsList';
 import QuizAttemptDetail from './pages/QuizAttemptDetail';
 import Broadcast from './pages/Broadcast';
+import Forum from './pages/Forum';
 import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './layouts/MainLayout';
 
@@ -64,6 +65,7 @@ function App() {
                 <Route path="/agenda" element={<Agenda />} />
                 <Route path="/report-cards" element={<StudentReportCards />} />
                 <Route path="/chat" element={<Chat />} />
+                <Route path="/forum" element={<Forum />} />
                 <Route path="/quizzes/:id" element={<QuizTake />} />
                 <Route path="/quizzes/:id/attempts" element={<QuizAttemptsList />} />
                 <Route path="/quizzes/attempts/:id" element={<QuizAttemptDetail />} />

@@ -90,7 +90,8 @@ const Dashboard = () => {
     SCHOOLS: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80", // École / Campus
     COURSES: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?auto=format&fit=crop&w=800&q=80", // Livres / Études
     HOMEWORK: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80", // Écriture / Devoirs
-    USERS: "https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?auto=format&fit=crop&w=800&q=80" // Groupe pro
+    USERS: "https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?auto=format&fit=crop&w=800&q=80", // Groupe pro
+    FORUM: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=800&q=80" // Discussion de groupe
   };
 
   return (
@@ -225,6 +226,16 @@ const Dashboard = () => {
             />
           </>
         )}
+
+        {/* Carte Forum École (Pour tous) */}
+        <DashboardCard 
+          title="Forum École"
+          count="Discussion"
+          label="Espace d'échange"
+          image={IMAGES.FORUM}
+          badgeColor="bg-blue-600"
+          onClick={() => navigate('/forum')}
+        />
       </div>
     </div>
   );
