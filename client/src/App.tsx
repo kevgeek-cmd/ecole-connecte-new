@@ -61,6 +61,7 @@ function App() {
                 <Route path="/assignments/:id" element={<AssignmentDetails />} />
                 <Route path="/library" element={<Library />} />
                 <Route path="/agenda" element={<Agenda />} />
+                <Route path="/report-cards" element={<StudentReportCards />} />
                 <Route path="/chat" element={<Chat />} />
                 <Route path="/quizzes/:id" element={<QuizTake />} />
                 <Route path="/quizzes/:id/attempts" element={<QuizAttemptsList />} />
