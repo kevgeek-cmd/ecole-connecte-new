@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useLocation } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { Send, AlertCircle, CheckCircle, Users, School, Globe, UserCheck, CheckSquare, Square } from 'lucide-react';
@@ -26,13 +27,14 @@ type TargetType = 'GLOBAL' | 'SPECIFIC_SCHOOLS' | 'SPECIFIC_ADMINS' | 'ROLE_BASE
 
 const Broadcast = () => {
   const { user } = useAuth();
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<BroadcastForm>();
+  const location = useLocation();
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<BroadcastForm>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
   // State for targeting logic
   const [targetType, setTargetType] = useState<TargetType>('GLOBAL');
-  const [targetRole, setTargetRole] = useState<'ALL' | 'TEACHER' | 'STUDENT'>('ALL'); // For School Admins
+  const [targetRoles, setTargetRoles] = useState<string[]>(['ALL']); // For School Admins & Educators
   
   // Data lists
   const [schools, setSchools] = useState<SchoolData[]>([]);
@@ -46,12 +48,22 @@ const Broadcast = () => {
   const [loadingData, setLoadingData] = useState(false);
 
   useEffect(() => {
-    // If School Admin, default targetType is effectively internal (handled by backend scope)
-    // but we present choices: All, Teachers, Students
-    if (user?.role === 'SCHOOL_ADMIN') {
-        setTargetRole('ALL');
+    // If School Admin or Educator, default targetType is effectively internal (handled by backend scope)
+    // but we present choices: All, Teachers, Students, IT Admins, Educators
+    if (user?.role === 'SCHOOL_ADMIN' || user?.role === 'EDUCATOR') {
+        setTargetType('ROLE_BASED');
+        setTargetRoles(['ALL']);
     }
   }, [user]);
+
+  // Handle prefill from location state
+  useEffect(() => {
+    const prefill = (location.state as any)?.prefill;
+    if (prefill) {
+      if (prefill.title) setValue('title', prefill.title);
+      if (prefill.message) setValue('message', prefill.message);
+    }
+  }, [location.state, setValue]);
 
   // Fetch data based on selection
   useEffect(() => {
@@ -108,6 +120,23 @@ const Broadcast = () => {
       else setSelectedAdminIds(admins.map(a => a.id));
   };
 
+  const toggleRoleSelection = (role: string) => {
+      if (role === 'ALL') {
+          setTargetRoles(['ALL']);
+          return;
+      }
+
+      setTargetRoles(prev => {
+          const newRoles = prev.filter(r => r !== 'ALL');
+          if (newRoles.includes(role)) {
+              const filtered = newRoles.filter(r => r !== role);
+              return filtered.length === 0 ? ['ALL'] : filtered;
+          } else {
+              return [...newRoles, role];
+          }
+      });
+  };
+
   const onSubmit = async (data: BroadcastForm) => {
     setIsSubmitting(true);
     setStatus(null);
@@ -141,8 +170,8 @@ const Broadcast = () => {
           } else if (targetType === 'SPECIFIC_ADMINS') {
               payload.targetUserIds = selectedAdminIds;
           }
-      } else if (user?.role === 'SCHOOL_ADMIN') {
-          payload.targetRole = targetRole;
+      } else if (user?.role === 'SCHOOL_ADMIN' || user?.role === 'EDUCATOR') {
+          payload.targetRoles = targetRoles;
       }
 
       const response = await api.post('/notifications/broadcast', payload);
@@ -152,6 +181,7 @@ const Broadcast = () => {
       setSelectedSchoolIds([]);
       setSelectedAdminIds([]);
       if (user?.role === 'SUPER_ADMIN') setTargetType('GLOBAL');
+      else setTargetRoles(['ALL']);
     } catch (error: any) {
       console.error("Broadcast error", error);
       setStatus({ 
@@ -224,43 +254,60 @@ const Broadcast = () => {
                               />
                               <div className="flex items-center gap-2">
                                   <UserCheck className="w-4 h-4 text-gray-500" />
-                                  <span className="text-sm font-medium dark:text-white">Admins spécifiques</span>
+                                  <span className="text-sm font-medium dark:text-white">Administrateurs spécifiques</span>
                               </div>
                           </label>
                       </div>
                   ) : (
                       <div className="space-y-3">
-                          <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${targetRole === 'ALL' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
+                          <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${targetRoles.includes('ALL') ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
                               <input 
-                                  type="radio" 
-                                  name="targetRole" 
-                                  checked={targetRole === 'ALL'} 
-                                  onChange={() => setTargetRole('ALL')}
-                                  className="w-4 h-4 text-blue-600"
+                                  type="checkbox" 
+                                  checked={targetRoles.includes('ALL')} 
+                                  onChange={() => toggleRoleSelection('ALL')}
+                                  className="w-4 h-4 text-blue-600 rounded"
                               />
                               <span className="text-sm font-medium dark:text-white">Tout l'établissement</span>
                           </label>
 
-                          <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${targetRole === 'TEACHER' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
+                          <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${targetRoles.includes('TEACHER') ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
                               <input 
-                                  type="radio" 
-                                  name="targetRole" 
-                                  checked={targetRole === 'TEACHER'} 
-                                  onChange={() => setTargetRole('TEACHER')}
-                                  className="w-4 h-4 text-blue-600"
+                                  type="checkbox" 
+                                  checked={targetRoles.includes('TEACHER')} 
+                                  onChange={() => toggleRoleSelection('TEACHER')}
+                                  className="w-4 h-4 text-blue-600 rounded"
                               />
-                              <span className="text-sm font-medium dark:text-white">Professeurs uniquement</span>
+                              <span className="text-sm font-medium dark:text-white">Professeurs</span>
                           </label>
 
-                          <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${targetRole === 'STUDENT' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
+                          <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${targetRoles.includes('STUDENT') ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
                               <input 
-                                  type="radio" 
-                                  name="targetRole" 
-                                  checked={targetRole === 'STUDENT'} 
-                                  onChange={() => setTargetRole('STUDENT')}
-                                  className="w-4 h-4 text-blue-600"
+                                  type="checkbox" 
+                                  checked={targetRoles.includes('STUDENT')} 
+                                  onChange={() => toggleRoleSelection('STUDENT')}
+                                  className="w-4 h-4 text-blue-600 rounded"
                               />
-                              <span className="text-sm font-medium dark:text-white">Élèves uniquement</span>
+                              <span className="text-sm font-medium dark:text-white">Élèves</span>
+                          </label>
+
+                          <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${targetRoles.includes('EDUCATOR') ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
+                              <input 
+                                  type="checkbox" 
+                                  checked={targetRoles.includes('EDUCATOR')} 
+                                  onChange={() => toggleRoleSelection('EDUCATOR')}
+                                  className="w-4 h-4 text-blue-600 rounded"
+                              />
+                              <span className="text-sm font-medium dark:text-white">Éducateurs</span>
+                          </label>
+
+                          <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${targetRoles.includes('IT_ADMIN') ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
+                              <input 
+                                  type="checkbox" 
+                                  checked={targetRoles.includes('IT_ADMIN')} 
+                                  onChange={() => toggleRoleSelection('IT_ADMIN')}
+                                  className="w-4 h-4 text-blue-600 rounded"
+                              />
+                              <span className="text-sm font-medium dark:text-white">Informaticiens</span>
                           </label>
                       </div>
                   )}

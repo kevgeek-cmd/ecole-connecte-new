@@ -25,6 +25,8 @@ import chatRoutes from "./routes/chat.routes.js";
 import quizRoutes from "./routes/quiz.routes.js";
 import reportCardRoutes from "./routes/report-card.routes.js";
 import forumRoutes from "./routes/forum.routes.js";
+import absenceRoutes from "./routes/absence.routes.js";
+import conductRoutes from "./routes/conduct.routes.js";
 
 // Chargement des variables d'environnement
 dotenv.config();
@@ -71,6 +73,8 @@ app.use("/api/chat", chatRoutes);           // Messagerie instantanée
 app.use("/api/quizzes", quizRoutes);       // Quiz et évaluations
 app.use("/api/report-cards", reportCardRoutes); // Bulletins scolaires
 app.use("/api/forum", forumRoutes);             // Forum École
+app.use("/api/absences", absenceRoutes);        // Gestion des absences
+app.use("/api/conducts", conductRoutes);        // Gestion de la conduite
 
 // Route de test pour vérifier que l'API est en ligne
 app.get("/", (req, res) => {

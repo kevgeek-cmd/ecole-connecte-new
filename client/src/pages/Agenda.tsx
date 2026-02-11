@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
-import { Calendar, ChevronLeft, ChevronRight, Clock, Filter } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Calendar, ChevronLeft, ChevronRight, Clock, Filter, Share2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface Assignment {
     id: string;
@@ -18,6 +18,7 @@ interface Assignment {
 
 const Agenda = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [assignments, setAssignments] = useState<Assignment[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -94,6 +95,24 @@ const Agenda = () => {
         setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
     };
 
+    const shareAgenda = () => {
+        if (!selectedLevel || assignments.length === 0) return;
+
+        const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+        const monthYear = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+        
+        const title = `Agenda des devoirs - ${selectedLevel} - ${monthYear}`;
+        let message = `Voici l'agenda des devoirs pour le mois de ${monthYear} (Niveau ${selectedLevel}) :\n\n`;
+        
+        assignments.forEach(a => {
+            const date = new Date(a.dueDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+            message += `- ${date} : ${a.title} (${a.course.subject.name})\n`;
+        });
+
+        // Navigate to broadcast with pre-filled data
+        navigate('/broadcast', { state: { prefill: { title, message } } });
+    };
+
     // Group assignments by date
     const getAssignmentsByDate = (date: number) => {
         const checkDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), date);
@@ -122,17 +141,41 @@ const Agenda = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <Filter className="w-5 h-5 text-gray-400" />
-                    <select 
-                        value={selectedLevel}
-                        onChange={(e) => setSelectedLevel(e.target.value)}
-                        className="p-2 border rounded-md shadow-sm bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                        <option value="">Sélectionner un niveau...</option>
-                        {levels.map(l => (
-                            <option key={l} value={l}>{l}</option>
-                        ))}
-                    </select>
+                    <button onClick={prevMonth} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition">
+                        <ChevronLeft className="w-6 h-6 dark:text-white" />
+                    </button>
+                    <span className="text-xl font-semibold min-w-[150px] text-center dark:text-white">
+                        {currentDate.toLocaleString('fr-FR', { month: 'long', year: 'numeric' })}
+                    </span>
+                    <button onClick={nextMonth} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition">
+                        <ChevronRight className="w-6 h-6 dark:text-white" />
+                    </button>
+                </div>
+
+                <div className="flex items-center gap-4">
+                    {(user?.role === 'SCHOOL_ADMIN' || user?.role === 'IT_ADMIN' || user?.role === 'EDUCATOR') && (
+                        <button 
+                            onClick={shareAgenda}
+                            disabled={!selectedLevel || assignments.length === 0}
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <Share2 className="w-4 h-4" />
+                            Partager l'agenda
+                        </button>
+                    )}
+                    <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2">
+                        <Filter className="w-4 h-4 text-gray-400" />
+                        <select 
+                            value={selectedLevel}
+                            onChange={(e) => setSelectedLevel(e.target.value)}
+                            className="bg-transparent border-none focus:ring-0 text-sm dark:text-white"
+                        >
+                            <option value="">Sélectionner un niveau</option>
+                            {levels.map(l => (
+                                <option key={l} value={l}>{l}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
             </div>
 

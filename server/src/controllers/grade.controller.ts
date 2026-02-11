@@ -32,6 +32,9 @@ export const getGradebook = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
+    // For School Admins, Educators, IT Admins, verify school access if implemented
+    // Assuming they have access to all courses in their school/scope
+
     // Get Students
     const enrollments = await prisma.enrollment.findMany({
       where: { classId: course.classId },
@@ -87,6 +90,7 @@ export const saveGrade = async (req: AuthRequest, res: Response) => {
         return res.status(403).json({ message: "Access denied" });
       }
     }
+    // Allow EDUCATOR, SCHOOL_ADMIN, IT_ADMIN to save grades without teacher check
 
     // Find active term
     const activeTerm = await prisma.term.findFirst({

@@ -63,6 +63,10 @@ model User {
   forumPosts    ForumPost[]
   forumComments ForumComment[]
 
+  // Suivi scolaire
+  absences      Absence[]
+  conducts      Conduct[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -91,6 +95,7 @@ model Term {
   academicYearId String
   academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
   grades         Grade[]
+  conducts       Conduct[]
 }
 
 /// Modèle Classe
@@ -329,4 +334,33 @@ model ForumComment {
   post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
   
   createdAt DateTime @default(now())
+}
+
+/// Modèle Absence
+model Absence {
+  id        String   @id @default(uuid())
+  date      DateTime
+  reason    String?
+  justified Boolean  @default(false)
+  
+  studentId String
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+}
+
+/// Modèle Conduite
+model Conduct {
+  id           String   @id @default(uuid())
+  appreciation String? // "Bien", "Avertissement", etc.
+  comment      String?
+  
+  studentId    String
+  student      User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  termId       String
+  term         Term     @relation(fields: [termId], references: [id])
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

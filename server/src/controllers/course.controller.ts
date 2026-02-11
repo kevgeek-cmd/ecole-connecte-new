@@ -84,7 +84,7 @@ export const getLibrary = async (req: AuthRequest, res: Response) => {
         include: includeRelation.course.include ? includeRelation : undefined,
         orderBy: { createdAt: 'desc' }
       });
-    } else if (role === "SCHOOL_ADMIN" || role === "IT_ADMIN") {
+    } else if (role === "SCHOOL_ADMIN" || role === "IT_ADMIN" || role === "EDUCATOR") {
          if (!schoolId) return res.status(400).json({message: "No school ID"});
          materials = await prisma.material.findMany({
             where: {

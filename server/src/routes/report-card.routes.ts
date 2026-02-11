@@ -8,9 +8,9 @@ const router = Router();
 router.use(authenticate);
 
 // Get specific student report (Student sees own, Admin/Teacher sees any)
-router.get("/student/:studentId", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER", "STUDENT", "IT_ADMIN"]), getStudentReportCard);
+router.get("/student/:studentId", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER", "STUDENT", "IT_ADMIN", "EDUCATOR"]), getStudentReportCard);
 
 // Get global class report (School Admin/Teacher)
-router.get("/class/:classId", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER", "IT_ADMIN"]), getClassReportCard);
+router.get("/class/:classId", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER", "IT_ADMIN", "EDUCATOR"]), getClassReportCard);
 
 export default router;

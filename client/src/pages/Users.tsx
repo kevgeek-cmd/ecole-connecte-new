@@ -96,6 +96,18 @@ const Users = () => {
     return result;
   }, [users]);
 
+  const formatRole = (role: string) => {
+    switch (role) {
+      case 'SUPER_ADMIN': return 'Super Administrateur';
+      case 'SCHOOL_ADMIN': return 'Administrateur école';
+      case 'IT_ADMIN': return 'Informaticien';
+      case 'EDUCATOR': return 'Éducateur';
+      case 'TEACHER': return 'Enseignant';
+      case 'STUDENT': return 'Élève';
+      default: return role;
+    }
+  };
+
   const selectedGroup = useMemo(() => groups.find(g => g.id === selectedGroupId), [groups, selectedGroupId]);
 
   useEffect(() => {
@@ -321,7 +333,7 @@ const Users = () => {
                         u.role === 'SCHOOL_ADMIN' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400' :
                         u.role === 'IT_ADMIN' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-400' :
                         u.role === 'TEACHER' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400' : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'}`}>
-                      {u.role}
+                      {formatRole(u.role)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -417,7 +429,10 @@ const Users = () => {
                     <option value="STUDENT">Élève</option>
                     <option value="TEACHER">Enseignant</option>
                     {(currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'SCHOOL_ADMIN') && (
-                        <option value="IT_ADMIN">Informaticien</option>
+                        <>
+                            <option value="IT_ADMIN">Informaticien</option>
+                            <option value="EDUCATOR">Éducateur</option>
+                        </>
                     )}
                     {currentUser?.role === 'SUPER_ADMIN' && (
                         <>

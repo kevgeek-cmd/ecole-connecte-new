@@ -1,7 +1,7 @@
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, User, School, BookOpen, GraduationCap, LayoutDashboard, FileText, Megaphone, Moon, Sun, Library, MessageCircle, X, Calendar, MessageSquare } from 'lucide-react';
+import { LogOut, User, School, BookOpen, GraduationCap, LayoutDashboard, FileText, Megaphone, Moon, Sun, Library, MessageCircle, X, Calendar, MessageSquare, UserX, ClipboardList } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import ConfirmationModal from './ConfirmationModal';
 
@@ -50,7 +50,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               <GraduationCap className="w-6 h-6 text-blue-500" />
               Ecole Connectée
             </h1>
-            <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider">{user.role.replace('_', ' ')}</p>
+            <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider">{formatRole(user.role)}</p>
           </div>
           {/* Bouton fermer sur mobile */}
           <button onClick={onClose} className="lg:hidden p-2 hover:bg-gray-800 rounded">
@@ -85,29 +85,47 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             </>
           )}
 
-          {(user.role === 'SCHOOL_ADMIN' || user.role === 'IT_ADMIN') && (
+          {(user.role === 'SCHOOL_ADMIN' || user.role === 'IT_ADMIN' || user.role === 'EDUCATOR') && (
             <>
-              <Link to="/academic-years" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/academic-years' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
-                <BookOpen className="w-5 h-5" />
-                Années Scolaires
-              </Link>
+              {(user.role === 'SCHOOL_ADMIN' || user.role === 'IT_ADMIN') && (
+                <Link to="/academic-years" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/academic-years' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
+                  <BookOpen className="w-5 h-5" />
+                  Années Scolaires
+                </Link>
+              )}
               <Link to="/classes" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/classes' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
                 <School className="w-5 h-5" />
                 Classes
               </Link>
+              {(user.role === 'SCHOOL_ADMIN' || user.role === 'IT_ADMIN') && (
                <Link to="/users" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/users' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
                 <User className="w-5 h-5" />
                 Utilisateurs
               </Link>
+              )}
+              {(user.role === 'SCHOOL_ADMIN' || user.role === 'IT_ADMIN') && (
                <Link to="/subjects" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/subjects' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
                 <BookOpen className="w-5 h-5" />
                 Matières
               </Link>
+              )}
               <Link to="/forum" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/forum' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
                 <MessageSquare className="w-5 h-5" />
                 Publication
               </Link>
-              {user.role === 'SCHOOL_ADMIN' && (
+              <Link to="/agenda" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/agenda' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
+                <Calendar className="w-5 h-5" />
+                Agenda
+              </Link>
+              <Link to="/absences" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/absences' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
+                <UserX className="w-5 h-5" />
+                Absences
+              </Link>
+              <Link to="/conduct" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/conduct' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
+                <ClipboardList className="w-5 h-5" />
+                Conduite
+              </Link>
+              {(user.role === 'SCHOOL_ADMIN' || user.role === 'EDUCATOR') && (
                  <Link to="/broadcast" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/broadcast' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
                    <Megaphone className="w-5 h-5" />
                    Annonces

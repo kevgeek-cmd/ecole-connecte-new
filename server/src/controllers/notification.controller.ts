@@ -6,7 +6,7 @@ import type { AuthRequest } from "../middleware/auth.js";
 const broadcastSchema = z.object({
   title: z.string().min(1),
   message: z.string().min(1),
-  targetRole: z.enum(["SCHOOL_ADMIN", "TEACHER", "STUDENT", "ALL"]).optional(),
+  targetRoles: z.array(z.enum(["SCHOOL_ADMIN", "TEACHER", "STUDENT", "IT_ADMIN", "EDUCATOR", "ALL"])).optional(),
   targetSchoolIds: z.array(z.string()).optional(),
   targetUserIds: z.array(z.string()).optional(),
 });
@@ -75,23 +75,23 @@ export const deleteNotification = async (req: AuthRequest, res: Response) => {
 
 export const broadcastNotification = async (req: AuthRequest, res: Response) => {
   try {
-    const { title, message, targetRole, targetSchoolIds, targetUserIds } = broadcastSchema.parse(req.body);
+    const { title, message, targetRoles, targetSchoolIds, targetUserIds } = broadcastSchema.parse(req.body);
 
     // Find all target users
     let whereClause: any = {};
     
-    // Scoping for SCHOOL_ADMIN
-    if (req.user?.role === 'SCHOOL_ADMIN') {
+    // Scoping for SCHOOL_ADMIN (or EDUCATOR if they have permission)
+    if (req.user?.role === 'SCHOOL_ADMIN' || req.user?.role === 'EDUCATOR') {
         if (!req.user.schoolId) {
-            return res.status(400).json({ message: "School Admin has no school assigned" });
+            return res.status(400).json({ message: "User has no school assigned" });
         }
         whereClause.schoolId = req.user.schoolId;
         
-        // School Admin can only filter by role within their school
-        if (targetRole && targetRole !== "ALL") {
-            whereClause.role = targetRole;
+        // Filter by specific roles if provided and not containing "ALL"
+        if (targetRoles && targetRoles.length > 0 && !targetRoles.includes("ALL")) {
+            whereClause.role = { in: targetRoles };
         } else {
-             whereClause.role = { not: "SUPER_ADMIN" }; // Don't notify Super Admin from School Admin broadcast
+             whereClause.role = { not: "SUPER_ADMIN" }; 
         }
     } else if (req.user?.role === 'SUPER_ADMIN') {
         // Super Admin Logic
@@ -103,14 +103,14 @@ export const broadcastNotification = async (req: AuthRequest, res: Response) => 
         // 2. Specific Schools (All users in those schools)
         else if (targetSchoolIds && targetSchoolIds.length > 0) {
             whereClause.schoolId = { in: targetSchoolIds };
-            // Optional: Still filter by role if provided (e.g. Teachers in specific schools)
-            if (targetRole && targetRole !== "ALL") {
-                whereClause.role = targetRole;
+            // Optional: Filter by roles
+            if (targetRoles && targetRoles.length > 0 && !targetRoles.includes("ALL")) {
+                whereClause.role = { in: targetRoles };
             }
         }
-        // 3. Global Role-based (e.g., All School Admins, All Teachers)
-        else if (targetRole && targetRole !== "ALL") {
-            whereClause.role = targetRole;
+        // 3. Global Role-based
+        else if (targetRoles && targetRoles.length > 0 && !targetRoles.includes("ALL")) {
+            whereClause.role = { in: targetRoles };
         }
         // 4. Global Broadcast (All Users)
         else {
