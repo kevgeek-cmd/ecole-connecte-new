@@ -77,106 +77,56 @@ export const deleteNotification = async (req: AuthRequest, res: Response) => {
 export const broadcastNotification = async (req: AuthRequest, res: Response) => {
   try {
     const { title, message, targetRoles, targetSchoolIds, targetUserIds, classId } = broadcastSchema.parse(req.body);
+    const user = req.user;
 
     // Find all target users
     let whereClause: any = {};
     
-    // Scoping for SCHOOL_ADMIN (or EDUCATOR if they have permission)
-    if (req.user?.role === 'SCHOOL_ADMIN' || req.user?.role === 'EDUCATOR') {
-        if (!req.user.schoolId) {
+    // 1. School Scoping
+    if (user?.role === 'SCHOOL_ADMIN' || user?.role === 'EDUCATOR') {
+        if (!user.schoolId) {
             return res.status(400).json({ message: "User has no school assigned" });
         }
-        whereClause.schoolId = req.user.schoolId;
-        
-        // Target specific user(s) if provided
-        if (targetUserIds && targetUserIds.length > 0) {
-            whereClause.id = { in: targetUserIds };
-        } 
-        // Target specific class if provided
-        else if (classId) {
-            const roles = targetRoles || ["ALL"];
-            const conditions: any[] = [];
-
-            if (roles.includes("ALL") || roles.includes("STUDENT")) {
-                conditions.push({
-                    enrollments: {
-                        some: { classId: classId }
-                    }
-                });
-            }
-
-            if (roles.includes("ALL") || roles.includes("TEACHER")) {
-                conditions.push({
-                    courses: {
-                        some: { classId: classId }
-                    }
-                });
-            }
-
-            if (conditions.length > 0) {
-                whereClause.OR = conditions;
-            }
-
-            // Within class, filter by role if provided and not ALL
-            if (roles.length > 0 && !roles.includes("ALL")) {
-                whereClause.role = { in: roles };
-            }
-        }
-        // Filter by specific roles if provided and not containing "ALL"
-        else if (targetRoles && targetRoles.length > 0 && !targetRoles.includes("ALL")) {
-            whereClause.role = { in: targetRoles };
-        } else {
-             whereClause.role = { not: "SUPER_ADMIN" }; 
-        }
-    } else if (req.user?.role === 'SUPER_ADMIN') {
-        // Super Admin Logic
-        
-        // 1. Specific Users (e.g., Specific School Admins)
-        if (targetUserIds && targetUserIds.length > 0) {
-            whereClause.id = { in: targetUserIds };
-        }
-        // 2. Specific Schools (All users in those schools)
-        else if (targetSchoolIds && targetSchoolIds.length > 0) {
+        whereClause.schoolId = user.schoolId;
+    } else if (user?.role === 'SUPER_ADMIN') {
+        if (targetSchoolIds && targetSchoolIds.length > 0) {
             whereClause.schoolId = { in: targetSchoolIds };
-            
-            // Filter by specific class if provided
-            if (classId) {
-                const roles = targetRoles || ["ALL"];
-                const conditions: any[] = [];
-
-                if (roles.includes("ALL") || roles.includes("STUDENT")) {
-                    conditions.push({
-                        enrollments: {
-                            some: { classId: classId }
-                        }
-                    });
-                }
-
-                if (roles.includes("ALL") || roles.includes("TEACHER")) {
-                    conditions.push({
-                        courses: {
-                            some: { classId: classId }
-                        }
-                    });
-                }
-
-                if (conditions.length > 0) {
-                    whereClause.OR = conditions;
-                }
-            }
-
-            // Optional: Filter by roles
-            if (targetRoles && targetRoles.length > 0 && !targetRoles.includes("ALL")) {
-                whereClause.role = { in: targetRoles };
-            }
         }
-        // 3. Global Role-based
-        else if (targetRoles && targetRoles.length > 0 && !targetRoles.includes("ALL")) {
+    }
+
+    // 2. Target Specific Users
+    if (targetUserIds && targetUserIds.length > 0) {
+        whereClause.id = { in: targetUserIds };
+    } 
+    // 3. Target Class
+    else if (classId) {
+        const roles = targetRoles || ["ALL"];
+        const conditions: any[] = [];
+
+        if (roles.includes("ALL") || roles.includes("STUDENT")) {
+            conditions.push({
+                enrollments: { some: { classId: classId } }
+            });
+        }
+
+        if (roles.includes("ALL") || roles.includes("TEACHER")) {
+            conditions.push({
+                courses: { some: { classId: classId } }
+            });
+        }
+
+        if (conditions.length > 0) {
+            whereClause.OR = conditions;
+        }
+    }
+
+    // 4. Role Filtering (Applied if no specific users targeted, or as an additional filter for class)
+    if (!targetUserIds || targetUserIds.length === 0) {
+        if (targetRoles && targetRoles.length > 0 && !targetRoles.includes("ALL")) {
             whereClause.role = { in: targetRoles };
-        }
-        // 4. Global Broadcast (All Users)
-        else {
-             whereClause.role = { not: "SUPER_ADMIN" }; // Don't notify self
+        } else if (user?.role !== 'SUPER_ADMIN') {
+            // Default restriction for non-super-admins
+            whereClause.role = { not: "SUPER_ADMIN" };
         }
     }
 
