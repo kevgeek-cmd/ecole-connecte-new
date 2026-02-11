@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useLocation } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { Send, AlertCircle, CheckCircle, Users, School, Globe, UserCheck, CheckSquare, Square } from 'lucide-react';
@@ -28,8 +27,7 @@ type TargetType = 'GLOBAL' | 'SPECIFIC_SCHOOLS' | 'SPECIFIC_ADMINS' | 'ROLE_BASE
 
 const Broadcast = () => {
   const { user } = useAuth();
-  const location = useLocation();
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<BroadcastForm>();
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<BroadcastForm>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
@@ -40,7 +38,6 @@ const Broadcast = () => {
   // Data lists
   const [schools, setSchools] = useState<SchoolData[]>([]);
   const [admins, setAdmins] = useState<UserData[]>([]);
-  const [classes, setClasses] = useState<any[]>([]);
   const [classUsers, setClassUsers] = useState<UserData[]>([]);
   
   // Selections
@@ -59,8 +56,7 @@ const Broadcast = () => {
         // Fetch classes for school admin/educator
         const fetchClasses = async () => {
             try {
-                const res = await api.get('/classes');
-                setClasses(res.data);
+                await api.get('/classes');
             } catch (err) {
                 console.error("Error fetching classes", err);
             }
@@ -134,12 +130,6 @@ const Broadcast = () => {
     );
   };
 
-  const toggleUserSelection = (id: string) => {
-    setSelectedUserIds(prev => 
-        prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    );
-  };
-
   const selectAllSchools = () => {
       if (selectedSchoolIds.length === schools.length) setSelectedSchoolIds([]);
       else setSelectedSchoolIds(schools.map(s => s.id));
@@ -148,11 +138,6 @@ const Broadcast = () => {
   const selectAllAdmins = () => {
       if (selectedAdminIds.length === admins.length) setSelectedAdminIds([]);
       else setSelectedAdminIds(admins.map(a => a.id));
-  };
-
-  const selectAllClassUsers = () => {
-      if (selectedUserIds.length === classUsers.length) setSelectedUserIds([]);
-      else setSelectedUserIds(classUsers.map(u => u.id));
   };
 
   const toggleRoleSelection = (role: string) => {
