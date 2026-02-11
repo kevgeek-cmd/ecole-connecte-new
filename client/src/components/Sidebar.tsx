@@ -17,6 +17,18 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const location = useLocation();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
+  const formatRole = (role: string) => {
+    switch (role) {
+      case 'SUPER_ADMIN': return 'Super Administrateur';
+      case 'SCHOOL_ADMIN': return 'Administrateur école';
+      case 'IT_ADMIN': return 'Informaticien';
+      case 'EDUCATOR': return 'Éducateur';
+      case 'TEACHER': return 'Enseignant';
+      case 'STUDENT': return 'Élève';
+      default: return role;
+    }
+  };
+
   // Fermer la sidebar sur mobile quand on change de page
   useEffect(() => {
     onClose();

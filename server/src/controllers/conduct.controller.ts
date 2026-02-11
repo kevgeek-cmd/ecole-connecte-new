@@ -1,6 +1,7 @@
-import { Request, Response } from "express";
-import { prisma } from "../lib/prisma.js";
+import { Response } from "express";
+import prisma from "../utils/prisma.js";
 import { z } from "zod";
+import { AuthRequest } from "../middleware/auth.js";
 
 const createConductSchema = z.object({
   studentId: z.string().uuid(),
@@ -9,7 +10,7 @@ const createConductSchema = z.object({
   comment: z.string().optional(),
 });
 
-export const createConduct = async (req: Request, res: Response) => {
+export const createConduct = async (req: AuthRequest, res: Response) => {
   try {
     const { studentId, termId, appreciation, comment } = createConductSchema.parse(req.body);
 
@@ -29,7 +30,7 @@ export const createConduct = async (req: Request, res: Response) => {
   }
 };
 
-export const getConducts = async (req: Request, res: Response) => {
+export const getConducts = async (req: AuthRequest, res: Response) => {
   try {
     const { studentId, classId, termId } = req.query;
     const user = req.user;
@@ -43,7 +44,11 @@ export const getConducts = async (req: Request, res: Response) => {
         if (studentId) where.studentId = String(studentId);
         if (classId) {
             where.student = {
-                classId: String(classId)
+                enrollments: {
+                    some: {
+                        classId: String(classId)
+                    }
+                }
             };
         }
     }
@@ -58,7 +63,6 @@ export const getConducts = async (req: Request, res: Response) => {
             id: true,
             firstName: true,
             lastName: true,
-            class: { select: { name: true } }
           }
         },
         term: {
@@ -84,7 +88,7 @@ export const updateConduct = async (req: AuthRequest, res: Response) => {
         const { appreciation, comment } = req.body;
 
         const conduct = await prisma.conduct.update({
-            where: { id },
+            where: { id: id as string },
             data: { appreciation, comment }
         });
 
@@ -98,7 +102,7 @@ export const updateConduct = async (req: AuthRequest, res: Response) => {
 export const deleteConduct = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        await prisma.conduct.delete({ where: { id } });
+        await prisma.conduct.delete({ where: { id: id as string } });
         res.json({ message: "Conduct deleted" });
     } catch (error) {
         console.error("Error deleting conduct:", error);

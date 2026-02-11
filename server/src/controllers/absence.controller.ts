@@ -44,7 +44,11 @@ export const getAbsences = async (req: AuthRequest, res: Response) => {
         if (studentId) where.studentId = String(studentId);
         if (classId) {
             where.student = {
-                classId: String(classId)
+                enrollments: {
+                    some: {
+                        classId: String(classId)
+                    }
+                }
             };
         }
     }
@@ -57,7 +61,6 @@ export const getAbsences = async (req: AuthRequest, res: Response) => {
             id: true,
             firstName: true,
             lastName: true,
-            class: { select: { name: true } }
           }
         }
       },
@@ -79,10 +82,10 @@ export const updateAbsence = async (req: AuthRequest, res: Response) => {
         const updateData: any = {};
         if (reason !== undefined) updateData.reason = reason;
         if (justified !== undefined) updateData.justified = justified;
-        if (date) updateData.date = new Date(date);
+        if (date) updateData.date = new Date(date as string);
 
         const absence = await prisma.absence.update({
-            where: { id },
+            where: { id: id as string },
             data: updateData
         });
 
@@ -96,7 +99,7 @@ export const updateAbsence = async (req: AuthRequest, res: Response) => {
 export const deleteAbsence = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        await prisma.absence.delete({ where: { id } });
+        await prisma.absence.delete({ where: { id: id as string } });
         res.json({ message: "Absence deleted" });
     } catch (error) {
         console.error("Error deleting absence:", error);
