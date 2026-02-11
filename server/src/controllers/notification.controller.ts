@@ -9,6 +9,7 @@ const broadcastSchema = z.object({
   targetRoles: z.array(z.enum(["SCHOOL_ADMIN", "TEACHER", "STUDENT", "IT_ADMIN", "EDUCATOR", "ALL"])).optional(),
   targetSchoolIds: z.array(z.string()).optional(),
   targetUserIds: z.array(z.string()).optional(),
+  classId: z.string().optional(),
 });
 
 export const getNotifications = async (req: AuthRequest, res: Response) => {
@@ -75,7 +76,7 @@ export const deleteNotification = async (req: AuthRequest, res: Response) => {
 
 export const broadcastNotification = async (req: AuthRequest, res: Response) => {
   try {
-    const { title, message, targetRoles, targetSchoolIds, targetUserIds } = broadcastSchema.parse(req.body);
+    const { title, message, targetRoles, targetSchoolIds, targetUserIds, classId } = broadcastSchema.parse(req.body);
 
     // Find all target users
     let whereClause: any = {};
@@ -87,8 +88,42 @@ export const broadcastNotification = async (req: AuthRequest, res: Response) => 
         }
         whereClause.schoolId = req.user.schoolId;
         
+        // Target specific user(s) if provided
+        if (targetUserIds && targetUserIds.length > 0) {
+            whereClause.id = { in: targetUserIds };
+        } 
+        // Target specific class if provided
+        else if (classId) {
+            const roles = targetRoles || ["ALL"];
+            const conditions: any[] = [];
+
+            if (roles.includes("ALL") || roles.includes("STUDENT")) {
+                conditions.push({
+                    enrollments: {
+                        some: { classId: classId }
+                    }
+                });
+            }
+
+            if (roles.includes("ALL") || roles.includes("TEACHER")) {
+                conditions.push({
+                    courses: {
+                        some: { classId: classId }
+                    }
+                });
+            }
+
+            if (conditions.length > 0) {
+                whereClause.OR = conditions;
+            }
+
+            // Within class, filter by role if provided and not ALL
+            if (roles.length > 0 && !roles.includes("ALL")) {
+                whereClause.role = { in: roles };
+            }
+        }
         // Filter by specific roles if provided and not containing "ALL"
-        if (targetRoles && targetRoles.length > 0 && !targetRoles.includes("ALL")) {
+        else if (targetRoles && targetRoles.length > 0 && !targetRoles.includes("ALL")) {
             whereClause.role = { in: targetRoles };
         } else {
              whereClause.role = { not: "SUPER_ADMIN" }; 
@@ -103,6 +138,33 @@ export const broadcastNotification = async (req: AuthRequest, res: Response) => 
         // 2. Specific Schools (All users in those schools)
         else if (targetSchoolIds && targetSchoolIds.length > 0) {
             whereClause.schoolId = { in: targetSchoolIds };
+            
+            // Filter by specific class if provided
+            if (classId) {
+                const roles = targetRoles || ["ALL"];
+                const conditions: any[] = [];
+
+                if (roles.includes("ALL") || roles.includes("STUDENT")) {
+                    conditions.push({
+                        enrollments: {
+                            some: { classId: classId }
+                        }
+                    });
+                }
+
+                if (roles.includes("ALL") || roles.includes("TEACHER")) {
+                    conditions.push({
+                        courses: {
+                            some: { classId: classId }
+                        }
+                    });
+                }
+
+                if (conditions.length > 0) {
+                    whereClause.OR = conditions;
+                }
+            }
+
             // Optional: Filter by roles
             if (targetRoles && targetRoles.length > 0 && !targetRoles.includes("ALL")) {
                 whereClause.role = { in: targetRoles };

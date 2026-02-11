@@ -9,7 +9,7 @@ const createUserSchema = z.object({
   password: z.string().min(6),
   firstName: z.string(),
   lastName: z.string(),
-  role: z.enum(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER", "STUDENT", "IT_ADMIN"]),
+  role: z.enum(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER", "STUDENT", "IT_ADMIN", "EDUCATOR"]),
   schoolId: z.string().optional(),
 });
 

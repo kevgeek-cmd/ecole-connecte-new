@@ -20,10 +20,11 @@ interface UserData {
   firstName: string;
   lastName: string;
   email: string;
+  role: string;
   school?: { name: string };
 }
 
-type TargetType = 'GLOBAL' | 'SPECIFIC_SCHOOLS' | 'SPECIFIC_ADMINS' | 'ROLE_BASED';
+type TargetType = 'GLOBAL' | 'SPECIFIC_SCHOOLS' | 'SPECIFIC_ADMINS' | 'ROLE_BASED' | 'SPECIFIC_USERS';
 
 const Broadcast = () => {
   const { user } = useAuth();
@@ -39,33 +40,56 @@ const Broadcast = () => {
   // Data lists
   const [schools, setSchools] = useState<SchoolData[]>([]);
   const [admins, setAdmins] = useState<UserData[]>([]);
+  const [classes, setClasses] = useState<any[]>([]);
+  const [classUsers, setClassUsers] = useState<UserData[]>([]);
   
   // Selections
   const [selectedSchoolIds, setSelectedSchoolIds] = useState<string[]>([]);
   const [selectedAdminIds, setSelectedAdminIds] = useState<string[]>([]);
+  const [selectedClassId, setSelectedClassId] = useState<string>('');
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
 
   // Loading states
   const [loadingData, setLoadingData] = useState(false);
 
   useEffect(() => {
-    // If School Admin or Educator, default targetType is effectively internal (handled by backend scope)
-    // but we present choices: All, Teachers, Students, IT Admins, Educators
     if (user?.role === 'SCHOOL_ADMIN' || user?.role === 'EDUCATOR') {
         setTargetType('ROLE_BASED');
         setTargetRoles(['ALL']);
+        // Fetch classes for school admin/educator
+        const fetchClasses = async () => {
+            try {
+                const res = await api.get('/classes');
+                setClasses(res.data);
+            } catch (err) {
+                console.error("Error fetching classes", err);
+            }
+        };
+        fetchClasses();
     }
   }, [user]);
 
-  // Handle prefill from location state
+  // Fetch users when a class is selected
   useEffect(() => {
-    const prefill = (location.state as any)?.prefill;
-    if (prefill) {
-      if (prefill.title) setValue('title', prefill.title);
-      if (prefill.message) setValue('message', prefill.message);
-    }
-  }, [location.state, setValue]);
+    const fetchClassUsers = async () => {
+        if (!selectedClassId) {
+            setClassUsers([]);
+            return;
+        }
+        setLoadingData(true);
+        try {
+            const res = await api.get(`/classes/${selectedClassId}/students`);
+            setClassUsers(res.data);
+        } catch (err) {
+            console.error("Error fetching class users", err);
+        } finally {
+            setLoadingData(false);
+        }
+    };
+    fetchClassUsers();
+  }, [selectedClassId]);
 
-  // Fetch data based on selection
+  // Fetch data based on selection (Super Admin)
   useEffect(() => {
     const fetchData = async () => {
         if (user?.role !== 'SUPER_ADMIN') return;
@@ -110,6 +134,12 @@ const Broadcast = () => {
     );
   };
 
+  const toggleUserSelection = (id: string) => {
+    setSelectedUserIds(prev => 
+        prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
   const selectAllSchools = () => {
       if (selectedSchoolIds.length === schools.length) setSelectedSchoolIds([]);
       else setSelectedSchoolIds(schools.map(s => s.id));
@@ -118,6 +148,11 @@ const Broadcast = () => {
   const selectAllAdmins = () => {
       if (selectedAdminIds.length === admins.length) setSelectedAdminIds([]);
       else setSelectedAdminIds(admins.map(a => a.id));
+  };
+
+  const selectAllClassUsers = () => {
+      if (selectedUserIds.length === classUsers.length) setSelectedUserIds([]);
+      else setSelectedUserIds(classUsers.map(u => u.id));
   };
 
   const toggleRoleSelection = (role: string) => {
@@ -153,6 +188,12 @@ const Broadcast = () => {
             setIsSubmitting(false);
             return;
         }
+    } else {
+        if (targetType === 'SPECIFIC_USERS' && selectedUserIds.length === 0) {
+            setStatus({ type: 'error', message: "Veuillez sélectionner au moins un utilisateur." });
+            setIsSubmitting(false);
+            return;
+        }
     }
 
     try {
@@ -163,15 +204,20 @@ const Broadcast = () => {
 
       if (user?.role === 'SUPER_ADMIN') {
           if (targetType === 'GLOBAL') {
-              payload.targetRole = 'ALL';
+              payload.targetRoles = ['ALL'];
           } else if (targetType === 'SPECIFIC_SCHOOLS') {
               payload.targetSchoolIds = selectedSchoolIds;
-              payload.targetRole = 'ALL'; // All users in those schools
+              payload.targetRoles = ['ALL'];
           } else if (targetType === 'SPECIFIC_ADMINS') {
               payload.targetUserIds = selectedAdminIds;
           }
       } else if (user?.role === 'SCHOOL_ADMIN' || user?.role === 'EDUCATOR') {
-          payload.targetRoles = targetRoles;
+          if (targetType === 'ROLE_BASED') {
+              payload.targetRoles = targetRoles;
+              if (selectedClassId) payload.classId = selectedClassId;
+          } else if (targetType === 'SPECIFIC_USERS') {
+              payload.targetUserIds = selectedUserIds;
+          }
       }
 
       const response = await api.post('/notifications/broadcast', payload);
@@ -180,8 +226,11 @@ const Broadcast = () => {
       reset();
       setSelectedSchoolIds([]);
       setSelectedAdminIds([]);
+      setSelectedUserIds([]);
+      setSelectedClassId('');
       if (user?.role === 'SUPER_ADMIN') setTargetType('GLOBAL');
-      else setTargetRoles(['ALL']);
+      else setTargetType('ROLE_BASED');
+      setTargetRoles(['ALL']);
     } catch (error: any) {
       console.error("Broadcast error", error);
       setStatus({ 

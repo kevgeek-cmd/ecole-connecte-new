@@ -100,7 +100,9 @@ const Dashboard = () => {
       <div className="space-y-2">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">Bienvenue, {user.firstName} !</h1>
         <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">
-          Vous êtes connecté en tant que <span className="font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide text-xs md:text-sm">{user.role.replace('_', ' ')}</span>.
+          Vous êtes connecté en tant que <span className="font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide text-xs md:text-sm">
+            {user.role === 'SCHOOL_ADMIN' ? 'Administrateur école' : user.role.replace('_', ' ')}
+          </span>.
         </p>
       </div>
 

@@ -56,7 +56,7 @@ const Users = () => {
     const studentsNoClass: User[] = [];
 
     users.forEach(u => {
-      if (u.role === 'SUPER_ADMIN' || u.role === 'SCHOOL_ADMIN' || u.role === 'IT_ADMIN') {
+      if (u.role === 'SUPER_ADMIN' || u.role === 'SCHOOL_ADMIN' || u.role === 'IT_ADMIN' || u.role === 'EDUCATOR') {
         admins.push(u);
       } else if (u.role === 'TEACHER') {
         teachers.push(u);

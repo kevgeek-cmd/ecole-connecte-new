@@ -15,7 +15,7 @@ router.get("/", getNotifications);
 router.patch("/:id/read", markAsRead);
 router.delete("/:id", deleteNotification);
 
-// Only Super Admin and School Admin can broadcast
-router.post("/broadcast", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN"]), broadcastNotification);
+// Only Super Admin, School Admin and Educator can broadcast
+router.post("/broadcast", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "EDUCATOR"]), broadcastNotification);
 
 export default router;

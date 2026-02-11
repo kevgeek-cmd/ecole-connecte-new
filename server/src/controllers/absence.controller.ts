@@ -13,6 +13,17 @@ const createAbsenceSchema = z.object({
 export const createAbsence = async (req: AuthRequest, res: Response) => {
   try {
     const { studentId, date, reason, justified } = createAbsenceSchema.parse(req.body);
+    const user = req.user;
+
+    // RBAC: Ensure admin can only create for their school
+    if (user?.role === 'SCHOOL_ADMIN' || user?.role === 'IT_ADMIN' || user?.role === 'EDUCATOR') {
+        const student = await prisma.user.findFirst({
+            where: { id: studentId, schoolId: user.schoolId }
+        });
+        if (!student) {
+            return res.status(403).json({ message: "Student not found in your school" });
+        }
+    }
 
     const absence = await prisma.absence.create({
       data: {
@@ -40,6 +51,20 @@ export const getAbsences = async (req: AuthRequest, res: Response) => {
     // If student, can only see own absences
     if (user?.role === 'STUDENT') {
         where.studentId = user.id;
+    } else if (user?.role === 'SCHOOL_ADMIN' || user?.role === 'IT_ADMIN' || user?.role === 'EDUCATOR') {
+        // Only see students in their school
+        where.student = {
+            schoolId: user.schoolId
+        };
+        
+        if (studentId) where.studentId = String(studentId);
+        if (classId) {
+            where.student.enrollments = {
+                some: {
+                    classId: String(classId)
+                }
+            };
+        }
     } else {
         if (studentId) where.studentId = String(studentId);
         if (classId) {
