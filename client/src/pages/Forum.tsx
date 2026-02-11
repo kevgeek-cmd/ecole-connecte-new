@@ -259,7 +259,7 @@ const Forum = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
             <MessageSquare className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-            Forum École
+            Publication
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
             Espace d'échange et de partage de ressources pour toute l'école.
@@ -272,6 +272,15 @@ const Forum = () => {
           <Plus className="w-5 h-5" />
           Nouveau Sujet
         </button>
+      </div>
+
+      {/* Explanatory Box */}
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-8 text-sm text-blue-800 dark:text-blue-200">
+        <p className="font-semibold mb-2">Types de publications autorisés :</p>
+        <p>
+          Ici vous pouvez publier les emplois du temps, des agendas de devoirs, des informations de kermesse, 
+          congés scolaires, examen blanc, devoir de niveau, le programme par matières...
+        </p>
       </div>
 
       {/* Filters */}

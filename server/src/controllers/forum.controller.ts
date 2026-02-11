@@ -48,6 +48,9 @@ export const createPost = async (req: AuthRequest, res: Response) => {
       },
     });
 
+    // Real-time notification
+    req.app.get("io")?.emit("forum:post_created", post);
+
     res.status(201).json(post);
   } catch (error) {
     console.error(error);
@@ -142,6 +145,9 @@ export const createComment = async (req: AuthRequest, res: Response) => {
       },
     });
 
+    // Real-time notification
+    req.app.get("io")?.emit("forum:comment_created", comment);
+
     res.status(201).json(comment);
   } catch (error) {
     res.status(500).json({ message: "Error creating comment", error });
@@ -165,6 +171,8 @@ export const deletePost = async (req: AuthRequest, res: Response) => {
 
     await prisma.forumPost.delete({ where: { id } });
 
+    req.app.get("io")?.emit("forum:post_deleted", id);
+
     res.json({ message: "Post deleted" });
   } catch (error) {
     res.status(500).json({ message: "Error deleting post", error });
@@ -186,6 +194,8 @@ export const deleteComment = async (req: AuthRequest, res: Response) => {
     }
 
     await prisma.forumComment.delete({ where: { id } });
+
+    req.app.get("io")?.emit("forum:comment_deleted", { id, postId: comment.postId });
 
     res.json({ message: "Comment deleted" });
   } catch (error) {

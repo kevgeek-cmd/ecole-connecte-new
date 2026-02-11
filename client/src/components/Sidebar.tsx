@@ -64,11 +64,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             Tableau de bord
           </Link>
 
-          <Link to="/forum" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/forum' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
-            <MessageSquare className="w-5 h-5" />
-            Forum École
-          </Link>
-
           {user.role === 'SUPER_ADMIN' && (
             <>
               <Link to="/schools" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/schools' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
@@ -83,26 +78,34 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                 <Megaphone className="w-5 h-5" />
                 Annonces
               </Link>
+              <Link to="/forum" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/forum' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
+                <MessageSquare className="w-5 h-5" />
+                Publication
+              </Link>
             </>
           )}
 
           {(user.role === 'SCHOOL_ADMIN' || user.role === 'IT_ADMIN') && (
             <>
+              <Link to="/academic-years" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/academic-years' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
+                <BookOpen className="w-5 h-5" />
+                Années Scolaires
+              </Link>
               <Link to="/classes" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/classes' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
                 <School className="w-5 h-5" />
                 Classes
               </Link>
-              <Link to="/academic-years" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/academic-years' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
-                <BookOpen className="w-5 h-5" />
-                Années Scolaires
+               <Link to="/users" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/users' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
+                <User className="w-5 h-5" />
+                Utilisateurs
               </Link>
                <Link to="/subjects" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/subjects' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
                 <BookOpen className="w-5 h-5" />
                 Matières
               </Link>
-               <Link to="/users" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/users' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
-                <User className="w-5 h-5" />
-                Utilisateurs
+              <Link to="/forum" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/forum' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
+                <MessageSquare className="w-5 h-5" />
+                Publication
               </Link>
               {user.role === 'SCHOOL_ADMIN' && (
                  <Link to="/broadcast" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/broadcast' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
@@ -119,6 +122,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
           {(user.role === 'TEACHER' || user.role === 'STUDENT') && (
             <>
+              <Link to="/forum" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/forum' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
+                <MessageSquare className="w-5 h-5" />
+                Publication
+              </Link>
               <Link to="/courses" className={`flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition ${location.pathname === '/courses' ? 'bg-blue-600/20 text-blue-400' : ''}`}>
                 <BookOpen className="w-5 h-5" />
                 Mes Cours
@@ -169,7 +176,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             className="w-full flex items-center justify-center gap-2 p-2 bg-red-600 hover:bg-red-700 rounded transition text-sm font-semibold"
           >
             <LogOut className="w-4 h-4" />
-            Déconnexion
+            Se déconnecter
           </button>
         </div>
 

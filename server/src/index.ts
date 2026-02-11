@@ -16,6 +16,7 @@ const io = new Server(server, {
 });
 
 setupSocket(io);
+app.set("io", io);
 
 // Only listen if not running in Vercel/Serverless environment
 if (process.env.NODE_ENV !== 'production') {
