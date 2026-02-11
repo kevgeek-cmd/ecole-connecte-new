@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { UserX, Plus, Search, Calendar, XCircle, Trash2, Edit, Filter, Users, ChevronRight } from 'lucide-react';
 import api from '../utils/api';
-import { useAuth } from '../context/AuthContext';
 import { useForm } from 'react-hook-form';
 import ConfirmModal from '../components/ConfirmModal';
 

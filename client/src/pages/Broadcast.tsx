@@ -38,7 +38,6 @@ const Broadcast = () => {
   // Data lists
   const [schools, setSchools] = useState<SchoolData[]>([]);
   const [admins, setAdmins] = useState<UserData[]>([]);
-  const [classUsers, setClassUsers] = useState<UserData[]>([]);
   
   // Selections
   const [selectedSchoolIds, setSelectedSchoolIds] = useState<string[]>([]);
@@ -69,13 +68,11 @@ const Broadcast = () => {
   useEffect(() => {
     const fetchClassUsers = async () => {
         if (!selectedClassId) {
-            setClassUsers([]);
             return;
         }
         setLoadingData(true);
         try {
-            const res = await api.get(`/classes/${selectedClassId}/students`);
-            setClassUsers(res.data);
+            await api.get(`/classes/${selectedClassId}/students`);
         } catch (err) {
             console.error("Error fetching class users", err);
         } finally {
