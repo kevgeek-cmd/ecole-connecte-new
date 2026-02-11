@@ -13,12 +13,15 @@ import {
 
 const router = Router();
 
-router.use(authenticate, authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "IT_ADMIN"]));
+router.use(authenticate);
+
+// Public read for authenticated users
+router.get("/years", authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "IT_ADMIN", "EDUCATOR", "TEACHER", "STUDENT"]), getAcademicYears);
+
+// Restricted write access
+router.use(authorize(["SUPER_ADMIN", "SCHOOL_ADMIN", "IT_ADMIN"]));
 
 router.post("/years", createAcademicYear);
-router.put("/years/:id", updateAcademicYear);
-router.delete("/years/:id", deleteAcademicYear);
-router.get("/years", getAcademicYears);
 router.post("/terms", createTerm);
 router.put("/terms/:id", updateTerm);
 router.delete("/terms/:id", deleteTerm);

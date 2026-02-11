@@ -40,13 +40,22 @@ export const createClass = async (req: AuthRequest, res: Response) => {
 
 export const getClasses = async (req: AuthRequest, res: Response) => {
   try {
-    const schoolId = req.user?.schoolId;
-    if (!schoolId) {
-      return res.status(400).json({ message: "User not associated with a school" });
+    const user = req.user;
+    const where: any = {};
+    
+    if (user?.role === 'SUPER_ADMIN') {
+        if (req.query.schoolId) {
+            where.schoolId = String(req.query.schoolId);
+        }
+    } else {
+        if (!user?.schoolId) {
+            return res.status(400).json({ message: "User not associated with a school" });
+        }
+        where.schoolId = user.schoolId;
     }
 
     const classes = await prisma.class.findMany({
-      where: { schoolId },
+      where,
       include: {
         _count: {
           select: { enrollments: true, courses: true },
