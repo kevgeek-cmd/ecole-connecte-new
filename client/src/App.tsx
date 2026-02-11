@@ -21,6 +21,8 @@ import QuizAttemptsList from './pages/QuizAttemptsList';
 import QuizAttemptDetail from './pages/QuizAttemptDetail';
 import Broadcast from './pages/Broadcast';
 import Forum from './pages/Forum';
+import Absences from './pages/Absences';
+import Conduct from './pages/Conduct';
 import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './layouts/MainLayout';
 
@@ -55,6 +57,12 @@ function App() {
                 <Route path="/classes" element={<Classes />} />
                 <Route path="/subjects" element={<Subjects />} />
                 <Route path="/academic-years" element={<AcademicYears />} />
+              </Route>
+
+              {/* Management Routes (School Admin, IT Admin, Educator) */}
+              <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'SCHOOL_ADMIN', 'IT_ADMIN', 'EDUCATOR']} />}>
+                 <Route path="/absences" element={<Absences />} />
+                 <Route path="/conduct" element={<Conduct />} />
               </Route>
 
               {/* Academic Routes (Accessible by all authorized roles, but logic handled inside components or backend) */}
